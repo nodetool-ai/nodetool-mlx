@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nodetool-mlx"
-version = "0.1.0"
+version = "0.6.0"
 description = "Apple Silicon MLX nodes for Nodetool"
 readme = "README.md"
 authors = [{ name = "Matthias Georgi", email = "matti.georgi@gmail.com" }]

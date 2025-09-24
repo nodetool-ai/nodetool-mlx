@@ -287,10 +287,10 @@
       "expose_as_tool": true
     },
     {
-      "title": "MLX Text To Speech",
-      "description": "Generate speech locally using mlx-audio TTS models on Apple Silicon.\n    tts, audio, speech, mlx, kokoro, sesame\n\n    Use cases:\n    - Fast offline TTS generation on Apple Silicon devices\n    - Experiment with Kokoro/Sesame voices without GPU dependencies\n    - Produce narration or assistant voices with low-latency local inference",
+      "title": "Kokoro TTS",
+      "description": "MLX Kokoro text-to-speech.",
       "namespace": "mlx.tts",
-      "node_type": "mlx.tts.TTS",
+      "node_type": "mlx.tts.KokoroTTS",
       "properties": [
         {
           "name": "text",
@@ -302,19 +302,32 @@
           "description": "Text content to synthesize into speech."
         },
         {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Speech speed multiplier for Kokoro (0.5\u20132.0).",
+          "min": 0.5,
+          "max": 2.0
+        },
+        {
           "name": "model",
           "type": {
             "type": "enum",
             "values": [
               "prince-canuma/Kokoro-82M",
               "mlx-community/Kokoro-82M-bf16",
-              "mlx-community/csm-1b"
+              "mlx-community/Kokoro-82M-4bit",
+              "mlx-community/Kokoro-82M-6bit",
+              "mlx-community/Kokoro-82M-8bit"
             ],
             "type_name": "nodetool.nodes.mlx.tts.Model"
           },
           "default": "prince-canuma/Kokoro-82M",
           "title": "Model",
-          "description": "MLX TTS model repo ID or local path."
+          "description": "Kokoro model variant to load."
         },
         {
           "name": "voice",
@@ -323,18 +336,7 @@
           },
           "default": "af_heart",
           "title": "Voice",
-          "description": "Voice preset supported by the selected model. Kokoro exposes af_*/am_*/bf_* voices; Sesame expects reference-audio-assisted voices."
-        },
-        {
-          "name": "speed",
-          "type": {
-            "type": "float"
-          },
-          "default": 1.0,
-          "title": "Speed",
-          "description": "Playback speed multiplier supported by Kokoro models.",
-          "min": 0.5,
-          "max": 2.0
+          "description": "Voice preset supported by Kokoro (e.g. af_heart, am_adam, bf_emma)."
         },
         {
           "name": "lang_code",
@@ -343,7 +345,7 @@
           },
           "default": "a",
           "title": "Lang Code",
-          "description": "Language code when supported (Kokoro: a=American English, b=British English, j=Japanese, etc.)."
+          "description": "Language code or name (a=American English, b=British English, e=Spanish, etc.)."
         },
         {
           "name": "temperature",
@@ -352,7 +354,7 @@
           },
           "default": 0.7,
           "title": "Temperature",
-          "description": "Sampling temperature passed to the underlying generator when supported.",
+          "description": "Sampling temperature passed to the Kokoro generator.",
           "min": 0.0,
           "max": 1.5
         }
@@ -430,6 +432,165 @@
           "trending_score": null
         },
         {
+          "id": "mlx-community/Kokoro-82M-4bit",
+          "type": "hf.model",
+          "name": "mlx-community/Kokoro-82M-4bit",
+          "repo_id": "mlx-community/Kokoro-82M-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 644051686,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "text-to-speech",
+            "en",
+            "base_model:yl4579/StyleTTS2-LJSpeech",
+            "base_model:finetune:yl4579/StyleTTS2-LJSpeech",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 476,
+          "likes": 3,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/Kokoro-82M-6bit",
+          "type": "hf.model",
+          "name": "mlx-community/Kokoro-82M-6bit",
+          "repo_id": "mlx-community/Kokoro-82M-6bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 320126961,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "text-to-speech",
+            "en",
+            "base_model:yl4579/StyleTTS2-LJSpeech",
+            "base_model:finetune:yl4579/StyleTTS2-LJSpeech",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 41,
+          "likes": 2,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/Kokoro-82M-8bit",
+          "type": "hf.model",
+          "name": "mlx-community/Kokoro-82M-8bit",
+          "repo_id": "mlx-community/Kokoro-82M-8bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 323414762,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "text-to-speech",
+            "en",
+            "base_model:yl4579/StyleTTS2-LJSpeech",
+            "base_model:finetune:yl4579/StyleTTS2-LJSpeech",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 85,
+          "likes": 5,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "text",
+        "speed",
+        "model",
+        "voice",
+        "lang_code",
+        "temperature"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "Sesame TTS",
+      "description": "MLX Sesame / CSM text-to-speech with reference audio cloning.",
+      "namespace": "mlx.tts",
+      "node_type": "mlx.tts.SesameTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Speech speed multiplier for Sesame (0.5\u20132.0).",
+          "min": 0.5,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "mlx-community/csm-1b",
+              "mlx-community/csm-1b-8bit"
+            ],
+            "type_name": "nodetool.nodes.mlx.tts.Model"
+          },
+          "default": "mlx-community/csm-1b",
+          "title": "Model",
+          "description": "Sesame/CSM model variant to load."
+        },
+        {
+          "name": "reference_audio",
+          "type": {
+            "type": "audio"
+          },
+          "title": "Reference Audio",
+          "description": "Reference audio clip used for voice cloning."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
           "id": "mlx-community/csm-1b",
           "type": "hf.model",
           "name": "mlx-community/csm-1b",
@@ -456,17 +617,219 @@
           ],
           "has_model_index": false,
           "downloads": 186,
-          "likes": 18,
+          "likes": 19,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/csm-1b-8bit",
+          "type": "hf.model",
+          "name": "mlx-community/csm-1b-8bit",
+          "repo_id": "mlx-community/csm-1b-8bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 1711114573,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "sam",
+            "model_hub_mixin",
+            "pytorch_model_hub_mixin",
+            "text-to-speech",
+            "en",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 50,
+          "likes": 0,
           "trending_score": null
         }
       ],
       "basic_fields": [
         "text",
+        "speed",
+        "model",
+        "reference_audio"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "Spark TTS",
+      "description": "MLX Spark text-to-speech.",
+      "namespace": "mlx.tts",
+      "node_type": "mlx.tts.SparkTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Spark speed must be one of {0.0, 0.5, 1.0, 1.5, 2.0}.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "mlx-community/Spark-TTS-0.5B-bf16",
+              "mlx-community/Spark-TTS-0.5B-8bit"
+            ],
+            "type_name": "nodetool.nodes.mlx.tts.Model"
+          },
+          "default": "mlx-community/Spark-TTS-0.5B-bf16",
+          "title": "Model",
+          "description": "Spark model variant to load."
+        },
+        {
+          "name": "voice",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "str"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "title": "Voice",
+          "description": "Optional Spark voice preset."
+        },
+        {
+          "name": "pitch",
+          "type": {
+            "type": "enum",
+            "values": [
+              "very_low",
+              "low",
+              "moderate",
+              "high",
+              "very_high"
+            ],
+            "type_name": "nodetool.nodes.mlx.tts.Pitch"
+          },
+          "default": "moderate",
+          "title": "Pitch",
+          "description": "Spark pitch preset."
+        },
+        {
+          "name": "gender",
+          "type": {
+            "type": "enum",
+            "values": [
+              "female",
+              "male"
+            ],
+            "type_name": "nodetool.nodes.mlx.tts.Gender"
+          },
+          "default": "female",
+          "title": "Gender",
+          "description": "Spark voice gender."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Spark-TTS-0.5B-bf16",
+          "type": "hf.model",
+          "name": "mlx-community/Spark-TTS-0.5B-bf16",
+          "repo_id": "mlx-community/Spark-TTS-0.5B-bf16",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 2920645801,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen2",
+            "text-to-speech",
+            "en",
+            "zh",
+            "license:cc-by-nc-sa-4.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1124,
+          "likes": 4,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/Spark-TTS-0.5B-8bit",
+          "type": "hf.model",
+          "name": "mlx-community/Spark-TTS-0.5B-8bit",
+          "repo_id": "mlx-community/Spark-TTS-0.5B-8bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 2445831009,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen2",
+            "text-to-speech",
+            "en",
+            "zh",
+            "license:cc-by-nc-sa-4.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 60,
+          "likes": 3,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "text",
+        "speed",
         "model",
         "voice",
-        "speed",
-        "lang_code",
-        "temperature"
+        "pitch",
+        "gender"
       ],
       "expose_as_tool": true
     },
