@@ -1,0 +1,166 @@
+name: Build and Publish Wheel
+
+on:
+  # Trigger on version tags
+  push:
+    tags:
+      - "v*.*.*"
+
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., 0.6.0)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark as prerelease"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PACKAGE_NAME: ${{ github.event.repository.name }} # e.g., "nodetool-base"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      tag-name: ${{ steps.get-version.outputs.tag-name }}
+      is-prerelease: ${{ steps.get-version.outputs.is-prerelease }}
+    steps:
+      - name: Get version from tag or input
+        id: get-version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG_NAME="v${VERSION}"
+            IS_PRERELEASE="${{ github.event.inputs.prerelease }}"
+          else
+            TAG_NAME="${{ github.ref_name }}"
+            VERSION="${TAG_NAME#v}"
+            IS_PRERELEASE="false"
+          fi
+
+          # Validate version format
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([a-zA-Z][0-9]*)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag-name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "is-prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+          echo "📋 Version: $VERSION"
+          echo "🏷️ Tag: $TAG_NAME"
+          echo "🔄 Prerelease: $IS_PRERELEASE"
+
+  build-wheel:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.tag-name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install build dependencies
+        run: |
+          pip install --upgrade pip
+          pip install build hatchling twine
+
+      - name: Download build helper
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/nodetool-ai/nodetool-core/main/build.py -o build.py
+
+      - name: Build wheel
+        run: |
+          echo "🏗️ Building wheel for ${{ env.PACKAGE_NAME }}"
+          python build.py build-wheel
+
+      - name: Validate wheel
+        run: |
+          python build.py validate-wheel
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}
+          path: |
+            dist/*.whl
+            dist/*.whl.metadata
+          retention-days: 30
+
+  create-release:
+    needs: [validate, build-wheel]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.tag-name }}
+
+      - name: Download build helper
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/nodetool-ai/nodetool-core/main/build.py -o build.py
+
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel-${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}
+          path: dist/
+
+      - name: Generate release notes
+        run: |
+          python build.py release-notes \
+            --package "${{ env.PACKAGE_NAME }}" \
+            --version "${{ needs.validate.outputs.version }}" \
+            --tag "${{ needs.validate.outputs.tag-name }}" \
+            --repository "${{ github.repository }}" \
+            --server-url "${{ github.server_url }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate.outputs.tag-name }}
+          name: "${{ env.PACKAGE_NAME }} v${{ needs.validate.outputs.version }}"
+          body_path: release_notes.md
+          files: |
+            dist/*.whl
+            dist/*.whl.metadata
+          draft: false
+          prerelease: ${{ needs.validate.outputs.is-prerelease }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify registry
+        if: success()
+        env:
+          REGISTRY_UPDATE_TOKEN: ${{ secrets.REGISTRY_UPDATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python build.py notify-registry \
+            --package "${{ env.PACKAGE_NAME }}" \
+            --version "${{ needs.validate.outputs.version }}" \
+            --tag "${{ needs.validate.outputs.tag-name }}" \
+            --repository "${{ github.repository }}" \
+            --server-url "${{ github.server_url }}"
+
+      - name: Create success summary
+        run: |
+          python build.py summary \
+            --package "${{ env.PACKAGE_NAME }}" \
+            --version "${{ needs.validate.outputs.version }}" \
+            --tag "${{ needs.validate.outputs.tag-name }}" \
+            --repository "${{ github.repository }}" \
+            --server-url "${{ github.server_url }}"

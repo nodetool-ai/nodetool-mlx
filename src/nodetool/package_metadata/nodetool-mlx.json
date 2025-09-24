@@ -1,0 +1,818 @@
+{
+  "name": "nodetool-mlx",
+  "description": "Apple Silicon MLX nodes for Nodetool",
+  "version": "0.1.0",
+  "authors": [
+    "Matthias Georgi <matti.georgi@gmail.com>"
+  ],
+  "repo_id": "",
+  "nodes": [
+    {
+      "title": "MFlux Image Generation",
+      "description": "Generate images locally using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image generation, apple-silicon\n\n    Use cases:\n    - Create high quality images on Apple Silicon without external APIs\n    - Prototype prompts locally before running on cloud inference providers\n    - Experiment with quantized FLUX models (schnell/dev/krea-dev variants)\n\n    Recommended models:\n    - schnell: Fastest model, good for quick generations (2-4 steps)\n    - dev: More powerful model, higher quality (20-25 steps)\n    - krea-dev: Enhanced photorealism with distinctive aesthetics\n    - Freepik/flux.1-lite-8B-alpha: Lighter version of FLUX\n    - Quantized 4-bit models: Reduced memory usage versions of the official models",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.ImageGeneration",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A vivid concept art piece of a futuristic city at sunset",
+          "title": "Prompt",
+          "description": "The text prompt describing the image to generate."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.flux"
+          },
+          "default": {
+            "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit"
+          },
+          "title": "Model",
+          "description": "MFLUX model variant to load. Options include official models (schnell, dev, krea-dev), third-party community models (Freepik/flux.1-lite-8B-alpha), and quantized 4-bit versions for reduced memory usage."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "enum",
+                "values": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  8
+                ],
+                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Optional quantization level for model weights (reduces memory usage)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 4,
+          "title": "Steps",
+          "description": "Number of denoising steps for the generation run.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 3.5,
+          "title": "Guidance",
+          "description": "Classifier-free guidance scale. Used by dev/krea-dev models.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "Freepik/flux.1-lite-8B-alpha",
+          "type": "hf.flux",
+          "name": "Freepik/flux.1-lite-8B-alpha",
+          "repo_id": "Freepik/flux.1-lite-8B-alpha",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 42642793609,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "flux",
+            "text-to-image",
+            "base_model:black-forest-labs/FLUX.1-dev",
+            "base_model:finetune:black-forest-labs/FLUX.1-dev",
+            "license:other",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 1572,
+          "likes": 427,
+          "trending_score": null
+        },
+        {
+          "id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+          "type": "hf.flux",
+          "name": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+          "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 9615583654,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "flux-rectified-flow",
+            "text-to-image",
+            "diffusion",
+            "mflux",
+            "en",
+            "dataset:custom",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 26,
+          "likes": 1,
+          "trending_score": null
+        },
+        {
+          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "type": "hf.flux",
+          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 9621508754,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "flux-rectified-flow",
+            "text-to-image",
+            "diffusion",
+            "mflux",
+            "development",
+            "en",
+            "dataset:custom",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 10,
+          "likes": 2,
+          "trending_score": null
+        },
+        {
+          "id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
+          "type": "hf.flux",
+          "name": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
+          "repo_id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 9614920957,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "mflux",
+            "flux",
+            "krea-dev",
+            "text-to-image",
+            "base_model:black-forest-labs/FLUX.1-Krea-dev",
+            "base_model:finetune:black-forest-labs/FLUX.1-Krea-dev",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 3,
+          "trending_score": null
+        },
+        {
+          "id": "akx/FLUX.1-Kontext-dev-mflux-4bit",
+          "type": "hf.flux",
+          "name": "akx/FLUX.1-Kontext-dev-mflux-4bit",
+          "repo_id": "akx/FLUX.1-Kontext-dev-mflux-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 9614920180,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mflux",
+            "base_model:black-forest-labs/FLUX.1-Kontext-dev",
+            "base_model:quantized:black-forest-labs/FLUX.1-Kontext-dev",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 2,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MLX Text To Speech",
+      "description": "Generate speech locally using mlx-audio TTS models on Apple Silicon.\n    tts, audio, speech, mlx, kokoro, sesame\n\n    Use cases:\n    - Fast offline TTS generation on Apple Silicon devices\n    - Experiment with Kokoro/Sesame voices without GPU dependencies\n    - Produce narration or assistant voices with low-latency local inference",
+      "namespace": "mlx.tts",
+      "node_type": "mlx.tts.TTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "prince-canuma/Kokoro-82M",
+              "mlx-community/Kokoro-82M-bf16",
+              "mlx-community/csm-1b"
+            ],
+            "type_name": "nodetool.nodes.mlx.tts.Model"
+          },
+          "default": "prince-canuma/Kokoro-82M",
+          "title": "Model",
+          "description": "MLX TTS model repo ID or local path."
+        },
+        {
+          "name": "voice",
+          "type": {
+            "type": "str"
+          },
+          "default": "af_heart",
+          "title": "Voice",
+          "description": "Voice preset supported by the selected model. Kokoro exposes af_*/am_*/bf_* voices; Sesame expects reference-audio-assisted voices."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Playback speed multiplier supported by Kokoro models.",
+          "min": 0.5,
+          "max": 2.0
+        },
+        {
+          "name": "lang_code",
+          "type": {
+            "type": "str"
+          },
+          "default": "a",
+          "title": "Lang Code",
+          "description": "Language code when supported (Kokoro: a=American English, b=British English, j=Japanese, etc.)."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.7,
+          "title": "Temperature",
+          "description": "Sampling temperature passed to the underlying generator when supported.",
+          "min": 0.0,
+          "max": 1.5
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "prince-canuma/Kokoro-82M",
+          "type": "hf.model",
+          "name": "prince-canuma/Kokoro-82M",
+          "repo_id": "prince-canuma/Kokoro-82M",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 361213864,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "text-to-speech",
+            "en",
+            "arxiv:2306.07691",
+            "arxiv:2203.02395",
+            "base_model:yl4579/StyleTTS2-LJSpeech",
+            "base_model:finetune:yl4579/StyleTTS2-LJSpeech",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1818,
+          "likes": 4,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/Kokoro-82M-bf16",
+          "type": "hf.model",
+          "name": "mlx-community/Kokoro-82M-bf16",
+          "repo_id": "mlx-community/Kokoro-82M-bf16",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 361205527,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "text-to-speech",
+            "en",
+            "base_model:yl4579/StyleTTS2-LJSpeech",
+            "base_model:finetune:yl4579/StyleTTS2-LJSpeech",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 5054,
+          "likes": 24,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/csm-1b",
+          "type": "hf.model",
+          "name": "mlx-community/csm-1b",
+          "repo_id": "mlx-community/csm-1b",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 6218711994,
+          "downloaded": false,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "sesame",
+            "text-to-speech",
+            "en",
+            "base_model:sesame/csm-1b",
+            "base_model:finetune:sesame/csm-1b",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 186,
+          "likes": 18,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "text",
+        "model",
+        "voice",
+        "speed",
+        "lang_code",
+        "temperature"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MLX Whisper",
+      "description": "Transcribe an audio asset using MLX Whisper.\n    whisper, mlx, asr, speech-to-text\n\n    - Uses MLX for efficient Apple Silicon acceleration\n    - Emits final transcript on `text` and segments on `segments`",
+      "namespace": "mlx.whisper",
+      "node_type": "mlx.whisper.MLXWhisper",
+      "properties": [
+        {
+          "name": "model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "mlx-community/whisper-tiny-mlx",
+              "mlx-community/whisper-tiny.en-mlx",
+              "mlx-community/whisper-base-mlx",
+              "mlx-community/whisper-base.en-mlx",
+              "mlx-community/whisper-small-mlx",
+              "mlx-community/whisper-small.en-mlx",
+              "mlx-community/whisper-medium-mlx",
+              "mlx-community/whisper-medium.en-mlx",
+              "mlx-community/whisper-large-v3-mlx"
+            ],
+            "type_name": "nodetool.nodes.mlx.whisper.Model"
+          },
+          "default": "mlx-community/whisper-tiny.en-mlx",
+          "title": "Model",
+          "description": "Model to use for transcription"
+        },
+        {
+          "name": "length_ms",
+          "type": {
+            "type": "int"
+          },
+          "default": 5000,
+          "title": "Length Ms",
+          "description": "Chunk length in milliseconds before decode"
+        },
+        {
+          "name": "compression_ratio_threshold",
+          "type": {
+            "type": "float",
+            "optional": true
+          },
+          "default": 2.4,
+          "title": "Compression Ratio Threshold",
+          "description": "Threshold for gzip compression ratio; above this, the result is treated as failed."
+        },
+        {
+          "name": "logprob_threshold",
+          "type": {
+            "type": "float",
+            "optional": true
+          },
+          "default": -1.0,
+          "title": "Logprob Threshold",
+          "description": "Average log probability threshold; below this, the result is treated as failed."
+        },
+        {
+          "name": "no_speech_threshold",
+          "type": {
+            "type": "float",
+            "optional": true
+          },
+          "default": 0.6,
+          "title": "No Speech Threshold",
+          "description": "Threshold for no-speech probability; if exceeded and logprob is low, the segment is considered silent."
+        },
+        {
+          "name": "condition_on_previous_text",
+          "type": {
+            "type": "bool"
+          },
+          "default": true,
+          "title": "Condition On Previous Text",
+          "description": "If True, the previous output is used as a prompt for the next window, improving consistency."
+        },
+        {
+          "name": "word_timestamps",
+          "type": {
+            "type": "bool"
+          },
+          "default": false,
+          "title": "Word Timestamps",
+          "description": "If True, extracts word-level timestamps using cross-attention and dynamic time warping."
+        },
+        {
+          "name": "chunk",
+          "type": {
+            "type": "chunk"
+          },
+          "default": {},
+          "title": "Chunk",
+          "description": "Streaming input chunk. Provide audio chunks (PCM16 base64 or bytes)."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "text"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        },
+        {
+          "type": {
+            "type": "list"
+          },
+          "name": "segments"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/whisper-tiny-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-tiny-mlx",
+          "repo_id": "mlx-community/whisper-tiny-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 74420620,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 151,
+          "likes": 2,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/whisper-tiny.en-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-tiny.en-mlx",
+          "repo_id": "mlx-community/whisper-tiny.en-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 74419890,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 247,
+          "likes": 0,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/whisper-base-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-base-mlx",
+          "repo_id": "mlx-community/whisper-base-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 143726284,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 2358,
+          "likes": 0,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/whisper-base.en-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-base.en-mlx",
+          "repo_id": "mlx-community/whisper-base.en-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 143725218,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 40,
+          "likes": 0,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/whisper-small-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-small-mlx",
+          "repo_id": "mlx-community/whisper-small-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 481309678,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 3004,
+          "likes": 3,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/whisper-small.en-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-small.en-mlx",
+          "repo_id": "mlx-community/whisper-small.en-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 481308292,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 66,
+          "likes": 0,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/whisper-medium-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-medium-mlx",
+          "repo_id": "mlx-community/whisper-medium-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 1524927002,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 2461,
+          "likes": 3,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/whisper-medium.en-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-medium.en-mlx",
+          "repo_id": "mlx-community/whisper-medium.en-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 1524925152,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 80,
+          "likes": 1,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/whisper-large-v3-mlx",
+          "type": "hf.model",
+          "name": "mlx-community/whisper-large-v3-mlx",
+          "repo_id": "mlx-community/whisper-large-v3-mlx",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 3083522444,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "mlx",
+            "whisper",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 2341,
+          "likes": 56,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "length_ms",
+        "compression_ratio_threshold",
+        "logprob_threshold",
+        "no_speech_threshold",
+        "condition_on_previous_text",
+        "word_timestamps",
+        "chunk"
+      ]
+    }
+  ]
+}
