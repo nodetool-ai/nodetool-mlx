@@ -1,17 +1,32 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
   "repo_id": "",
   "nodes": [
     {
-      "title": "MFlux Image Generation",
+      "title": "Base MFlux",
+      "description": "",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.BaseMFlux",
+      "outputs": [
+        {
+          "type": {
+            "type": "any"
+          },
+          "name": "output"
+        }
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux",
       "description": "Generate images locally using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image generation, apple-silicon\n\n    Use cases:\n    - Create high quality images on Apple Silicon without external APIs\n    - Prototype prompts locally before running on cloud inference providers\n    - Experiment with quantized FLUX models (schnell/dev/krea-dev variants)\n\n    Recommended models:\n    - schnell: Fastest model, good for quick generations (2-4 steps)\n    - dev: More powerful model, higher quality (20-25 steps)\n    - krea-dev: Enhanced photorealism with distinctive aesthetics\n    - Freepik/flux.1-lite-8B-alpha: Lighter version of FLUX\n    - Quantized 4-bit models: Reduced memory usage versions of the official models",
       "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.ImageGeneration",
+      "node_type": "mlx.mflux.MFlux",
       "properties": [
         {
           "name": "prompt",
@@ -155,7 +170,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 1572,
+          "downloads": 1561,
           "likes": 427,
           "trending_score": null
         },
@@ -184,7 +199,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 26,
+          "downloads": 18,
           "likes": 1,
           "trending_score": null
         },
@@ -214,7 +229,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10,
+          "downloads": 11,
           "likes": 2,
           "trending_score": null
         },
@@ -276,6 +291,1448 @@
       ],
       "basic_fields": [
         "prompt",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux ControlNet",
+      "description": "Generate images with MFlux ControlNet guidance using local MLX acceleration.\n    mlx, flux, controlnet, conditioning, edge-detection\n\n    Use cases:\n    - Apply edge-aware guidance via ControlNet canny models\n    - Leverage local Apple Silicon acceleration for conditioned generations\n    - Upscale images using ControlNet upscaler weights",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.MFluxControlNet",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Highly detailed cinematic portrait",
+          "title": "Prompt",
+          "description": "Primary text prompt for image generation."
+        },
+        {
+          "name": "control_image",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Control Image",
+          "description": "Reference image used by ControlNet for conditioning."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.flux"
+          },
+          "default": {
+            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit"
+          },
+          "title": "Model",
+          "description": "Base Flux model to load for conditioned generation."
+        },
+        {
+          "name": "controlnet_model",
+          "type": {
+            "type": "hf.controlnet_flux"
+          },
+          "default": {
+            "repo_id": "InstantX/FLUX.1-dev-Controlnet-Canny"
+          },
+          "title": "Controlnet Model",
+          "description": "ControlNet weights that match the selected Flux base model."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "enum",
+                "values": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  8
+                ],
+                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Optional quantization level for model weights (reduces memory usage)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 8,
+          "title": "Steps",
+          "description": "Number of denoising steps for diffusion.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 3.5,
+          "title": "Guidance",
+          "description": "Classifier-free guidance scale when supported by the selected model.",
+          "min": 0.0
+        },
+        {
+          "name": "controlnet_strength",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.5,
+          "title": "Controlnet Strength",
+          "description": "Blend factor between ControlNet conditioning and base model prior.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave 0 for random."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "type": "hf.flux",
+          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 9621508754,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "flux-rectified-flow",
+            "text-to-image",
+            "diffusion",
+            "mflux",
+            "development",
+            "en",
+            "dataset:custom",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 11,
+          "likes": 2,
+          "trending_score": null
+        },
+        {
+          "id": "InstantX/FLUX.1-dev-Controlnet-Canny",
+          "type": "hf.controlnet_flux",
+          "name": "InstantX/FLUX.1-dev-Controlnet-Canny",
+          "repo_id": "InstantX/FLUX.1-dev-Controlnet-Canny",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 3588002196,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "Text-to-Image",
+            "ControlNet",
+            "Diffusers",
+            "Stable Diffusion",
+            "base_model:black-forest-labs/FLUX.1-dev",
+            "base_model:finetune:black-forest-labs/FLUX.1-dev",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 4501,
+          "likes": 191,
+          "trending_score": null
+        },
+        {
+          "id": "jasperai/Flux.1-dev-Controlnet-Upscaler",
+          "type": "hf.controlnet_flux",
+          "name": "jasperai/Flux.1-dev-Controlnet-Upscaler",
+          "repo_id": "jasperai/Flux.1-dev-Controlnet-Upscaler",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 3591390928,
+          "downloaded": false,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "ControlNet",
+            "super-resolution",
+            "upscaler",
+            "image-to-image",
+            "base_model:black-forest-labs/FLUX.1-dev",
+            "base_model:finetune:black-forest-labs/FLUX.1-dev",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 10578,
+          "likes": 826,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "control_image",
+        "model",
+        "controlnet_model",
+        "quantize",
+        "steps",
+        "guidance",
+        "controlnet_strength",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Depth",
+      "description": "Generate images with depth guidance via the MFlux depth pipeline using local MLX acceleration.\n    mlx, flux, depth, conditioning, structure-preserving\n\n    Use cases:\n    - Use a depth map to control structural composition while keeping prompt-driven appearance\n    - Provide both source image and depth map to transfer scene layout to a new generation\n    - Generate depth-guided outputs when only a depth map is available (source image optional)",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.MFluxDepth",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Highly detailed cinematic portrait with depth cues",
+          "title": "Prompt",
+          "description": "Primary text prompt for the depth-guided generation."
+        },
+        {
+          "name": "image",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Image",
+          "description": "Optional reference image used for depth extraction or as a content guide."
+        },
+        {
+          "name": "depth_image",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Depth Image",
+          "description": "Optional depth map to guide geometry. If omitted, depth is inferred from the image when provided."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.depth_generation"
+          },
+          "default": {
+            "repo_id": "black-forest-labs/FLUX.1-Depth-dev"
+          },
+          "title": "Model",
+          "description": "Depth model weights compatible with the Flux depth pipeline."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "enum",
+                "values": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  8
+                ],
+                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Optional quantization level for model weights (reduces memory usage)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps for the generation run.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 10.0,
+          "title": "Guidance",
+          "description": "Classifier-free guidance scale. Defaults higher to encourage prompt adherence in depth mode.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave 0 for random seed."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "black-forest-labs/FLUX.1-Depth-dev",
+          "type": "hf.depth_generation",
+          "name": "black-forest-labs/FLUX.1-Depth-dev",
+          "repo_id": "black-forest-labs/FLUX.1-Depth-dev",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 67823838679,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-generation",
+            "flux",
+            "diffusion-single-file",
+            "en",
+            "license:other",
+            "diffusers:FluxControlPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 7817,
+          "likes": 221,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "image",
+        "depth_image",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux ImageToImage",
+      "description": "Transform an existing image using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image-to-image, apple-silicon\n\n    Use cases:\n    - Apply prompt-based edits to an existing image without relying on external APIs\n    - Experiment with strength-controlled transformations locally",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.MFluxImageToImage",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Refine this image with cinematic lighting",
+          "title": "Prompt",
+          "description": "Text prompt describing how to transform the input image."
+        },
+        {
+          "name": "image",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Image",
+          "description": "Base image that will be transformed."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.flux"
+          },
+          "default": {
+            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit"
+          },
+          "title": "Model",
+          "description": "MFLUX model variant to load for image-to-image generation."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "enum",
+                "values": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  8
+                ],
+                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Optional quantization level for model weights (reduces memory usage)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 8,
+          "title": "Steps",
+          "description": "Number of denoising steps for the transformation.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 3.5,
+          "title": "Guidance",
+          "description": "Classifier-free guidance scale. Used by dev/krea-dev models.",
+          "min": 0.0
+        },
+        {
+          "name": "image_strength",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.4,
+          "title": "Image Strength",
+          "description": "Blend factor between the original image and the generation (0 keeps original).",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "type": "hf.flux",
+          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 9621508754,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "flux-rectified-flow",
+            "text-to-image",
+            "diffusion",
+            "mflux",
+            "development",
+            "en",
+            "dataset:custom",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 11,
+          "likes": 2,
+          "trending_score": null
+        },
+        {
+          "id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+          "type": "hf.flux",
+          "name": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+          "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 9615583654,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "flux-rectified-flow",
+            "text-to-image",
+            "diffusion",
+            "mflux",
+            "en",
+            "dataset:custom",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 18,
+          "likes": 1,
+          "trending_score": null
+        },
+        {
+          "id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
+          "type": "hf.flux",
+          "name": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
+          "repo_id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 9614920957,
+          "downloaded": false,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "mflux",
+            "flux",
+            "krea-dev",
+            "text-to-image",
+            "base_model:black-forest-labs/FLUX.1-Krea-dev",
+            "base_model:finetune:black-forest-labs/FLUX.1-Krea-dev",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 3,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "image",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "image_strength",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Inpaint",
+      "description": "Inpaint portions of an image locally using the MFLUX MLX implementation of FLUX.1 Fill.\n    mlx, flux, inpainting, mask editing\n\n    Use cases:\n    - Restore masked regions with prompt-guided content\n    - Blend new elements into an existing composition while preserving unmasked areas",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.MFluxInpaint",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Refine the masked region with additional details",
+          "title": "Prompt",
+          "description": "Text prompt describing what to generate inside the mask."
+        },
+        {
+          "name": "image",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Image",
+          "description": "Base image that will stay fixed outside the masked regions."
+        },
+        {
+          "name": "mask",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Mask",
+          "description": "Mask image: white areas will be regenerated, black areas remain untouched."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.inpainting"
+          },
+          "default": {
+            "repo_id": "black-forest-labs/FLUX.1-Fill-dev"
+          },
+          "title": "Model",
+          "description": "Inpainting model to load. Defaults to FLUX.1 Fill dev weights."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "enum",
+                "values": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  8
+                ],
+                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Optional quantization level for model weights (reduces memory usage)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps for the inpainting run.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 30.0,
+          "title": "Guidance",
+          "description": "Classifier-free guidance scale. Higher values tend to better respect the prompt in Fill mode.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Target output height in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Target output width in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave 0 for random seed."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "black-forest-labs/FLUX.1-Fill-dev",
+          "type": "hf.inpainting",
+          "name": "black-forest-labs/FLUX.1-Fill-dev",
+          "repo_id": "black-forest-labs/FLUX.1-Fill-dev",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 58056239932,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-generation",
+            "flux",
+            "diffusion-single-file",
+            "en",
+            "license:other",
+            "diffusers:FluxFillPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 346650,
+          "likes": 927,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "image",
+        "mask",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Kontext",
+      "description": "Generate images using Kontext reference image fusion on Apple Silicon.\n    mlx, flux, kontext, reference guidance\n\n    Use cases:\n    - Leverage a reference image and prompt to produce stylistically consistent outputs\n    - Perform context-aware edits without external services\n    - Prototype Kontext-driven workflows locally",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.MFluxKontext",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Create an atmospheric scene based on the reference image",
+          "title": "Prompt",
+          "description": "Primary text prompt for Kontext-guided generation."
+        },
+        {
+          "name": "reference_image",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Reference Image",
+          "description": "Reference image that will guide the Kontext generation."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.kontext_generation"
+          },
+          "default": {
+            "repo_id": "black-forest-labs/FLUX.1-Kontext-dev"
+          },
+          "title": "Model",
+          "description": "Kontext model weights compatible with the Flux Kontext pipeline."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "enum",
+                "values": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  8
+                ],
+                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Optional quantization level for model weights (reduces memory usage)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps for the generation run.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 2.5,
+          "title": "Guidance",
+          "description": "Classifier-free guidance scale. Kontext often works best with moderate values.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave 0 for random seed."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "black-forest-labs/FLUX.1-Kontext-dev",
+          "type": "hf.kontext_generation",
+          "name": "black-forest-labs/FLUX.1-Kontext-dev",
+          "repo_id": "black-forest-labs/FLUX.1-Kontext-dev",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 57890836779,
+          "downloaded": false,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-generation",
+            "flux",
+            "diffusion-single-file",
+            "image-to-image",
+            "en",
+            "arxiv:2506.15742",
+            "license:other",
+            "diffusers:FluxKontextPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 310419,
+          "likes": 2305,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "reference_image",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Outpaint",
+      "description": "Outpaint an existing image by extending the canvas using the MFLUX Fill pipeline.\n    mlx, flux, outpainting, canvas extension\n\n    Use cases:\n    - Expand scene borders while maintaining continuity with the original image\n    - Add sky, foreground elements, or contextual scenery around a provided image",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.MFluxOutpaint",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Expand the scene with complementary surroundings",
+          "title": "Prompt",
+          "description": "Prompt guiding what to generate in the newly added canvas regions."
+        },
+        {
+          "name": "image",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Image",
+          "description": "Base image that will remain visible inside the padded region."
+        },
+        {
+          "name": "mask",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Mask",
+          "description": "Mask defining areas to regenerate (white) after padding. If blank, generated automatically."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.outpainting"
+          },
+          "default": {
+            "repo_id": "black-forest-labs/FLUX.1-Fill-dev"
+          },
+          "title": "Model",
+          "description": "Outpainting model to load. Defaults to FLUX.1 Fill dev weights."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "enum",
+                "values": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  8
+                ],
+                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Optional quantization level for model weights (reduces memory usage)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps for the outpainting run.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 30.0,
+          "title": "Guidance",
+          "description": "Classifier-free guidance scale. Higher values tend to better respect the prompt in Fill mode.",
+          "min": 0.0
+        },
+        {
+          "name": "padding",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "str"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "title": "Padding",
+          "description": "CSS-style padding string (e.g. '128', '96,64', '10%,5%') describing additional canvas to create before generation."
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Target output height after padding.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Target output width after padding.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave 0 for random seed."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "any"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "black-forest-labs/FLUX.1-Fill-dev",
+          "type": "hf.outpainting",
+          "name": "black-forest-labs/FLUX.1-Fill-dev",
+          "repo_id": "black-forest-labs/FLUX.1-Fill-dev",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 58056239932,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-generation",
+            "flux",
+            "diffusion-single-file",
+            "en",
+            "license:other",
+            "diffusers:FluxFillPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 346650,
+          "likes": 927,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "image",
+        "mask",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "padding",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Redux",
+      "description": "Generate images using reference images with Flux Redux guidance on Apple Silicon.\n    mlx, flux, redux, reference fusion\n\n    Use cases:\n    - Blend multiple reference images with a text prompt to steer style and content\n    - Reinterpret a photo collection into a coherent output while keeping structure from the references\n    - Experiment locally with the Flux Redux pipeline without external APIs",
+      "namespace": "mlx.mflux",
+      "node_type": "mlx.mflux.MFluxRedux",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Create a cinematic composition inspired by the reference images",
+          "title": "Prompt",
+          "description": "Primary text prompt for the Redux generation."
+        },
+        {
+          "name": "redux_image",
+          "type": {
+            "type": "image"
+          },
+          "default": {},
+          "title": "Redux Image",
+          "description": "Reference image that will guide the generation."
+        },
+        {
+          "name": "redux_image_strength",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "title": "Redux Image Strength",
+          "description": "Optional strength value (0-1) for the reference image.",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.redux_generation"
+          },
+          "default": {
+            "repo_id": "black-forest-labs/FLUX.1-Redux-dev"
+          },
+          "title": "Model",
+          "description": "Redux model variant to load. Defaults to FLUX.1 Redux dev weights."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "enum",
+                "values": [
+                  3,
+                  4,
+                  5,
+                  6,
+                  8
+                ],
+                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Optional quantization level for model weights (reduces memory usage)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps for the generation run.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "union",
+            "type_args": [
+              {
+                "type": "float"
+              },
+              {
+                "type": "none"
+              }
+            ]
+          },
+          "default": 7.0,
+          "title": "Guidance",
+          "description": "Classifier-free guidance scale. A moderate default balances prompt adherence and references.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave 0 for random seed."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "black-forest-labs/FLUX.1-Redux-dev",
+          "type": "hf.redux_generation",
+          "name": "black-forest-labs/FLUX.1-Redux-dev",
+          "repo_id": "black-forest-labs/FLUX.1-Redux-dev",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 1115068289,
+          "downloaded": false,
+          "pipeline_tag": null,
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-generation",
+            "flux",
+            "diffusion-single-file",
+            "en",
+            "license:other",
+            "diffusers:FluxPriorReduxPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 27226,
+          "likes": 565,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "redux_image",
+        "redux_image_strength",
         "model",
         "quantize",
         "steps",
@@ -399,7 +1856,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1818,
+          "downloads": 1823,
           "likes": 4,
           "trending_score": null
         },
@@ -427,7 +1884,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5054,
+          "downloads": 5877,
           "likes": 24,
           "trending_score": null
         },
@@ -455,7 +1912,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 476,
+          "downloads": 453,
           "likes": 3,
           "trending_score": null
         },
@@ -483,7 +1940,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 41,
+          "downloads": 37,
           "likes": 2,
           "trending_score": null
         },
@@ -511,7 +1968,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 85,
+          "downloads": 94,
           "likes": 5,
           "trending_score": null
         }
@@ -616,7 +2073,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 186,
+          "downloads": 174,
           "likes": 19,
           "trending_score": null
         },
@@ -678,13 +2135,19 @@
         {
           "name": "speed",
           "type": {
-            "type": "float"
+            "type": "enum",
+            "values": [
+              "very_low",
+              "low",
+              "moderate",
+              "high",
+              "very_high"
+            ],
+            "type_name": "nodetool.nodes.mlx.tts.Speed"
           },
-          "default": 1.0,
+          "default": "moderate",
           "title": "Speed",
-          "description": "Spark speed must be one of {0.0, 0.5, 1.0, 1.5, 2.0}.",
-          "min": 0.0,
-          "max": 2.0
+          "description": "Spark speed preset (very_low, low, moderate, high, very_high)."
         },
         {
           "name": "model",
@@ -788,7 +2251,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1124,
+          "downloads": 1086,
           "likes": 4,
           "trending_score": null
         },
@@ -818,7 +2281,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 60,
+          "downloads": 61,
           "likes": 3,
           "trending_score": null
         }
@@ -968,7 +2431,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 151,
+          "downloads": 135,
           "likes": 2,
           "trending_score": null
         },
@@ -992,7 +2455,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 247,
+          "downloads": 250,
           "likes": 0,
           "trending_score": null
         },
@@ -1016,7 +2479,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2358,
+          "downloads": 2527,
           "likes": 0,
           "trending_score": null
         },
@@ -1040,7 +2503,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 40,
+          "downloads": 25,
           "likes": 0,
           "trending_score": null
         },
@@ -1064,7 +2527,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 3004,
+          "downloads": 2868,
           "likes": 3,
           "trending_score": null
         },
@@ -1088,7 +2551,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 66,
+          "downloads": 63,
           "likes": 0,
           "trending_score": null
         },
@@ -1112,7 +2575,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2461,
+          "downloads": 2516,
           "likes": 3,
           "trending_score": null
         },
@@ -1161,7 +2624,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2341,
+          "downloads": 2308,
           "likes": 56,
           "trending_score": null
         }
