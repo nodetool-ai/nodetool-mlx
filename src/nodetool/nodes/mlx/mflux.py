@@ -133,11 +133,10 @@ class MFlux(BaseMFluxNode):
     model: HFFlux = Field(
         default=HFFlux(
             repo_id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-            path=None,
         ),
         description="MFLUX model variant to load. Options include official models (schnell, dev, krea-dev), third-party community models (Freepik/flux.1-lite-8B-alpha), and quantized 4-bit versions for reduced memory usage.",
     )
-    quantize: QuantizationLevel | None = Field(
+    quantize: QuantizationLevel = Field(
         default=QuantizationLevel.BITS_4,
         description="Optional quantization level for model weights (reduces memory usage).",
     )
@@ -853,7 +852,35 @@ class MFluxOutpaint(BaseMFluxNode):
     def get_title(cls):
         return "MFlux Outpaint"
 
-    async def preload_model(self, context: ProcessingContext):
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux outpainting requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+
+        model = ModelManager.get_model(self.model.repo_id, "flux-fill")
+        if model is not None:
+            self._flux_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+
+        def _load_model() -> Flux1Fill:
+            log.info(
+                "Loading MFlux Fill model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            model = Flux1Fill(
+                quantize=quantize_value,
+            )
+            ModelManager.set_model(self.id, self.model.repo_id, "flux-fill", model)
+            return model
+
+        self._flux_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
             "MFlux outpainting requires macOS (Apple Silicon / MLX)."
         )
@@ -1488,5 +1515,5 @@ class MFluxKontext(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HFKontextGeneration]:
         return [
-            HFKontextGeneration(repo_id="black-forest-labs/FLUX.1-Kontext-dev", 
+            HFKontextGeneration(repo_id="black-forest-labs/FLUX.1-Kontext-dev"),
         ]

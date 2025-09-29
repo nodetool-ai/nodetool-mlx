@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 import base64
 import logging
@@ -9,7 +7,7 @@ import tempfile
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
-from typing import Any, ClassVar, Optional, cast
+from typing import Any, AsyncGenerator, ClassVar, Optional, TypedDict, cast
 
 from huggingface_hub import try_to_load_from_cache
 import mlx.core as mx
@@ -53,10 +51,6 @@ class BaseMLXTTS(BaseNode):
     def requires_gpu(self) -> bool:
         return False
 
-    @classmethod
-    def return_type(cls) -> dict[str, Any]:
-        return {"audio": AudioRef, "chunk": Chunk}
-
     @staticmethod
     def _ensure_supported_platform() -> None:
         if sys.platform != "darwin":
@@ -93,7 +87,13 @@ class BaseMLXTTS(BaseNode):
         self._tts_model = await loop.run_in_executor(None, _load_model)
         self._model_id_loaded = model_id
 
-    async def gen_process(self, context: ProcessingContext):
+    class OutputType(TypedDict):
+        audio: AudioRef | None
+        chunk: Chunk
+
+    async def gen_process(
+        self, context: ProcessingContext
+    ) -> AsyncGenerator[OutputType, None]:
         self._ensure_supported_platform()
 
         if self._tts_model is None or self._model_id_loaded != self._get_model_id():
@@ -107,7 +107,7 @@ class BaseMLXTTS(BaseNode):
         params.setdefault("stream", False)
         params.setdefault("verbose", False)
 
-        yield "chunk", Chunk(content="", done=True)
+        yield {"chunk": Chunk(content="", done=True), "audio": None}
 
         chunks: list[np.ndarray] = []
         try:
@@ -118,7 +118,7 @@ class BaseMLXTTS(BaseNode):
                     log.debug("Skipping empty MLX audio segment %d", idx)
                     continue
                 chunk_msg, audio_int16 = self._encode_chunk(chunk)
-                yield "chunk", chunk_msg
+                yield {"chunk": chunk_msg, "audio": None}
                 chunks.append(audio_int16)
         finally:
             if cleanup_path:
@@ -129,7 +129,10 @@ class BaseMLXTTS(BaseNode):
             raise ValueError("MLX TTS did not produce any audio")
 
         combined = chunks[0] if len(chunks) == 1 else np.concatenate(chunks)
-        yield "audio", await context.audio_from_numpy(combined, 24_000)
+        yield {
+            "audio": await context.audio_from_numpy(combined, 24_000),
+            "chunk": Chunk(content="", done=True),
+        }
 
     async def _build_generation_params(
         self, context: ProcessingContext

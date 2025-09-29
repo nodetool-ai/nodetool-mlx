@@ -1,0 +1,535 @@
+{
+  "id": "70a49fd69d7111f0b86500005fdf8376",
+  "access": "public",
+  "created_at": "2025-09-30T00:20:43.254892",
+  "updated_at": "2025-09-30T00:20:43.254915",
+  "name": "Movie Posters MLX",
+  "tool_name": null,
+  "description": "Create cinematic movie posters using AI image generation for Apple Silicon",
+  "tags": [
+    "start",
+    "image"
+  ],
+  "thumbnail": null,
+  "thumbnail_url": null,
+  "graph": {
+    "nodes": [
+      {
+        "id": "strategy_llm",
+        "parent_id": null,
+        "type": "nodetool.agents.Agent",
+        "data": {
+          "model": {
+            "type": "language_model",
+            "id": "qwen3:4b",
+            "provider": "ollama",
+            "name": "qwen3:4b"
+          },
+          "system": "You are a friendly assistant.",
+          "image": {},
+          "audio": {},
+          "voice": "none",
+          "tools": [],
+          "messages": [],
+          "max_tokens": 4096,
+          "context_window": 4096
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 736.6666666666666,
+            "y": 518
+          },
+          "zIndex": 0,
+          "width": 265,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "strategy_template_prompt",
+        "parent_id": null,
+        "type": "nodetool.constant.String",
+        "data": {
+          "value": "You are a senior movie-poster strategist.  \n\nWrite a creative strategy for a fictional film called **\u201c{{MOVIE_TITLE}}\u201d** (Genre: **{{GENRE}}**, Audience: **{{PRIMARY_AUDIENCE}}**).  \n\nReturn only Markdown with the following sections, no commentary.  \n\n## Goal & Positioning  \n\n1\u20132 lines on what the poster must promise to the audience.  \n\n## Audience Insight  \n\n3\u20135 bullets: emotional drives, visual tastes, cultural touchpoints.  \n\n## Core Visual Concept  \n\nOne bold line: the \u201cbig idea\u201d that excites this audience.  \n\n## Design System  \n\n- **Color Palette** \u2013 up to 5 items: Name + Hex + emotion.  \n\n- **Imagery** \u2013 \u226410 words: hero focus, composition, lighting style.  \n\n- **Typography** \u2013 1\u20132 cues (font family + texture/mood).  \n\n"
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 50,
+            "y": 846
+          },
+          "zIndex": 0,
+          "width": 338,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "strategy_preview",
+        "parent_id": null,
+        "type": "nodetool.workflows.base_node.Preview",
+        "data": {
+          "name": "str_text"
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 1042,
+            "y": 745
+          },
+          "zIndex": 0,
+          "width": 465,
+          "height": 445,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "strategy_prompt_formatter",
+        "parent_id": null,
+        "type": "nodetool.text.FormatText",
+        "data": {},
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 458,
+            "y": 613
+          },
+          "zIndex": 0,
+          "width": 200,
+          "selectable": true
+        },
+        "dynamic_properties": {
+          "MOVIE_TITLE": "",
+          "GENRE": "",
+          "PRIMARY_AUDIENCE": ""
+        },
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "movie_title_input",
+        "parent_id": null,
+        "type": "nodetool.input.StringInput",
+        "data": {
+          "value": "Spaceships",
+          "name": "Movie Title"
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 188,
+            "y": 601
+          },
+          "zIndex": 0,
+          "width": 200,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "genre_input",
+        "parent_id": null,
+        "type": "nodetool.input.StringInput",
+        "data": {
+          "value": "S",
+          "name": "Genre"
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 188,
+            "y": 356
+          },
+          "zIndex": 0,
+          "width": 200,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "audience_input",
+        "parent_id": null,
+        "type": "nodetool.input.StringInput",
+        "data": {
+          "value": "Boys, Age 8-12, Gamers",
+          "name": "Primary Audience"
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 188,
+            "y": 1314
+          },
+          "zIndex": 0,
+          "width": 200,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "image_preview",
+        "parent_id": null,
+        "type": "nodetool.workflows.base_node.Preview",
+        "data": {
+          "name": "image_output"
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 1634,
+            "y": 217
+          },
+          "zIndex": 0,
+          "width": 402,
+          "height": 557,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "prompt_list_generator",
+        "parent_id": null,
+        "type": "nodetool.generators.ListGenerator",
+        "data": {
+          "model": {
+            "type": "language_model",
+            "id": "qwen3:4b",
+            "provider": "ollama",
+            "name": "qwen3:4b"
+          },
+          "max_tokens": 4096
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 1090.6666666666667,
+            "y": 293
+          },
+          "zIndex": 0,
+          "width": 200,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "designer_instructions_prompt",
+        "parent_id": null,
+        "type": "nodetool.constant.String",
+        "data": {
+          "value": "You are a senior movie-poster designer.  \n\nUsing the given strategy, create **3 cinematic Stable Diffusion prompts** for poster concepts.  \n\n\n\nGuidelines:  \n\n- Start with the main subject (hero, scene, or symbol).  \n\n- Add composition (wide shot, close-up, collage, minimalist).  \n\n- Weave in genre cues and audience triggers.  \n\n- Apply the color palette and lighting mood.  \n\n- Add typography as \u201ccinematic title text, [style]\u201d.  \n\n- Keep \u2264 60 words per prompt.  \n\n- Exclude watermarks, real logos, or extra limbs.  \n\nOutput format:  \n\n1. Prompt A  \n\n2. Prompt B  \n\n3. Prompt C  \n\n"
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 688,
+            "y": 50
+          },
+          "zIndex": 0,
+          "width": 338,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "comment_overview",
+        "parent_id": null,
+        "type": "nodetool.workflows.base_node.Comment",
+        "data": {
+          "comment": [
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "AI-Assisted Movie-Poster Generator",
+                  "bold": true,
+                  "size": "+"
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "bold": true,
+                  "size": "+",
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "\t\u2022\tTakes title, genre, and primary audience as inputs."
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "\t\u2022\tLLM #1 produces a brief poster-marketing strategy."
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "\t\u2022\tLLM #2 converts that strategy into multiple Stable-Diffusion prompts."
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "\t\u2022\tStable Diffusion node renders 512 \u00d7 768 px poster concepts."
+                }
+              ]
+            },
+            {
+              "type": "paragraph",
+              "children": [
+                {
+                  "text": "\t\u2022\tPreview panels display the strategy and a gallery of generated images."
+                }
+              ]
+            }
+          ],
+          "comment_lexical": {
+            "root": {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "detail": 0,
+                      "format": 0,
+                      "mode": "normal",
+                      "style": "",
+                      "text": "AI-Assisted Movie-Poster Generator\n\n\t\u2022\tTakes title, genre, and primary audience as inputs.\n\t\u2022\tLLM #1 produces marketing strategy.\n\t\u2022\tLLM #2 converts that strategy into multiple Stable-Diffusion prompts.\n\t\u2022\tStable Diffusion node renders 512 \u00d7 768 px poster concepts.\n\t\u2022\tPreview panels display the strategy and a gallery of generated images.",
+                      "type": "text",
+                      "version": 1
+                    }
+                  ],
+                  "direction": "ltr",
+                  "format": "",
+                  "indent": 0,
+                  "type": "paragraph",
+                  "version": 1,
+                  "textFormat": 0,
+                  "textStyle": ""
+                }
+              ],
+              "direction": "ltr",
+              "format": "",
+              "indent": 0,
+              "type": "root",
+              "version": 1
+            }
+          }
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 373,
+            "y": -192
+          },
+          "zIndex": 0,
+          "width": 600,
+          "height": 167,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "bff1b8ab-9ab2-4676-9a08-166c9132e392",
+        "parent_id": null,
+        "type": "nodetool.workflows.base_node.Preview",
+        "data": {},
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 1628,
+            "y": 813
+          },
+          "zIndex": 0,
+          "width": 410,
+          "height": 402,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "df1a57e8-4d9d-403a-a725-066bbfd328d9",
+        "parent_id": null,
+        "type": "mlx.mflux.MFlux",
+        "data": {
+          "model": {
+            "type": "hf.flux",
+            "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "quantize": 4,
+          "steps": 4,
+          "guidance": 3.5,
+          "height": 768,
+          "width": 512,
+          "seed": 0
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 1377,
+            "y": 209
+          },
+          "zIndex": 0,
+          "width": 200,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      }
+    ],
+    "edges": [
+      {
+        "id": "24947fe6-d750-4bac-839c-5c25769c021c",
+        "source": "strategy_llm",
+        "sourceHandle": "text",
+        "target": "strategy_preview",
+        "targetHandle": "value",
+        "ui_properties": {
+          "className": "str"
+        }
+      },
+      {
+        "id": "5ada5828-b7b9-4a21-a0e7-04c315fa8d07",
+        "source": "strategy_template_prompt",
+        "sourceHandle": "output",
+        "target": "strategy_prompt_formatter",
+        "targetHandle": "template",
+        "ui_properties": null
+      },
+      {
+        "id": "ed372108-44fe-4325-a615-c98f19282ade",
+        "source": "strategy_prompt_formatter",
+        "sourceHandle": "output",
+        "target": "strategy_llm",
+        "targetHandle": "prompt",
+        "ui_properties": null
+      },
+      {
+        "id": "4f7df337-3a31-411d-9ec1-1af5ed3fbe1c",
+        "source": "strategy_llm",
+        "sourceHandle": "text",
+        "target": "prompt_list_generator",
+        "targetHandle": "input_text",
+        "ui_properties": null
+      },
+      {
+        "id": "7dd2c9a0-81c3-4c18-a8d8-b02b9cb82c2e",
+        "source": "designer_instructions_prompt",
+        "sourceHandle": "output",
+        "target": "prompt_list_generator",
+        "targetHandle": "prompt",
+        "ui_properties": null
+      },
+      {
+        "id": "bdf22e6b-0b03-4434-b628-210a75c1e2b6",
+        "source": "audience_input",
+        "sourceHandle": "output",
+        "target": "strategy_prompt_formatter",
+        "targetHandle": "PRIMARY_AUDIENCE",
+        "ui_properties": {
+          "className": "str"
+        }
+      },
+      {
+        "id": "b7ac2972-706a-400d-92b4-038aa9e10107",
+        "source": "movie_title_input",
+        "sourceHandle": "output",
+        "target": "strategy_prompt_formatter",
+        "targetHandle": "MOVIE_TITLE",
+        "ui_properties": {
+          "className": "str"
+        }
+      },
+      {
+        "id": "a391366e-3c3b-47a2-bfc0-6f9f93216b4b",
+        "source": "genre_input",
+        "sourceHandle": "output",
+        "target": "strategy_prompt_formatter",
+        "targetHandle": "GENRE",
+        "ui_properties": {
+          "className": "str"
+        }
+      },
+      {
+        "id": "741bffc3-3758-40f6-91b4-f4e0cd962bd9",
+        "source": "prompt_list_generator",
+        "sourceHandle": "item",
+        "target": "bff1b8ab-9ab2-4676-9a08-166c9132e392",
+        "targetHandle": "value",
+        "ui_properties": {
+          "className": "str"
+        }
+      },
+      {
+        "id": "0d301f9e-42f8-4711-ae74-2d1ac85e16c3",
+        "source": "prompt_list_generator",
+        "sourceHandle": "item",
+        "target": "df1a57e8-4d9d-403a-a725-066bbfd328d9",
+        "targetHandle": "prompt",
+        "ui_properties": {
+          "className": "str"
+        }
+      },
+      {
+        "id": "7607584a-b397-4797-9cf0-e2ca97c0cc1b",
+        "source": "df1a57e8-4d9d-403a-a725-066bbfd328d9",
+        "sourceHandle": "output",
+        "target": "image_preview",
+        "targetHandle": "value",
+        "ui_properties": {
+          "className": "image"
+        }
+      }
+    ]
+  },
+  "input_schema": null,
+  "output_schema": null,
+  "settings": null,
+  "package_name": "nodetool-mlx",
+  "path": null,
+  "run_mode": null,
+  "required_providers": null,
+  "required_models": null
+}

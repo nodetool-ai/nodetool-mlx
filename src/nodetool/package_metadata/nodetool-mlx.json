@@ -12,14 +12,6 @@
       "description": "",
       "namespace": "mlx.mflux",
       "node_type": "mlx.mflux.BaseMFlux",
-      "outputs": [
-        {
-          "type": {
-            "type": "any"
-          },
-          "name": "output"
-        }
-      ],
       "expose_as_tool": true
     },
     {
@@ -43,7 +35,12 @@
             "type": "hf.flux"
           },
           "default": {
-            "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit"
+            "type": "hf.flux",
+            "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Model",
           "description": "MFLUX model variant to load. Options include official models (schnell, dev, krea-dev), third-party community models (Freepik/flux.1-lite-8B-alpha), and quantized 4-bit versions for reduced memory usage."
@@ -51,23 +48,15 @@
         {
           "name": "quantize",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "enum",
-                "values": [
-                  3,
-                  4,
-                  5,
-                  6,
-                  8
-                ],
-                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "enum",
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -87,15 +76,8 @@
         {
           "name": "guidance",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
           "default": 3.5,
           "title": "Guidance",
@@ -170,7 +152,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 1561,
+          "downloads": 1801,
           "likes": 427,
           "trending_score": null
         },
@@ -199,7 +181,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 18,
+          "downloads": 16,
           "likes": 1,
           "trending_score": null
         },
@@ -229,7 +211,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 11,
+          "downloads": 10,
           "likes": 2,
           "trending_score": null
         },
@@ -321,7 +303,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Control Image",
           "description": "Reference image used by ControlNet for conditioning."
         },
@@ -331,7 +318,12 @@
             "type": "hf.flux"
           },
           "default": {
-            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit"
+            "type": "hf.flux",
+            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Model",
           "description": "Base Flux model to load for conditioned generation."
@@ -342,7 +334,12 @@
             "type": "hf.controlnet_flux"
           },
           "default": {
-            "repo_id": "InstantX/FLUX.1-dev-Controlnet-Canny"
+            "type": "hf.controlnet_flux",
+            "repo_id": "InstantX/FLUX.1-dev-Controlnet-Canny",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Controlnet Model",
           "description": "ControlNet weights that match the selected Flux base model."
@@ -350,23 +347,16 @@
         {
           "name": "quantize",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "enum",
-                "values": [
-                  3,
-                  4,
-                  5,
-                  6,
-                  8
-                ],
-                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -386,15 +376,8 @@
         {
           "name": "guidance",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
           "default": 3.5,
           "title": "Guidance",
@@ -479,7 +462,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 11,
+          "downloads": 10,
           "likes": 2,
           "trending_score": null
         },
@@ -510,7 +493,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 4501,
+          "downloads": 4185,
           "likes": 191,
           "trending_score": null
         },
@@ -541,8 +524,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10578,
-          "likes": 826,
+          "downloads": 10420,
+          "likes": 827,
           "trending_score": null
         }
       ],
@@ -581,7 +564,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Image",
           "description": "Optional reference image used for depth extraction or as a content guide."
         },
@@ -590,7 +578,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Depth Image",
           "description": "Optional depth map to guide geometry. If omitted, depth is inferred from the image when provided."
         },
@@ -600,7 +593,12 @@
             "type": "hf.depth_generation"
           },
           "default": {
-            "repo_id": "black-forest-labs/FLUX.1-Depth-dev"
+            "type": "hf.depth_generation",
+            "repo_id": "black-forest-labs/FLUX.1-Depth-dev",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Model",
           "description": "Depth model weights compatible with the Flux depth pipeline."
@@ -608,23 +606,16 @@
         {
           "name": "quantize",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "enum",
-                "values": [
-                  3,
-                  4,
-                  5,
-                  6,
-                  8
-                ],
-                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -644,15 +635,8 @@
         {
           "name": "guidance",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
           "default": 10.0,
           "title": "Guidance",
@@ -726,8 +710,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 7817,
-          "likes": 221,
+          "downloads": 7539,
+          "likes": 222,
           "trending_score": null
         }
       ],
@@ -765,7 +749,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Image",
           "description": "Base image that will be transformed."
         },
@@ -775,7 +764,12 @@
             "type": "hf.flux"
           },
           "default": {
-            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit"
+            "type": "hf.flux",
+            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Model",
           "description": "MFLUX model variant to load for image-to-image generation."
@@ -783,23 +777,16 @@
         {
           "name": "quantize",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "enum",
-                "values": [
-                  3,
-                  4,
-                  5,
-                  6,
-                  8
-                ],
-                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -819,15 +806,8 @@
         {
           "name": "guidance",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
           "default": 3.5,
           "title": "Guidance",
@@ -912,7 +892,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 11,
+          "downloads": 10,
           "likes": 2,
           "trending_score": null
         },
@@ -941,7 +921,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 18,
+          "downloads": 16,
           "likes": 1,
           "trending_score": null
         },
@@ -1009,7 +989,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Image",
           "description": "Base image that will stay fixed outside the masked regions."
         },
@@ -1018,7 +1003,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Mask",
           "description": "Mask image: white areas will be regenerated, black areas remain untouched."
         },
@@ -1028,7 +1018,12 @@
             "type": "hf.inpainting"
           },
           "default": {
-            "repo_id": "black-forest-labs/FLUX.1-Fill-dev"
+            "type": "hf.inpainting",
+            "repo_id": "black-forest-labs/FLUX.1-Fill-dev",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Model",
           "description": "Inpainting model to load. Defaults to FLUX.1 Fill dev weights."
@@ -1036,23 +1031,16 @@
         {
           "name": "quantize",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "enum",
-                "values": [
-                  3,
-                  4,
-                  5,
-                  6,
-                  8
-                ],
-                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -1072,15 +1060,8 @@
         {
           "name": "guidance",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
           "default": 30.0,
           "title": "Guidance",
@@ -1154,8 +1135,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 346650,
-          "likes": 927,
+          "downloads": 345118,
+          "likes": 928,
           "trending_score": null
         }
       ],
@@ -1193,7 +1174,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Reference Image",
           "description": "Reference image that will guide the Kontext generation."
         },
@@ -1203,7 +1189,12 @@
             "type": "hf.kontext_generation"
           },
           "default": {
-            "repo_id": "black-forest-labs/FLUX.1-Kontext-dev"
+            "type": "hf.kontext_generation",
+            "repo_id": "black-forest-labs/FLUX.1-Kontext-dev",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Model",
           "description": "Kontext model weights compatible with the Flux Kontext pipeline."
@@ -1211,23 +1202,16 @@
         {
           "name": "quantize",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "enum",
-                "values": [
-                  3,
-                  4,
-                  5,
-                  6,
-                  8
-                ],
-                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -1247,15 +1231,8 @@
         {
           "name": "guidance",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
           "default": 2.5,
           "title": "Guidance",
@@ -1331,8 +1308,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 310419,
-          "likes": 2305,
+          "downloads": 307086,
+          "likes": 2315,
           "trending_score": null
         }
       ],
@@ -1369,7 +1346,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Image",
           "description": "Base image that will remain visible inside the padded region."
         },
@@ -1378,7 +1360,12 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Mask",
           "description": "Mask defining areas to regenerate (white) after padding. If blank, generated automatically."
         },
@@ -1388,7 +1375,12 @@
             "type": "hf.outpainting"
           },
           "default": {
-            "repo_id": "black-forest-labs/FLUX.1-Fill-dev"
+            "type": "hf.outpainting",
+            "repo_id": "black-forest-labs/FLUX.1-Fill-dev",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Model",
           "description": "Outpainting model to load. Defaults to FLUX.1 Fill dev weights."
@@ -1396,23 +1388,16 @@
         {
           "name": "quantize",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "enum",
-                "values": [
-                  3,
-                  4,
-                  5,
-                  6,
-                  8
-                ],
-                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -1432,15 +1417,8 @@
         {
           "name": "guidance",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
           "default": 30.0,
           "title": "Guidance",
@@ -1450,16 +1428,10 @@
         {
           "name": "padding",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "str"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "str",
+            "optional": true
           },
+          "default": null,
           "title": "Padding",
           "description": "CSS-style padding string (e.g. '128', '96,64', '10%,5%') describing additional canvas to create before generation."
         },
@@ -1498,7 +1470,7 @@
       "outputs": [
         {
           "type": {
-            "type": "any"
+            "type": "image"
           },
           "name": "output"
         }
@@ -1530,8 +1502,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 346650,
-          "likes": 927,
+          "downloads": 345118,
+          "likes": 928,
           "trending_score": null
         }
       ],
@@ -1570,23 +1542,22 @@
           "type": {
             "type": "image"
           },
-          "default": {},
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
           "title": "Redux Image",
           "description": "Reference image that will guide the generation."
         },
         {
           "name": "redux_image_strength",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
+          "default": null,
           "title": "Redux Image Strength",
           "description": "Optional strength value (0-1) for the reference image.",
           "min": 0.0,
@@ -1598,7 +1569,12 @@
             "type": "hf.redux_generation"
           },
           "default": {
-            "repo_id": "black-forest-labs/FLUX.1-Redux-dev"
+            "type": "hf.redux_generation",
+            "repo_id": "black-forest-labs/FLUX.1-Redux-dev",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
           },
           "title": "Model",
           "description": "Redux model variant to load. Defaults to FLUX.1 Redux dev weights."
@@ -1606,23 +1582,16 @@
         {
           "name": "quantize",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "enum",
-                "values": [
-                  3,
-                  4,
-                  5,
-                  6,
-                  8
-                ],
-                "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -1642,15 +1611,8 @@
         {
           "name": "guidance",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "float"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "float",
+            "optional": true
           },
           "default": 7.0,
           "title": "Guidance",
@@ -1724,7 +1686,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 27226,
+          "downloads": 24970,
           "likes": 565,
           "trending_score": null
         }
@@ -1856,7 +1818,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1823,
+          "downloads": 1830,
           "likes": 4,
           "trending_score": null
         },
@@ -1884,7 +1846,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5877,
+          "downloads": 6921,
           "likes": 24,
           "trending_score": null
         },
@@ -1912,7 +1874,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 453,
+          "downloads": 432,
           "likes": 3,
           "trending_score": null
         },
@@ -1940,7 +1902,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 37,
+          "downloads": 36,
           "likes": 2,
           "trending_score": null
         },
@@ -1968,7 +1930,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 94,
+          "downloads": 97,
           "likes": 5,
           "trending_score": null
         }
@@ -2028,6 +1990,7 @@
           "type": {
             "type": "audio"
           },
+          "default": null,
           "title": "Reference Audio",
           "description": "Reference audio clip used for voice cloning."
         }
@@ -2073,8 +2036,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 174,
-          "likes": 19,
+          "downloads": 167,
+          "likes": 20,
           "trending_score": null
         },
         {
@@ -2104,7 +2067,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 50,
+          "downloads": 49,
           "likes": 0,
           "trending_score": null
         }
@@ -2166,16 +2129,10 @@
         {
           "name": "voice",
           "type": {
-            "type": "union",
-            "type_args": [
-              {
-                "type": "str"
-              },
-              {
-                "type": "none"
-              }
-            ]
+            "type": "str",
+            "optional": true
           },
+          "default": null,
           "title": "Voice",
           "description": "Optional Spark voice preset."
         },
@@ -2251,7 +2208,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1086,
+          "downloads": 985,
           "likes": 4,
           "trending_score": null
         },
@@ -2281,7 +2238,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 61,
+          "downloads": 57,
           "likes": 3,
           "trending_score": null
         }
@@ -2298,7 +2255,7 @@
     },
     {
       "title": "MLX Whisper",
-      "description": "Transcribe an audio asset using MLX Whisper.\n    whisper, mlx, asr, speech-to-text\n\n    - Uses MLX for efficient Apple Silicon acceleration\n    - Emits final transcript on `text` and segments on `segments`",
+      "description": "Transcribe an audio asset using MLX Whisper.\n    whisper, mlx, asr, speech-to-text\n\n    - Uses MLX for efficient Apple Silicon acceleration\n    - Returns transcript and segments with optional word-level timestamps",
       "namespace": "mlx.whisper",
       "node_type": "mlx.whisper.MLXWhisper",
       "properties": [
@@ -2324,13 +2281,18 @@
           "description": "Model to use for transcription"
         },
         {
-          "name": "length_ms",
+          "name": "audio",
           "type": {
-            "type": "int"
+            "type": "audio"
           },
-          "default": 5000,
-          "title": "Length Ms",
-          "description": "Chunk length in milliseconds before decode"
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null
+          },
+          "title": "Audio Input",
+          "description": "The input audio to transcribe."
         },
         {
           "name": "compression_ratio_threshold",
@@ -2379,15 +2341,6 @@
           "default": false,
           "title": "Word Timestamps",
           "description": "If True, extracts word-level timestamps using cross-attention and dynamic time warping."
-        },
-        {
-          "name": "chunk",
-          "type": {
-            "type": "chunk"
-          },
-          "default": {},
-          "title": "Chunk",
-          "description": "Streaming input chunk. Provide audio chunks (PCM16 base64 or bytes)."
         }
       ],
       "outputs": [
@@ -2396,12 +2349,6 @@
             "type": "str"
           },
           "name": "text"
-        },
-        {
-          "type": {
-            "type": "chunk"
-          },
-          "name": "chunk"
         },
         {
           "type": {
@@ -2431,7 +2378,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 135,
+          "downloads": 124,
           "likes": 2,
           "trending_score": null
         },
@@ -2455,7 +2402,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 250,
+          "downloads": 249,
           "likes": 0,
           "trending_score": null
         },
@@ -2479,7 +2426,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2527,
+          "downloads": 2609,
           "likes": 0,
           "trending_score": null
         },
@@ -2503,7 +2450,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 25,
+          "downloads": 27,
           "likes": 0,
           "trending_score": null
         },
@@ -2527,7 +2474,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2868,
+          "downloads": 1982,
           "likes": 3,
           "trending_score": null
         },
@@ -2551,7 +2498,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 63,
+          "downloads": 43,
           "likes": 0,
           "trending_score": null
         },
@@ -2575,7 +2522,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2516,
+          "downloads": 2427,
           "likes": 3,
           "trending_score": null
         },
@@ -2599,7 +2546,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 80,
+          "downloads": 90,
           "likes": 1,
           "trending_score": null
         },
@@ -2624,20 +2571,19 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2308,
-          "likes": 56,
+          "downloads": 2251,
+          "likes": 58,
           "trending_score": null
         }
       ],
       "basic_fields": [
         "model",
-        "length_ms",
+        "audio",
         "compression_ratio_threshold",
         "logprob_threshold",
         "no_speech_threshold",
         "condition_on_previous_text",
-        "word_timestamps",
-        "chunk"
+        "word_timestamps"
       ]
     }
   ]
