@@ -40,4 +40,5 @@ packages = ["src/nodetool"]
 artifacts = [
     "src/nodetool/package_metadata/nodetool-mlx.json",
     "package_metadata/nodetool-mlx.json",
+    "assets/nodetool-mlx/Movie Posters MLX.jpg",
 ]

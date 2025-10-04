@@ -15,19 +15,25 @@ whenever the tokenizer advertises tool calling support.
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import base64
 import json
+import logging
 import threading
 from dataclasses import dataclass
 import time
-from typing import Any, AsyncIterator, Callable, Iterable, Sequence
+from typing import Any, AsyncIterator, Callable, Iterable, List, Sequence
 from io import BytesIO
 from urllib.parse import urlparse, unquote
 import os
 import tempfile
 
-from nodetool.chat.providers.base import ChatProvider, register_chat_provider
+from nodetool.chat.providers.base import (
+    ChatProvider,
+    ProviderCapability,
+    register_chat_provider,
+)
 from nodetool.agents.tools.base import Tool
 from nodetool.config.environment import Environment
 from nodetool.config.logging_config import get_logger
@@ -41,6 +47,7 @@ from nodetool.metadata.types import (
     MessageAudioContent,
     ImageRef,
     AudioRef,
+    LanguageModel,
 )
 from nodetool.workflows.types import Chunk
 from nodetool.io.uri_utils import fetch_uri_bytes_and_mime
@@ -49,6 +56,7 @@ import PIL.Image
 from pydub import AudioSegment  # type: ignore
 
 log = get_logger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 DEFAULT_MLX_MODEL = "mlx-community/Llama-3.2-3B-Instruct-4bit"
@@ -120,6 +128,7 @@ class MLXProvider(ChatProvider):
         self._tokenizer: Any | None = None
         self._model: Any | None = None
         self._load_lock = asyncio.Lock()
+        self._generation_lock = asyncio.Lock()  # Serialize generation calls
 
         # mlx-vlm runtime + cache holders
         self._vlm_runtime: _MLXVLMRuntime | None = None
@@ -127,10 +136,18 @@ class MLXProvider(ChatProvider):
         self._vlm_processor: Any | None = None
         self._vlm_config: Any | None = None
         self._vlm_load_lock = asyncio.Lock()
+        self._vlm_generation_lock = asyncio.Lock()  # Serialize VLM generation calls
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+    def get_capabilities(self) -> set[ProviderCapability]:
+        """MLX provider supports message generation."""
+        return {
+            ProviderCapability.GENERATE_MESSAGE,
+            ProviderCapability.GENERATE_MESSAGES,
+        }
+
     async def generate_message(
         self,
         messages: Sequence[Message],
@@ -197,6 +214,200 @@ class MLXProvider(ChatProvider):
         # otherwise specified.
         return 8192
 
+    def has_tool_support(self, model: str) -> bool:
+        """Return True if the given model supports tools/function calling.
+
+        For MLX models, tool support is determined by checking if the tokenizer
+        has the `has_tool_calling` attribute set to True.
+
+        Args:
+            model: Model identifier.
+
+        Returns:
+            True if the tokenizer is loaded and has `has_tool_calling=True`,
+            or True by default if the model is not yet loaded (optimistic default).
+        """
+        # If tokenizer is already loaded, check its capabilities
+        if self._tokenizer is not None:
+            has_tools = getattr(self._tokenizer, "has_tool_calling", False)
+            log.debug(f"Model {model} has_tool_calling: {has_tools} (tokenizer loaded)")
+            return has_tools
+
+        # If not loaded yet, default to True (most modern MLX models support tools)
+        # The actual check will happen when the model loads
+        log.debug(
+            f"Model {model} tool support unknown (not loaded yet), defaulting to True"
+        )
+        return True
+
+    async def get_available_language_models(self) -> List[LanguageModel]:
+        """
+        Get available MLX models.
+
+        Returns MLX-converted models available in the local HuggingFace cache.
+        Always returns models (doesn't check if MLX is available).
+
+        Returns:
+            List of LanguageModel instances for MLX
+        """
+        try:
+            # Import the function to get locally cached MLX models
+            from nodetool.integrations.huggingface.huggingface_models import (
+                get_mlx_language_models_from_hf_cache,
+            )
+
+            models = await get_mlx_language_models_from_hf_cache()
+            log.debug(f"Found {len(models)} MLX models in HF cache")
+            return models
+        except Exception as e:
+            log.error(f"Error getting MLX models: {e}")
+            return []
+
+    # ------------------------------------------------------------------
+    # Tool emulation helpers
+    # ------------------------------------------------------------------
+    def _format_tools_as_python(self, tools: Sequence[Tool]) -> str:
+        """Format tools as Python function definitions for emulation.
+
+        Args:
+            tools: Sequence of tools to format.
+
+        Returns:
+            String containing Python function definitions.
+        """
+        log.debug(f"Formatting {len(tools)} tools as Python functions for emulation")
+
+        function_defs = []
+        for tool in tools:
+            tool_param = tool.tool_param()
+            func = tool_param.get("function", {})
+            name = func.get("name", "unknown")
+            description = func.get("description", "")
+            parameters = func.get("parameters", {})
+
+            # Build simplified function signature
+            params = []
+            if "properties" in parameters:
+                for param_name in parameters["properties"].keys():
+                    params.append(param_name)
+
+            params_str = ", ".join(params) if params else ""
+            func_def = f"# {name}({params_str})\n# {description}"
+            if params:
+                func_def += f"\n# Example: {name}({params[0]}='...')"
+            function_defs.append(func_def)
+
+        return "\n\n".join(function_defs)
+
+    def _parse_function_calls(
+        self, text: str, tools: Sequence[Tool] | None = None
+    ) -> list[ToolCall]:
+        """Parse Python function calls from text using AST parsing.
+
+        Args:
+            text: Text containing potential function calls.
+            tools: Optional list of tools to map positional args to named parameters.
+
+        Returns:
+            List of parsed ToolCall objects.
+        """
+        if not text or not text.strip():
+            return []
+
+        tool_calls: list[ToolCall] = []
+        lines = text.split("\n")
+
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            # Try to parse as a function call
+            try:
+                tree = ast.parse(line, mode="eval")
+                if isinstance(tree.body, ast.Call):
+                    call_node = tree.body
+                    func_name = self._extract_function_name(call_node.func)
+
+                    if func_name:
+                        args = self._extract_call_arguments(call_node, func_name, tools)
+                        tool_call = ToolCall(
+                            id=f"call_{len(tool_calls)}",
+                            name=func_name,
+                            args=args,
+                        )
+                        tool_calls.append(tool_call)
+                        log.debug(f"Parsed tool call: {func_name} with args {args}")
+            except (SyntaxError, ValueError):
+                # Not a valid function call, skip
+                continue
+
+        return tool_calls
+
+    def _extract_function_name(self, node: ast.expr) -> str | None:
+        """Extract function name from AST node."""
+        if isinstance(node, ast.Name):
+            return node.id
+        elif isinstance(node, ast.Attribute):
+            return node.attr
+        return None
+
+    def _extract_call_arguments(
+        self, call_node: ast.Call, func_name: str, tools: Sequence[Tool] | None
+    ) -> dict[str, Any]:
+        """Extract arguments from a function call AST node."""
+        args: dict[str, Any] = {}
+
+        # Extract keyword arguments
+        for keyword in call_node.keywords:
+            if keyword.arg:
+                value = self._ast_to_value(keyword.value)
+                args[keyword.arg] = value
+
+        # Handle positional arguments by mapping to parameter names
+        if call_node.args and tools:
+            matching_tool = next((t for t in tools if t.name == func_name), None)
+            if matching_tool:
+                tool_param = matching_tool.tool_param()
+                func_schema = tool_param.get("function", {})
+                parameters = func_schema.get("parameters", {})
+                properties = parameters.get("properties", {})
+                param_names = list(properties.keys())
+
+                for i, arg in enumerate(call_node.args):
+                    if i < len(param_names):
+                        param_name = param_names[i]
+                        value = self._ast_to_value(arg)
+                        args[param_name] = value
+
+        return args
+
+    def _ast_to_value(self, node: ast.expr) -> Any:
+        """Convert AST node to Python value."""
+        if isinstance(node, ast.Constant):
+            return node.value
+        elif isinstance(node, ast.Str):  # Python 3.7 compatibility
+            return node.s
+        elif isinstance(node, ast.Num):  # Python 3.7 compatibility
+            return node.n
+        elif isinstance(node, ast.List):
+            return [self._ast_to_value(el) for el in node.elts]
+        elif isinstance(node, ast.Dict):
+            result = {}
+            for k, v in zip(node.keys, node.values):
+                if k is not None:  # Skip None keys
+                    key = self._ast_to_value(k)
+                    value = self._ast_to_value(v)
+                    if key is not None:
+                        result[key] = value
+            return result
+        elif isinstance(node, ast.NameConstant):  # Python 3.7 compatibility
+            return node.value
+        elif isinstance(node, (ast.Name, ast.Attribute)):
+            # For variable references, try to return the name as a string
+            return ast.unparse(node) if hasattr(ast, "unparse") else str(node)
+        return None
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -245,10 +456,54 @@ class MLXProvider(ChatProvider):
         assert self._tokenizer is not None
         assert self._model is not None
 
-        converted_messages = [
-            self._convert_message(msg, index) for index, msg in enumerate(messages)
-        ]
-        tool_defs = self._convert_tools(tools)
+        # Determine if we need tool emulation
+        use_tool_emulation = len(tools) > 0 and not self.has_tool_support(model)
+        if use_tool_emulation:
+            log.info(f"Using tool emulation for model {model}")
+
+        # Prepare messages with tool emulation if needed
+        if use_tool_emulation and len(tools) > 0:
+            tool_definitions = self._format_tools_as_python(tools)
+            tool_instruction = (
+                "\n\n=== AVAILABLE FUNCTIONS ===\n"
+                "You can call these functions by writing a function call on a single line.\n"
+                "DO NOT write function definitions - only write function CALLS.\n\n"
+                f"{tool_definitions}\n\n"
+                "=== INSTRUCTIONS ===\n"
+                "When you need to use a function:\n"
+                "1. Write ONLY the function call, nothing else\n"
+                "2. Use this exact format: function_name(param='value')\n"
+                "3. Do NOT write 'def', 'return', or any other Python keywords\n"
+                "4. After calling a function, wait for the result\n"
+                "5. Once you receive a function result, use it in your final answer\n"
+                "6. Do NOT call the same function twice"
+            )
+
+            # Inject tool instructions into system message or prepend to first user message
+            messages_list = list(messages)
+            if messages_list and messages_list[0].role == "system":
+                # Append to existing system message
+                existing_content = messages_list[0].content or ""
+                messages_list[0] = Message(
+                    role="system", content=f"{existing_content}{tool_instruction}"
+                )
+            else:
+                # Prepend new system message
+                messages_list.insert(
+                    0, Message(role="system", content=tool_instruction)
+                )
+
+            converted_messages = [
+                self._convert_message(msg, index)
+                for index, msg in enumerate(messages_list)
+            ]
+            # Don't pass tool_defs when using emulation
+            tool_defs = None
+        else:
+            converted_messages = [
+                self._convert_message(msg, index) for index, msg in enumerate(messages)
+            ]
+            tool_defs = self._convert_tools(tools)
 
         prompt = await asyncio.to_thread(
             self._tokenizer.apply_chat_template,
@@ -267,114 +522,147 @@ class MLXProvider(ChatProvider):
         queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
         loop = asyncio.get_running_loop()
 
-        def _run_stream() -> None:
-            log.debug(
-                "MLX _run_stream thread start | model=%s max_tokens=%s stream_kwargs=%s",
-                model,
-                max_tokens,
-                {
-                    k: ("<callable>" if callable(v) else v)
-                    for k, v in stream_kwargs.items()
-                },
-            )
-            try:
-                for response in runtime.stream_generate(
-                    self._model,
-                    self._tokenizer,
-                    prompt,
-                    max_tokens=max_tokens,
-                    **stream_kwargs,
-                ):
-                    asyncio.run_coroutine_threadsafe(
-                        queue.put(("response", response)), loop
-                    ).result()
-            except Exception as exc:  # pragma: no cover - defensive
-                log.exception("MLX _run_stream thread error: %s", exc)
-                asyncio.run_coroutine_threadsafe(
-                    queue.put(("error", exc)), loop
-                ).result()
-            finally:
-                log.debug("MLX _run_stream thread done")
-                asyncio.run_coroutine_threadsafe(
-                    queue.put(("done", None)), loop
-                ).result()
+        # Acquire generation lock to serialize MLX model usage across concurrent requests
+        await self._generation_lock.acquire()
 
-        threading.Thread(target=_run_stream, daemon=True).start()
+        try:
 
-        tool_state = {
-            "buffer": "",
-            "in_tool_call": False,
-            "counter": 0,
-        }
-        done_emitted = False
-
-        # Watchdog to log if no items arrive for too long
-        last_activity = time.monotonic()
-        watchdog_seconds = int(os.getenv("MLX_WATCHDOG_SECS", "60"))
-
-        while True:
-            try:
-                kind, payload = await asyncio.wait_for(queue.get(), timeout=5.0)
-                last_activity = time.monotonic()
-            except asyncio.TimeoutError:
-                if (
-                    watchdog_seconds > 0
-                    and (time.monotonic() - last_activity) > watchdog_seconds
-                ):
-                    log.warning(
-                        "MLX _stream_chat watchdog tripped | no-activity-for=%ss model=%s in_tool_call=%s",
-                        int(time.monotonic() - last_activity),
-                        model,
-                        tool_state["in_tool_call"],
-                    )
-                    # Continue waiting; we only log to surface the hang
-                continue
-            if kind == "response":
-                response = payload
-                is_final = getattr(response, "finish_reason", None) is not None
-                if is_final:
-                    self._update_usage(response)
-
-                segments, parsed_calls = self._process_response_text(
-                    response.text, tool_state
+            def _run_stream() -> None:
+                log.debug(
+                    "MLX _run_stream thread start | model=%s max_tokens=%s stream_kwargs=%s",
+                    model,
+                    max_tokens,
+                    {
+                        k: ("<callable>" if callable(v) else v)
+                        for k, v in stream_kwargs.items()
+                    },
                 )
-                for tool_call in parsed_calls:
-                    log.debug(
-                        "MLX parsed tool_call name=%s id=%s",
-                        tool_call.name,
-                        tool_call.id,
-                    )
-                    yield tool_call
+                try:
+                    for response in runtime.stream_generate(
+                        self._model,
+                        self._tokenizer,
+                        prompt,
+                        max_tokens=max_tokens,
+                        **stream_kwargs,
+                    ):
+                        asyncio.run_coroutine_threadsafe(
+                            queue.put(("response", response)), loop
+                        ).result()
+                except Exception as exc:  # pragma: no cover - defensive
+                    log.exception("MLX _run_stream thread error: %s", exc)
+                    asyncio.run_coroutine_threadsafe(
+                        queue.put(("error", exc)), loop
+                    ).result()
+                finally:
+                    log.debug("MLX _run_stream thread done")
+                    asyncio.run_coroutine_threadsafe(
+                        queue.put(("done", None)), loop
+                    ).result()
 
-                for i, segment in enumerate(segments):
-                    if not segment:
-                        continue
-                    done_flag = (
-                        is_final
-                        and i == len(segments) - 1
-                        and not tool_state["in_tool_call"]
-                    )
-                    if done_flag:
-                        log.debug("MLX emitting final chunk (done=True)")
-                    yield Chunk(content=segment, done=done_flag)
-                    done_emitted = done_emitted or done_flag
+            threading.Thread(target=_run_stream, daemon=True).start()
 
-                if is_final:
+            tool_state = {
+                "buffer": "",
+                "in_tool_call": False,
+                "counter": 0,
+            }
+            done_emitted = False
+            accumulated_content = ""  # For emulation parsing
+
+            # Watchdog to log if no items arrive for too long
+            last_activity = time.monotonic()
+            watchdog_seconds = int(os.getenv("MLX_WATCHDOG_SECS", "60"))
+
+            while True:
+                try:
+                    kind, payload = await asyncio.wait_for(queue.get(), timeout=5.0)
+                    last_activity = time.monotonic()
+                except asyncio.TimeoutError:
+                    if (
+                        watchdog_seconds > 0
+                        and (time.monotonic() - last_activity) > watchdog_seconds
+                    ):
+                        log.warning(
+                            "MLX _stream_chat watchdog tripped | no-activity-for=%ss model=%s in_tool_call=%s",
+                            int(time.monotonic() - last_activity),
+                            model,
+                            tool_state["in_tool_call"],
+                        )
+                        # Continue waiting; we only log to surface the hang
+                    continue
+                if kind == "response":
+                    response = payload
+                    is_final = getattr(response, "finish_reason", None) is not None
+                    if is_final:
+                        self._update_usage(response)
+
+                    # Process native tool calls if supported
+                    segments, parsed_calls = self._process_response_text(
+                        response.text, tool_state
+                    )
+
+                    # Accumulate content for emulation
+                    if use_tool_emulation:
+                        accumulated_content += response.text
+
+                    # Yield native tool calls
+                    for tool_call in parsed_calls:
+                        log.debug(
+                            "MLX parsed tool_call name=%s id=%s",
+                            tool_call.name,
+                            tool_call.id,
+                        )
+                        yield tool_call
+
+                    # Parse emulated tool calls on final response
+                    if is_final and use_tool_emulation and accumulated_content:
+                        log.debug(
+                            "Parsing emulated tool calls from accumulated content"
+                        )
+                        emulated_calls = self._parse_function_calls(
+                            accumulated_content, tools
+                        )
+                        for tool_call in emulated_calls:
+                            log.debug(f"Yielding emulated tool call: {tool_call.name}")
+                            yield tool_call
+                        # Don't emit segments if we found emulated tool calls
+                        if emulated_calls:
+                            segments = []
+
+                    for i, segment in enumerate(segments):
+                        if not segment:
+                            continue
+                        done_flag = (
+                            is_final
+                            and i == len(segments) - 1
+                            and not tool_state["in_tool_call"]
+                        )
+                        if done_flag:
+                            log.debug("MLX emitting final chunk (done=True)")
+                        yield Chunk(content=segment, done=done_flag)
+                        done_emitted = done_emitted or done_flag
+
+                    if is_final:
+                        if not done_emitted:
+                            log.debug("MLX emitting trailing done chunk")
+                            yield Chunk(content="", done=True)
+                        break
+                elif kind == "error":
+                    log.error(
+                        "MLX _stream_chat received error from thread: %s", payload
+                    )
+                    raise payload
+                elif kind == "done":
                     if not done_emitted:
-                        log.debug("MLX emitting trailing done chunk")
+                        log.debug(
+                            "MLX done without explicit final token; emitting done chunk"
+                        )
                         yield Chunk(content="", done=True)
                     break
-            elif kind == "error":
-                log.error("MLX _stream_chat received error from thread: %s", payload)
-                raise payload
-            elif kind == "done":
-                if not done_emitted:
-                    log.debug(
-                        "MLX done without explicit final token; emitting done chunk"
-                    )
-                    yield Chunk(content="", done=True)
-                break
-        log.debug("MLX _stream_chat end | model=%s", model)
+        finally:
+            # Always release generation lock, even on error
+            self._generation_lock.release()
+            log.debug("MLX _stream_chat end | model=%s", model)
 
     async def _ensure_model_loaded(self, model: str) -> None:
         async with self._load_lock:
@@ -741,11 +1029,13 @@ class MLXProvider(ChatProvider):
             # Some versions may return objects; coerce to string
             return result.text
 
-        try:
-            output: str = await asyncio.to_thread(_run_generate)
-        except Exception as exc:
-            log.exception("MLX-VLM generation error: %s", exc)
-            raise RuntimeError(f"mlx-vlm generation failed: {exc}")
+        # Serialize VLM generation to avoid concurrent Metal access
+        async with self._vlm_generation_lock:
+            try:
+                output: str = await asyncio.to_thread(_run_generate)
+            except Exception as exc:
+                log.exception("MLX-VLM generation error: %s", exc)
+                raise RuntimeError(f"mlx-vlm generation failed: {exc}")
 
         log.debug(
             "MLX-VLM generation ok | output_len=%d",
@@ -999,32 +1289,68 @@ def _coerce_bool(value: Any) -> bool:
 
 
 async def main() -> None:
-    """Run a simple demo of the MLX provider.
+    """Run a comprehensive demo of the MLX provider.
 
     - Basic generation: ask the model to say hello
-    - Optional tool-call round trip with a trivial echo tool
+    - Multiple concurrent generations to test serialization lock
+    - Optional tool-call round trip with a calculator tool
     """
     from nodetool.workflows.processing_context import ProcessingContext
 
-    class EchoTool(Tool):
-        name = "echo"
-        description = "Echo back the provided text."
+    class CalculatorTool(Tool):
+        name = "calculator"
+        description = (
+            "Perform basic arithmetic operations (add, subtract, multiply, divide)."
+        )
         input_schema = {
             "type": "object",
-            "properties": {"text": {"type": "string"}},
-            "required": ["text"],
+            "properties": {
+                "operation": {
+                    "type": "string",
+                    "enum": ["add", "subtract", "multiply", "divide"],
+                    "description": "The arithmetic operation to perform",
+                },
+                "a": {"type": "number", "description": "First number"},
+                "b": {"type": "number", "description": "Second number"},
+            },
+            "required": ["operation", "a", "b"],
         }
 
         async def process(  # type: ignore[override]
             self, context: ProcessingContext, params: dict[str, Any]
         ) -> Any:
-            return {"echo": params.get("text", "")}
+            operation = params.get("operation")
+            a = float(params.get("a", 0))
+            b = float(params.get("b", 0))
+
+            if operation == "add":
+                result = a + b
+            elif operation == "subtract":
+                result = a - b
+            elif operation == "multiply":
+                result = a * b
+            elif operation == "divide":
+                if b == 0:
+                    return {"error": "Cannot divide by zero"}
+                result = a / b
+            else:
+                return {"error": f"Unknown operation: {operation}"}
+
+            return {
+                "operation": operation,
+                "a": a,
+                "b": b,
+                "result": result,
+            }
 
     provider = MLXProvider()
-    model_name = "Qwen/Qwen3-4B-MLX-4bit"
-    content_parts = []
+    model_name = "mlx-community/Llama-3.2-3B-Instruct-4bit"
 
-    # Basic, non-tool generation
+    print("=" * 70)
+    print("TEST 1: Basic single generation")
+    print("=" * 70)
+
+    content_parts = []
     messages = [
         Message(role="system", content="You are a helpful assistant."),
         Message(role="user", content="Say 'Hello from MLX' in one short sentence."),
@@ -1038,14 +1364,58 @@ async def main() -> None:
                 content_parts.append(item.content)
             if item.done:
                 break
-    print("".join(content_parts))
-    # Optional: demonstrate a simple tool call round trip
-    tools: list[Tool] = [EchoTool()]
+    print("Response:", "".join(content_parts))
+    print()
+
+    print("=" * 70)
+    print("TEST 2: Multiple concurrent generations (serialization test)")
+    print("=" * 70)
+
+    async def generate_response(prompt: str, index: int) -> str:
+        """Helper to generate a single response."""
+        messages = [Message(role="user", content=prompt)]
+        parts = []
+        print(f"[{index}] Starting generation...")
+        async for item in provider.generate_messages(
+            messages=messages, model=model_name, max_tokens=100
+        ):
+            if isinstance(item, Chunk):
+                if item.content:
+                    parts.append(item.content)
+                if item.done:
+                    break
+        result = "".join(parts)
+        print(f"[{index}] Completed: {result[:50]}...")
+        return result
+
+    # Launch multiple concurrent requests
+    prompts = [
+        "What is 2+2? Answer in one sentence.",
+        "Name a color. Just one word.",
+        "Count from 1 to 3. Just the numbers.",
+        "What is the capital of France? One word answer.",
+        "Is water wet? Answer yes or no.",
+    ]
+
+    print(f"\nLaunching {len(prompts)} concurrent requests...")
+    tasks = [generate_response(prompt, i) for i, prompt in enumerate(prompts)]
+    results = await asyncio.gather(*tasks)
+
+    print("\n✅ All concurrent requests completed successfully!")
+    for i, result in enumerate(results):
+        print(f"  [{i}]: {result[:60]}...")
+    print()
+
+    print("=" * 70)
+    print("TEST 3: Tool calling with multiple rounds")
+    print("=" * 70)
+
+    tools: list[Tool] = [CalculatorTool()]
     context = ProcessingContext()
     messages = [
         Message(
             role="user",
-            content="Use the echo tool with text 'mlx', then say done.",
+            content="Use the calculator to multiply 23 by 17, then tell me the result.",
         ),
     ]
 
@@ -1068,9 +1438,9 @@ async def main() -> None:
                 if tool is None:
                     continue
                 print(f"Processing tool call: {tc.name}")
-                print(tc.args)
+                print(f"  Args: {tc.args}")
                 result = await tool.process(context, tc.args or {})
-                print(f"Tool result: {result}")
+                print(f"  Result: {result}")
                 messages.append(
                     Message(
                         role="tool",
@@ -1080,8 +1450,7 @@ async def main() -> None:
                     )
                 )
 
-            print(messages)
-
+            print("\nFinal response:")
             async for item in provider.generate_messages(
                 messages=messages, model=model_name, tools=tools, max_tokens=4096
             ):
@@ -1089,12 +1458,16 @@ async def main() -> None:
                     if item.content:
                         print(item.content, end="", flush=True)
                     if item.done:
-                        print()
+                        print("\n")
                         break
         else:
             print("No tool calls returned by the model.")
     except Exception as e:  # pragma: no cover - demo convenience
-        print("Tool call demo failed:", e)
+        print(f"Tool call demo failed: {e}")
+
+    print("=" * 70)
+    print("All tests completed!")
+    print("=" * 70)
 
 
 if __name__ == "__main__":

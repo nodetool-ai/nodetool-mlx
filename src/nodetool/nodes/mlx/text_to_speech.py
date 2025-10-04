@@ -20,6 +20,7 @@ from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class BaseMLXTTS(BaseNode):
@@ -101,37 +102,46 @@ class BaseMLXTTS(BaseNode):
 
         assert self._tts_model is not None
 
+        # Split text by newlines and process each line separately
+        lines = [line.strip() for line in self.text.split("\n") if line.strip()]
+
+        if not lines:
+            raise ValueError("No text content to synthesize")
+
         params, cleanup_path = await self._build_generation_params(context)
-        params.setdefault("text", self.text)
-        params.setdefault("speed", self._normalize_speed())
-        params.setdefault("stream", False)
-        params.setdefault("verbose", False)
 
-        yield {"chunk": Chunk(content="", done=True), "audio": None}
-
-        chunks: list[np.ndarray] = []
+        all_chunks: list[np.ndarray] = []
         try:
-            for idx, result in enumerate(self._tts_model.generate(**params)):
-                audio = getattr(result, "audio", None)
-                chunk = self._mx_array_to_numpy(audio)
-                if chunk.size == 0:
-                    log.debug("Skipping empty MLX audio segment %d", idx)
-                    continue
-                chunk_msg, audio_int16 = self._encode_chunk(chunk)
-                yield {"chunk": chunk_msg, "audio": None}
-                chunks.append(audio_int16)
+            for line_idx, line in enumerate(lines):
+                # Update params with current line
+                line_params = params.copy()
+                line_params["text"] = line
+
+                log.debug(
+                    f"Generating audio for line {line_idx + 1}/{len(lines)}: {line[:50]}..."
+                )
+
+                for idx, result in enumerate(self._tts_model.generate(**line_params)):
+                    audio = getattr(result, "audio", None)
+                    chunk = self._mx_array_to_numpy(audio)
+                    if chunk.size == 0:
+                        log.debug("Skipping empty MLX audio segment %d", idx)
+                        continue
+                    chunk_msg, audio_int16 = self._encode_chunk(chunk)
+                    yield {"chunk": chunk_msg, "audio": None}
+                    all_chunks.append(audio_int16)
         finally:
             if cleanup_path:
                 with suppress(FileNotFoundError):
                     os.remove(cleanup_path)
 
-        if not chunks:
+        if not all_chunks:
             raise ValueError("MLX TTS did not produce any audio")
 
-        combined = chunks[0] if len(chunks) == 1 else np.concatenate(chunks)
+        combined = all_chunks[0] if len(all_chunks) == 1 else np.concatenate(all_chunks)
         yield {
             "audio": await context.audio_from_numpy(combined, 24_000),
-            "chunk": Chunk(content="", done=True),
+            "chunk": Chunk(content="", done=True, content_type="audio"),
         }
 
     async def _build_generation_params(
@@ -205,19 +215,105 @@ class KokoroTTS(BaseMLXTTS):
         KOKORO_82M_6BIT = "mlx-community/Kokoro-82M-6bit"
         KOKORO_82M_8BIT = "mlx-community/Kokoro-82M-8bit"
 
+    class LanguageCode(str, Enum):
+        AMERICAN_ENGLISH = "a"
+        BRITISH_ENGLISH = "b"
+        ESPANOL = "e"
+        FRENCH = "f"
+        HINDI = "h"
+        ITALIAN = "i"
+        PORTUGUESE = "p"
+        JAPANESE = "j"
+        CHINESE = "z"
+        KOREAN = "k"
+        RUSSIAN = "r"
+        TURKISH = "t"
+        VIETNAMESE = "v"
+        ARABIC = "a"
+        GERMAN = "g"
+        POLISH = "p"
+        ROMANIAN = "r"
+        UKRAINIAN = "u"
+
+    class Voice(str, Enum):
+        # af_*
+        AF_ALLOY = "af_alloy"
+        AF_AOEDE = "af_aoede"
+        AF_BELLA = "af_bella"
+        AF_HEART = "af_heart"
+        AF_JESSICA = "af_jessica"
+        AF_KORE = "af_kore"
+        AF_NICOLE = "af_nicole"
+        AF_NOVA = "af_nova"
+        AF_RIVER = "af_river"
+        AF_SARAH = "af_sarah"
+        AF_SKY = "af_sky"
+        # am_*
+        AM_ADAM = "am_adam"
+        AM_ECHO = "am_echo"
+        AM_ERIC = "am_eric"
+        AM_FENRIR = "am_fenrir"
+        AM_LIAM = "am_liam"
+        AM_MICHAEL = "am_michael"
+        AM_ONYX = "am_onyx"
+        AM_PUCK = "am_puck"
+        AM_SANTA = "am_santa"
+        # bf_*
+        BF_ALICE = "bf_alice"
+        BF_EMMA = "bf_emma"
+        BF_ISABELLA = "bf_isabella"
+        BF_LILY = "bf_lily"
+        # bm_*
+        BM_DANIEL = "bm_daniel"
+        BM_FABLE = "bm_fable"
+        BM_GEORGE = "bm_george"
+        BM_LEWIS = "bm_lewis"
+        # ef_*
+        EF_DORA = "ef_dora"
+        # em_*
+        EM_ALEX = "em_alex"
+        EM_SANTA = "em_santa"
+        # ff_*
+        FF_SIWIS = "ff_siwis"
+        # hf_*
+        HF_ALPHA = "hf_alpha"
+        HF_BETA = "hf_beta"
+        # hm_*
+        HM_OMEGA = "hm_omega"
+        HM_PSI = "hm_psi"
+        # if_*
+        IF_SARA = "if_sara"
+        # im_*
+        IM_NICOLA = "im_nicola"
+        # jf_*
+        JF_ALPHA = "jf_alpha"
+        JF_GONGITSUNE = "jf_gongitsune"
+        JF_NEZUMI = "jf_nezumi"
+        JF_TEBUKURO = "jf_tebukuro"
+        # jm_*
+        JM_KUMO = "jm_kumo"
+        # pf_*
+        PF_DORA = "pf_dora"
+        # pm_*
+        PM_ALEX = "pm_alex"
+        PM_SANTA = "pm_santa"
+        # zf_*
+        ZF_XIAOBEI = "zf_xiaobei"
+        ZF_XIAONI = "zf_xiaoni"
+        ZF_XIAOXIAO = "zf_xiaoxiao"
+        ZF_XIAOYI = "zf_xiaoyi"
+
     model: Model = Field(
         default=Model.KOKORO_82M,
         description="Kokoro model variant to load.",
     )
-    voice: str = Field(
-        default="af_heart",
+    voice: Voice = Field(
+        default=Voice.AF_HEART,
         description="Voice preset supported by Kokoro (e.g. af_heart, am_adam, bf_emma).",
     )
-    lang_code: str = Field(
-        default="a",
-        description=(
-            "Language code or name (a=American English, b=British English, e=Spanish, etc.)."
-        ),
+    language: LanguageCode = Field(
+        default=LanguageCode.AMERICAN_ENGLISH,
+        description=("Language code"),
     )
     temperature: float = Field(
         default=0.7,
@@ -231,27 +327,6 @@ class KokoroTTS(BaseMLXTTS):
         le=2.0,
         description="Speech speed multiplier for Kokoro (0.5–2.0).",
     )
-
-    _LANGUAGE_MAP: ClassVar[dict[str, str]] = {
-        "american_english": "a",
-        "british_english": "b",
-        "spanish": "e",
-        "french": "f",
-        "hindi": "h",
-        "italian": "i",
-        "portuguese": "p",
-        "japanese": "j",
-        "mandarin_chinese": "z",
-        "a": "a",
-        "b": "b",
-        "e": "e",
-        "f": "f",
-        "h": "h",
-        "i": "i",
-        "p": "p",
-        "j": "j",
-        "z": "z",
-    }
 
     @classmethod
     def get_title(cls):
@@ -279,22 +354,12 @@ class KokoroTTS(BaseMLXTTS):
         params, cleanup = await super()._build_generation_params(context)
         params.update(
             {
-                "voice": self.voice,
-                "lang_code": self._resolve_language_code(),
+                "voice": self.voice.value,
+                "lang_code": self.language.value,
                 "temperature": self.temperature,
             }
         )
         return params, cleanup
-
-    def _resolve_language_code(self) -> str:
-        key = (self.lang_code or "").lower()
-        if key in self._LANGUAGE_MAP:
-            return self._LANGUAGE_MAP[key]
-        if len(key) == 1:
-            return key
-        if self.voice:
-            return self.voice[0]
-        return "a"
 
 
 class SesameTTS(BaseMLXTTS):

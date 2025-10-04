@@ -1,0 +1,176 @@
+{
+  "id": "5f2e290a9fa311f0819a000010e9066c",
+  "access": "public",
+  "created_at": "2025-10-03T00:14:02.899257",
+  "updated_at": "2025-10-03T00:14:02.899281",
+  "name": "Image To Audio Story",
+  "tool_name": null,
+  "description": "Generate and narrate creative stories from images using AI",
+  "tags": [
+    "start",
+    "multimodal"
+  ],
+  "thumbnail": null,
+  "thumbnail_url": null,
+  "graph": {
+    "nodes": [
+      {
+        "id": "1",
+        "parent_id": null,
+        "type": "nodetool.constant.Image",
+        "data": {
+          "value": {
+            "uri": "https://s.abcnews.com/images/International/tiananmen-square-anniversary-01-file-gty-jef-190529_hpMain_16x9_992.jpg?w=992",
+            "type": "image"
+          }
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 50,
+            "y": 193
+          },
+          "zIndex": 0,
+          "width": 200,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "77a9cf98-c4c6-4585-930b-badbe641a662",
+        "parent_id": null,
+        "type": "nodetool.agents.Agent",
+        "data": {
+          "model": {
+            "type": "language_model",
+            "id": "gemma3:4b",
+            "provider": "ollama",
+            "name": "gemma3:4b"
+          },
+          "system": "You are a friendly assistant.",
+          "prompt": "Write a compelling story about the image.",
+          "messages": [],
+          "max_tokens": 4096
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 280,
+            "y": 63
+          },
+          "zIndex": 0,
+          "width": 182,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "60a3a5de-1f80-4278-876c-503438a39495",
+        "parent_id": null,
+        "type": "mlx.text_to_speech.KokoroTTS",
+        "data": {
+          "speed": 1,
+          "model": "prince-canuma/Kokoro-82M",
+          "voice": "af_heart",
+          "language": "a",
+          "temperature": 0.7
+        },
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 492,
+            "y": 50
+          },
+          "zIndex": 0,
+          "width": 200,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "cc2281ff-ee94-444d-9392-b0cb9f76f0d3",
+        "parent_id": null,
+        "type": "nodetool.workflows.base_node.Preview",
+        "data": {},
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": 722,
+            "y": 191
+          },
+          "zIndex": 0,
+          "width": 234,
+          "height": 174,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      },
+      {
+        "id": "1c1233ec-8eed-4ab0-b644-333af9764e0e",
+        "parent_id": null,
+        "type": "nodetool.workflows.base_node.Comment",
+        "data": {},
+        "ui_properties": {
+          "selected": false,
+          "position": {
+            "x": -622,
+            "y": 5
+          },
+          "zIndex": 0,
+          "width": 600,
+          "height": 548,
+          "selectable": true
+        },
+        "dynamic_properties": {},
+        "dynamic_outputs": {},
+        "sync_mode": "on_any"
+      }
+    ],
+    "edges": [
+      {
+        "id": "15db2a09-693e-4931-8273-fa64a60b6d52",
+        "source": "1",
+        "sourceHandle": "output",
+        "target": "77a9cf98-c4c6-4585-930b-badbe641a662",
+        "targetHandle": "image",
+        "ui_properties": null
+      },
+      {
+        "id": "d914e6f7-6dac-4fe6-a9ff-18940b77992a",
+        "source": "77a9cf98-c4c6-4585-930b-badbe641a662",
+        "sourceHandle": "text",
+        "target": "60a3a5de-1f80-4278-876c-503438a39495",
+        "targetHandle": "text",
+        "ui_properties": {
+          "className": "str"
+        }
+      },
+      {
+        "id": "59523ffd-b928-420b-a31b-4e8255a73480",
+        "source": "60a3a5de-1f80-4278-876c-503438a39495",
+        "sourceHandle": "chunk",
+        "target": "cc2281ff-ee94-444d-9392-b0cb9f76f0d3",
+        "targetHandle": "value",
+        "ui_properties": {
+          "className": "chunk"
+        }
+      }
+    ]
+  },
+  "input_schema": null,
+  "output_schema": null,
+  "settings": null,
+  "package_name": "nodetool-mlx",
+  "path": null,
+  "run_mode": null,
+  "required_providers": null,
+  "required_models": null
+}

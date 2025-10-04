@@ -1,0 +1,359 @@
+"""
+Centralized Flux model loading utilities for MLX.
+
+This module provides a unified way to load Flux models across both nodes and image providers,
+with proper caching and availability checks.
+"""
+
+import asyncio
+import sys
+from typing import Any
+from nodetool.ml.core.model_manager import ModelManager
+from nodetool.integrations.huggingface.huggingface_cache import has_cached_files
+from nodetool.config.logging_config import get_logger
+
+from mflux.flux.flux import Flux1
+
+log = get_logger(__name__)
+
+
+class FluxModelNotAvailableError(Exception):
+    """Raised when a Flux model is not available in the local cache."""
+
+    def __init__(self, model_id: str):
+        self.model_id = model_id
+        super().__init__(
+            f"Model '{model_id}' is not available in your local cache.\n\n"
+            f"To use this model:\n"
+            f"1. Open the Model Manager (in the NodeTool UI)\n"
+            f"2. Search for '{model_id}'\n"
+            f"3. Download the model\n"
+            f"4. Try again once the download is complete\n\n"
+            f"Note: MLX models are only loaded from local cache and will not be downloaded automatically "
+            f"to avoid unexpected network usage and storage consumption."
+        )
+
+
+def ensure_mflux_available() -> None:
+    """Ensure mflux is installed and we're on macOS."""
+    if sys.platform != "darwin":
+        raise RuntimeError(
+            "MLX/MFlux requires macOS with Apple Silicon. "
+            "This feature is not available on other platforms."
+        )
+
+
+def is_flux_model_available(model_id: str) -> bool:
+    """
+    Check if a Flux model is available in the local HuggingFace cache.
+
+    Args:
+        model_id: The HuggingFace repo ID (e.g., "apple/FLUX.1-schnell-4bit")
+
+    Returns:
+        True if the model is cached locally, False otherwise
+    """
+    return has_cached_files(model_id)
+
+
+async def load_flux_model(
+    model_id: str,
+    quantize: int | None = 4,
+    node_id: str | None = None,
+    task: str = "flux",
+    force_reload: bool = False,
+) -> Flux1:
+    """
+    Load a Flux model with proper caching and availability checks.
+
+    This function:
+    1. Checks if the model is available in the HuggingFace cache
+    2. Checks the ModelManager cache
+    3. Only loads from local files (does not download)
+    4. Caches the loaded model for reuse
+
+    Args:
+        model_id: The HuggingFace repo ID (e.g., "apple/FLUX.1-schnell-4bit")
+        quantize: Quantization level (3, 4, 5, 6, 8, or None)
+        node_id: Optional node ID for ModelManager association
+        task: Task identifier for ModelManager (default: "flux")
+        force_reload: If True, bypass ModelManager cache and reload from disk
+
+    Returns:
+        The loaded Flux1 model instance
+
+    Raises:
+        RuntimeError: If mflux is not available or not on macOS
+        FluxModelNotAvailableError: If the model is not in the local cache
+    """
+    ensure_mflux_available()
+
+    # Check if model is available in HF cache
+    if not is_flux_model_available(model_id):
+        raise FluxModelNotAvailableError(model_id)
+
+    # Check ModelManager cache (unless forcing reload)
+    if not force_reload:
+        cached_model = ModelManager.get_model(model_id, task)
+        if cached_model is not None:
+            log.info(f"Using cached Flux model: {model_id}")
+            return cached_model
+
+    # Load model from local cache
+    loop = asyncio.get_running_loop()
+
+    def _load() -> Flux1:
+        log.info(
+            f"Loading Flux model {model_id} from local cache "
+            f"(quantize={quantize if quantize is not None else 'none'})"
+        )
+        model = Flux1.from_name(
+            model_name=model_id,
+            quantize=quantize,
+        )
+        return model
+
+    model = await loop.run_in_executor(None, _load)
+
+    # Cache in ModelManager if node_id provided
+    if node_id:
+        ModelManager.set_model(node_id, model_id, task, model)
+
+    return model
+
+
+async def load_flux_controlnet_model(
+    base_model_id: str,
+    controlnet_model_id: str,
+    quantize: int | None = 4,
+    node_id: str | None = None,
+    force_reload: bool = False,
+) -> Any:  # Returns Flux1Controlnet
+    """
+    Load a Flux ControlNet model with proper caching and availability checks.
+
+    Args:
+        base_model_id: Base Flux model repo ID
+        controlnet_model_id: ControlNet model repo ID
+        quantize: Quantization level
+        node_id: Optional node ID for ModelManager association
+        force_reload: If True, bypass ModelManager cache
+
+    Returns:
+        The loaded Flux1Controlnet model instance
+
+    Raises:
+        RuntimeError: If mflux is not available or not on macOS
+        FluxModelNotAvailableError: If either model is not in the local cache
+    """
+    ensure_mflux_available()
+
+    # Check if both models are available
+    if not is_flux_model_available(base_model_id):
+        raise FluxModelNotAvailableError(base_model_id)
+    if not is_flux_model_available(controlnet_model_id):
+        raise FluxModelNotAvailableError(controlnet_model_id)
+
+    # Check ModelManager cache
+    cache_key = f"{base_model_id}:{controlnet_model_id}"
+    if not force_reload:
+        cached_model = ModelManager.get_model(cache_key, "flux-controlnet")
+        if cached_model is not None:
+            log.info(f"Using cached Flux ControlNet model: {cache_key}")
+            return cached_model
+
+    # Load model
+    from mflux.controlnet.flux_controlnet import Flux1Controlnet
+    from mflux.config.model_config import ModelConfig
+
+    loop = asyncio.get_running_loop()
+
+    def _load() -> Flux1Controlnet:
+        log.info(
+            f"Loading Flux ControlNet model {base_model_id} with controlnet {controlnet_model_id} "
+            f"(quantize={quantize if quantize is not None else 'none'})"
+        )
+        model_config = ModelConfig.from_name(base_model_id)
+        model_config.controlnet_model = controlnet_model_id
+
+        model = Flux1Controlnet(
+            model_config=model_config,
+            quantize=quantize,
+        )
+        return model
+
+    model = await loop.run_in_executor(None, _load)
+
+    # Cache in ModelManager
+    if node_id:
+        ModelManager.set_model(node_id, cache_key, "flux-controlnet", model)
+
+    return model
+
+
+async def load_flux_fill_model(
+    model_id: str = "black-forest-labs/FLUX.1-Fill-dev",
+    quantize: int | None = 4,
+    node_id: str | None = None,
+    force_reload: bool = False,
+) -> Any:  # Returns Flux1Fill
+    """
+    Load a Flux Fill (inpainting/outpainting) model.
+
+    Args:
+        model_id: Fill model repo ID
+        quantize: Quantization level
+        node_id: Optional node ID for ModelManager association
+        force_reload: If True, bypass ModelManager cache
+
+    Returns:
+        The loaded Flux1Fill model instance
+    """
+    ensure_mflux_available()
+
+    if not is_flux_model_available(model_id):
+        raise FluxModelNotAvailableError(model_id)
+
+    if not force_reload:
+        cached_model = ModelManager.get_model(model_id, "flux-fill")
+        if cached_model is not None:
+            log.info(f"Using cached Flux Fill model: {model_id}")
+            return cached_model
+
+    from mflux.flux_tools.fill.flux_fill import Flux1Fill
+
+    loop = asyncio.get_running_loop()
+
+    def _load() -> Flux1Fill:
+        log.info(
+            f"Loading Flux Fill model {model_id} "
+            f"(quantize={quantize if quantize is not None else 'none'})"
+        )
+        model = Flux1Fill(quantize=quantize)
+        return model
+
+    model = await loop.run_in_executor(None, _load)
+
+    if node_id:
+        ModelManager.set_model(node_id, model_id, "flux-fill", model)
+
+    return model
+
+
+async def load_flux_depth_model(
+    model_id: str = "black-forest-labs/FLUX.1-Depth-dev",
+    quantize: int | None = 4,
+    node_id: str | None = None,
+    force_reload: bool = False,
+) -> Any:  # Returns Flux1Depth
+    """Load a Flux Depth model."""
+    ensure_mflux_available()
+
+    if not is_flux_model_available(model_id):
+        raise FluxModelNotAvailableError(model_id)
+
+    if not force_reload:
+        cached_model = ModelManager.get_model(model_id, "flux-depth")
+        if cached_model is not None:
+            log.info(f"Using cached Flux Depth model: {model_id}")
+            return cached_model
+
+    from mflux.flux_tools.depth.flux_depth import Flux1Depth
+
+    loop = asyncio.get_running_loop()
+
+    def _load() -> Flux1Depth:
+        log.info(
+            f"Loading Flux Depth model {model_id} "
+            f"(quantize={quantize if quantize is not None else 'none'})"
+        )
+        model = Flux1Depth(quantize=quantize)
+        return model
+
+    model = await loop.run_in_executor(None, _load)
+
+    if node_id:
+        ModelManager.set_model(node_id, model_id, "flux-depth", model)
+
+    return model
+
+
+async def load_flux_redux_model(
+    model_id: str = "black-forest-labs/FLUX.1-Redux-dev",
+    quantize: int | None = 4,
+    node_id: str | None = None,
+    force_reload: bool = False,
+) -> Any:  # Returns Flux1Redux
+    """Load a Flux Redux model."""
+    ensure_mflux_available()
+
+    if not is_flux_model_available(model_id):
+        raise FluxModelNotAvailableError(model_id)
+
+    if not force_reload:
+        cached_model = ModelManager.get_model(model_id, "flux-redux")
+        if cached_model is not None:
+            log.info(f"Using cached Flux Redux model: {model_id}")
+            return cached_model
+
+    from mflux.flux_tools.redux.flux_redux import Flux1Redux
+    from mflux.config.model_config import ModelConfig
+
+    loop = asyncio.get_running_loop()
+
+    def _load() -> Flux1Redux:
+        log.info(
+            f"Loading Flux Redux model {model_id} "
+            f"(quantize={quantize if quantize is not None else 'none'})"
+        )
+        model_config = ModelConfig.dev_redux()
+        model = Flux1Redux(
+            model_config=model_config,
+            quantize=quantize,
+        )
+        return model
+
+    model = await loop.run_in_executor(None, _load)
+
+    if node_id:
+        ModelManager.set_model(node_id, model_id, "flux-redux", model)
+
+    return model
+
+
+async def load_flux_kontext_model(
+    model_id: str = "black-forest-labs/FLUX.1-Kontext-dev",
+    quantize: int | None = 4,
+    node_id: str | None = None,
+    force_reload: bool = False,
+) -> Any:  # Returns Flux1Kontext
+    """Load a Flux Kontext model."""
+    ensure_mflux_available()
+
+    if not is_flux_model_available(model_id):
+        raise FluxModelNotAvailableError(model_id)
+
+    if not force_reload:
+        cached_model = ModelManager.get_model(model_id, "flux-kontext")
+        if cached_model is not None:
+            log.info(f"Using cached Flux Kontext model: {model_id}")
+            return cached_model
+
+    from mflux.kontext.flux_kontext import Flux1Kontext
+
+    loop = asyncio.get_running_loop()
+
+    def _load() -> Flux1Kontext:
+        log.info(
+            f"Loading Flux Kontext model {model_id} "
+            f"(quantize={quantize if quantize is not None else 'none'})"
+        )
+        model = Flux1Kontext(quantize=quantize)
+        return model
+
+    model = await loop.run_in_executor(None, _load)
+
+    if node_id:
+        ModelManager.set_model(node_id, model_id, "flux-kontext", model)
+
+    return model

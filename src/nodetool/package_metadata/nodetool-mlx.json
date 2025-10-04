@@ -152,7 +152,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 1801,
+          "downloads": 1732,
           "likes": 427,
           "trending_score": null
         },
@@ -181,7 +181,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 16,
+          "downloads": 20,
           "likes": 1,
           "trending_score": null
         },
@@ -493,7 +493,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 4185,
+          "downloads": 4289,
           "likes": 191,
           "trending_score": null
         },
@@ -524,8 +524,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10420,
-          "likes": 827,
+          "downloads": 10398,
+          "likes": 830,
           "trending_score": null
         }
       ],
@@ -710,7 +710,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 7539,
+          "downloads": 7395,
           "likes": 222,
           "trending_score": null
         }
@@ -921,7 +921,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 16,
+          "downloads": 20,
           "likes": 1,
           "trending_score": null
         },
@@ -1135,8 +1135,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 345118,
-          "likes": 928,
+          "downloads": 343769,
+          "likes": 929,
           "trending_score": null
         }
       ],
@@ -1308,8 +1308,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 307086,
-          "likes": 2315,
+          "downloads": 316415,
+          "likes": 2321,
           "trending_score": null
         }
       ],
@@ -1502,8 +1502,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 345118,
-          "likes": 928,
+          "downloads": 343769,
+          "likes": 929,
           "trending_score": null
         }
       ],
@@ -1686,7 +1686,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 24970,
+          "downloads": 24637,
           "likes": 565,
           "trending_score": null
         }
@@ -1708,8 +1708,8 @@
     {
       "title": "Kokoro TTS",
       "description": "MLX Kokoro text-to-speech.",
-      "namespace": "mlx.tts",
-      "node_type": "mlx.tts.KokoroTTS",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.KokoroTTS",
       "properties": [
         {
           "name": "text",
@@ -1742,7 +1742,7 @@
               "mlx-community/Kokoro-82M-6bit",
               "mlx-community/Kokoro-82M-8bit"
             ],
-            "type_name": "nodetool.nodes.mlx.tts.Model"
+            "type_name": "nodetool.nodes.mlx.text_to_speech.KokoroTTS.Model"
           },
           "default": "prince-canuma/Kokoro-82M",
           "title": "Model",
@@ -1751,20 +1751,94 @@
         {
           "name": "voice",
           "type": {
-            "type": "str"
+            "type": "enum",
+            "values": [
+              "af_alloy",
+              "af_aoede",
+              "af_bella",
+              "af_heart",
+              "af_jessica",
+              "af_kore",
+              "af_nicole",
+              "af_nova",
+              "af_river",
+              "af_sarah",
+              "af_sky",
+              "am_adam",
+              "am_echo",
+              "am_eric",
+              "am_fenrir",
+              "am_liam",
+              "am_michael",
+              "am_onyx",
+              "am_puck",
+              "am_santa",
+              "bf_alice",
+              "bf_emma",
+              "bf_isabella",
+              "bf_lily",
+              "bm_daniel",
+              "bm_fable",
+              "bm_george",
+              "bm_lewis",
+              "ef_dora",
+              "em_alex",
+              "em_santa",
+              "ff_siwis",
+              "hf_alpha",
+              "hf_beta",
+              "hm_omega",
+              "hm_psi",
+              "if_sara",
+              "im_nicola",
+              "jf_alpha",
+              "jf_gongitsune",
+              "jf_nezumi",
+              "jf_tebukuro",
+              "jm_kumo",
+              "pf_dora",
+              "pm_alex",
+              "pm_santa",
+              "zf_xiaobei",
+              "zf_xiaoni",
+              "zf_xiaoxiao",
+              "zf_xiaoyi"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_speech.KokoroTTS.Voice"
           },
           "default": "af_heart",
           "title": "Voice",
           "description": "Voice preset supported by Kokoro (e.g. af_heart, am_adam, bf_emma)."
         },
         {
-          "name": "lang_code",
+          "name": "language",
           "type": {
-            "type": "str"
+            "type": "enum",
+            "values": [
+              "a",
+              "b",
+              "e",
+              "f",
+              "h",
+              "i",
+              "p",
+              "j",
+              "z",
+              "k",
+              "r",
+              "t",
+              "v",
+              "a",
+              "g",
+              "p",
+              "r",
+              "u"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_speech.KokoroTTS.LanguageCode"
           },
           "default": "a",
-          "title": "Lang Code",
-          "description": "Language code or name (a=American English, b=British English, e=Spanish, etc.)."
+          "title": "Language",
+          "description": "Language code"
         },
         {
           "name": "temperature",
@@ -1818,7 +1892,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1830,
+          "downloads": 1812,
           "likes": 4,
           "trending_score": null
         },
@@ -1846,7 +1920,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 6921,
+          "downloads": 7613,
           "likes": 24,
           "trending_score": null
         },
@@ -1874,7 +1948,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 432,
+          "downloads": 419,
           "likes": 3,
           "trending_score": null
         },
@@ -1902,7 +1976,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 36,
+          "downloads": 37,
           "likes": 2,
           "trending_score": null
         },
@@ -1940,7 +2014,7 @@
         "speed",
         "model",
         "voice",
-        "lang_code",
+        "language",
         "temperature"
       ],
       "expose_as_tool": true
@@ -1948,8 +2022,8 @@
     {
       "title": "Sesame TTS",
       "description": "MLX Sesame / CSM text-to-speech with reference audio cloning.",
-      "namespace": "mlx.tts",
-      "node_type": "mlx.tts.SesameTTS",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.SesameTTS",
       "properties": [
         {
           "name": "text",
@@ -1979,7 +2053,7 @@
               "mlx-community/csm-1b",
               "mlx-community/csm-1b-8bit"
             ],
-            "type_name": "nodetool.nodes.mlx.tts.Model"
+            "type_name": "nodetool.nodes.mlx.text_to_speech.SesameTTS.Model"
           },
           "default": "mlx-community/csm-1b",
           "title": "Model",
@@ -2067,7 +2141,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 49,
+          "downloads": 50,
           "likes": 0,
           "trending_score": null
         }
@@ -2083,8 +2157,8 @@
     {
       "title": "Spark TTS",
       "description": "MLX Spark text-to-speech.",
-      "namespace": "mlx.tts",
-      "node_type": "mlx.tts.SparkTTS",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.SparkTTS",
       "properties": [
         {
           "name": "text",
@@ -2106,7 +2180,7 @@
               "high",
               "very_high"
             ],
-            "type_name": "nodetool.nodes.mlx.tts.Speed"
+            "type_name": "nodetool.nodes.mlx.text_to_speech.SparkTTS.Speed"
           },
           "default": "moderate",
           "title": "Speed",
@@ -2120,7 +2194,7 @@
               "mlx-community/Spark-TTS-0.5B-bf16",
               "mlx-community/Spark-TTS-0.5B-8bit"
             ],
-            "type_name": "nodetool.nodes.mlx.tts.Model"
+            "type_name": "nodetool.nodes.mlx.text_to_speech.SparkTTS.Model"
           },
           "default": "mlx-community/Spark-TTS-0.5B-bf16",
           "title": "Model",
@@ -2147,7 +2221,7 @@
               "high",
               "very_high"
             ],
-            "type_name": "nodetool.nodes.mlx.tts.Pitch"
+            "type_name": "nodetool.nodes.mlx.text_to_speech.SparkTTS.Pitch"
           },
           "default": "moderate",
           "title": "Pitch",
@@ -2161,7 +2235,7 @@
               "female",
               "male"
             ],
-            "type_name": "nodetool.nodes.mlx.tts.Gender"
+            "type_name": "nodetool.nodes.mlx.text_to_speech.SparkTTS.Gender"
           },
           "default": "female",
           "title": "Gender",
@@ -2208,7 +2282,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 985,
+          "downloads": 878,
           "likes": 4,
           "trending_score": null
         },
@@ -2238,7 +2312,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 57,
+          "downloads": 59,
           "likes": 3,
           "trending_score": null
         }
@@ -2274,7 +2348,7 @@
               "mlx-community/whisper-medium.en-mlx",
               "mlx-community/whisper-large-v3-mlx"
             ],
-            "type_name": "nodetool.nodes.mlx.whisper.Model"
+            "type_name": "nodetool.nodes.mlx.whisper.MLXWhisper.Model"
           },
           "default": "mlx-community/whisper-tiny.en-mlx",
           "title": "Model",
@@ -2378,7 +2452,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 124,
+          "downloads": 122,
           "likes": 2,
           "trending_score": null
         },
@@ -2402,7 +2476,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 249,
+          "downloads": 276,
           "likes": 0,
           "trending_score": null
         },
@@ -2426,7 +2500,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2609,
+          "downloads": 2776,
           "likes": 0,
           "trending_score": null
         },
@@ -2450,7 +2524,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 27,
+          "downloads": 32,
           "likes": 0,
           "trending_score": null
         },
@@ -2474,7 +2548,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1982,
+          "downloads": 2023,
           "likes": 3,
           "trending_score": null
         },
@@ -2498,7 +2572,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 43,
+          "downloads": 48,
           "likes": 0,
           "trending_score": null
         },
@@ -2522,7 +2596,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2427,
+          "downloads": 2421,
           "likes": 3,
           "trending_score": null
         },
@@ -2546,7 +2620,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 90,
+          "downloads": 89,
           "likes": 1,
           "trending_score": null
         },
@@ -2571,8 +2645,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2251,
-          "likes": 58,
+          "downloads": 2041,
+          "likes": 59,
           "trending_score": null
         }
       ],
@@ -2584,6 +2658,24 @@
         "no_speech_threshold",
         "condition_on_previous_text",
         "word_timestamps"
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "package_name": "nodetool-mlx",
+      "name": "Movie Posters MLX.jpg",
+      "path": ""
+    }
+  ],
+  "examples": [
+    {
+      "id": "70a49fd69d7111f0b86500005fdf8376",
+      "name": "Movie Posters MLX",
+      "description": "Create cinematic movie posters using AI image generation for Apple Silicon",
+      "tags": [
+        "start",
+        "image"
       ]
     }
   ]
