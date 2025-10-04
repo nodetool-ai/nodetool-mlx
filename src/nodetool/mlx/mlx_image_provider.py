@@ -1,7 +1,7 @@
 """
-MLX image provider implementation.
+MLX local image provider implementation.
 
-This module implements the ImageProvider interface for local MLX models using mflux.
+This module implements the BaseProvider interface for local MLX models using mflux.
 """
 
 import asyncio
@@ -11,8 +11,7 @@ from typing import Any, List, Set
 from io import BytesIO
 import PIL.Image
 
-from nodetool.image.providers.base import ImageProvider
-from nodetool.chat.providers.base import ProviderCapability
+from nodetool.chat.providers.base import BaseProvider, ProviderCapability
 from nodetool.image.types import ImageBytes, TextToImageParams, ImageToImageParams
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.metadata.types import ImageModel, Provider
@@ -33,8 +32,8 @@ except ImportError:
 log = get_logger(__name__)
 
 
-class MlxImageProvider(ImageProvider):
-    """Image provider for local MLX models using mflux.
+class MlxLocalImageProvider(BaseProvider):
+    """Local image provider for MLX models using mflux.
 
     This provider runs FLUX models locally on Apple Silicon using MLX acceleration.
     Requires macOS and the mflux library. Models must be downloaded via the Model Manager

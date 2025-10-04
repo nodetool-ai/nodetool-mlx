@@ -27,12 +27,13 @@ from typing import Any, AsyncIterator, Callable, Iterable, List, Sequence
 from io import BytesIO
 from urllib.parse import urlparse, unquote
 import os
+import sys
 import tempfile
 
 from nodetool.chat.providers.base import (
-    ChatProvider,
+    BaseProvider,
     ProviderCapability,
-    register_chat_provider,
+    register_provider,
 )
 from nodetool.agents.tools.base import Tool
 from nodetool.config.environment import Environment
@@ -91,8 +92,8 @@ _VLM_MODEL_CACHE: dict[str, tuple[Any, Any, Any, float]] = {}
 _VLM_MODEL_CACHE_LOCK = threading.Lock()
 
 
-@register_chat_provider(Provider.MLX)
-class MLXProvider(ChatProvider):
+@register_provider(Provider.MLX)
+class MLXProvider(BaseProvider):
     """Chat provider backed by the ``mlx-lm`` runtime.
 
     This provider exposes a standard chat interface that uses the MLX runtime
@@ -142,10 +143,11 @@ class MLXProvider(ChatProvider):
     # Public API
     # ------------------------------------------------------------------
     def get_capabilities(self) -> set[ProviderCapability]:
-        """MLX provider supports message generation."""
+        """MLX provider supports message generation and text-to-speech."""
         return {
             ProviderCapability.GENERATE_MESSAGE,
             ProviderCapability.GENERATE_MESSAGES,
+            ProviderCapability.TEXT_TO_SPEECH,
         }
 
     async def generate_message(
@@ -1276,6 +1278,133 @@ class MLXProvider(ChatProvider):
             name=name,
             args=args if isinstance(args, dict) else {"value": args},
         )
+
+    async def text_to_speech(
+        self,
+        text: str,
+        model: str,
+        voice: str | None = None,
+        speed: float = 1.0,
+        timeout_s: int | None = None,
+        context: Any = None,
+        **kwargs: Any,
+    ) -> bytes:
+        """Generate speech audio from text using MLX text-to-speech models.
+
+        Args:
+            text: Input text to convert to speech
+            model: Model repository ID (e.g., "mlx-community/Kokoro-82M-bf16")
+            voice: Voice preset (e.g., "af_heart", "am_adam") - defaults to "af_heart"
+            speed: Speech speed multiplier (0.5 to 2.0)
+            timeout_s: Optional timeout in seconds
+            context: Optional processing context
+            **kwargs: Additional MLX TTS parameters (e.g., temperature, language)
+
+        Returns:
+            Raw audio bytes (16-bit PCM WAV format)
+
+        Raises:
+            ValueError: If required parameters are missing
+            RuntimeError: If generation fails or platform is unsupported
+        """
+        log.debug(f"Generating speech with MLX model: {model}, voice: {voice}, speed: {speed}")
+
+        if sys.platform != "darwin":
+            raise RuntimeError("MLX TTS requires macOS (Apple Silicon / MLX)")
+
+        if not text:
+            raise ValueError("text must not be empty")
+
+        # Default voice and parameters
+        voice = voice or "af_heart"
+        speed = max(0.5, min(2.0, speed))
+
+        try:
+            # Lazy import mlx-audio TTS utilities
+            def _import_mlx_tts():
+                try:
+                    from mlx_audio.tts.utils import load_model
+                    from huggingface_hub import try_to_load_from_cache
+                    import numpy as np
+                    return load_model, try_to_load_from_cache, np
+                except Exception as exc:
+                    raise RuntimeError(
+                        "Install mlx-audio package to use MLX TTS functionality"
+                    ) from exc
+
+            load_model, try_to_load_from_cache, np = await asyncio.to_thread(_import_mlx_tts)
+
+            # Check if model is cached
+            model_path = try_to_load_from_cache(model, "config.json")
+            if not model_path:
+                raise ValueError(f"Model {model} must be downloaded first (not found in cache)")
+
+            load_target = os.path.dirname(model_path)
+
+            # Load the TTS model
+            def _load_tts_model():
+                log.info(f"Loading MLX TTS model {model}")
+                return load_model(load_target)
+
+            tts_model = await asyncio.to_thread(_load_tts_model)
+
+            # Prepare generation parameters
+            gen_params = {
+                "text": text,
+                "speed": speed,
+                "stream": False,
+                "verbose": False,
+            }
+
+            # Add voice if the model supports it (Kokoro-style models)
+            if voice:
+                gen_params["voice"] = voice
+
+            # Add additional kwargs
+            if "temperature" in kwargs:
+                gen_params["temperature"] = kwargs["temperature"]
+            if "lang_code" in kwargs:
+                gen_params["lang_code"] = kwargs["lang_code"]
+            if "language" in kwargs:
+                gen_params["lang_code"] = kwargs["language"]
+
+            # Generate audio
+            def _generate_audio():
+                all_chunks = []
+                for result in tts_model.generate(**gen_params):
+                    audio = getattr(result, "audio", None)
+                    if audio is None:
+                        continue
+                    # Convert MLX array to numpy
+                    if hasattr(audio, "astype") and hasattr(audio, "numpy"):
+                        import mlx.core as mx
+                        chunk = audio.astype(mx.float32).numpy()
+                    else:
+                        chunk = np.asarray(audio, dtype=np.float32)
+
+                    if chunk.size > 0:
+                        all_chunks.append(chunk)
+
+                if not all_chunks:
+                    raise ValueError("MLX TTS did not produce any audio")
+
+                # Concatenate all chunks
+                combined = all_chunks[0] if len(all_chunks) == 1 else np.concatenate(all_chunks)
+
+                # Convert to int16 PCM
+                audio_int16 = np.clip(combined, -1.0, 1.0)
+                audio_int16 = (audio_int16 * 32767.0).astype(np.int16)
+
+                return audio_int16.tobytes()
+
+            audio_bytes = await asyncio.to_thread(_generate_audio)
+
+            log.debug(f"Generated {len(audio_bytes)} bytes of audio")
+            return audio_bytes
+
+        except Exception as e:
+            log.error(f"MLX TTS generation failed: {e}")
+            raise RuntimeError(f"MLX TTS generation failed: {str(e)}")
 
 
 def _coerce_bool(value: Any) -> bool:
