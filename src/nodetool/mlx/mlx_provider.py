@@ -1,16 +1,22 @@
-"""MLX chat provider implementation.
+"""MLX unified provider implementation.
 
-This provider integrates the `mlx-lm` runtime so models exported for MLX can be
-used through Nodetool's unified chat provider interface. The implementation
-keeps a lazy reference to the MLX runtime because importing `mlx_lm` requires a
-Metal capable environment. When the provider is first used we import the
-library, load the configured model, and then stream generations through
-``stream_generate``.
+This provider integrates multiple MLX libraries to provide a complete multi-modal
+AI provider for Apple Silicon:
 
-The provider supports the chat history format used by other providers, basic
-streaming, and MLX's tool calling conventions (``<tool_call>`` markers around a
-JSON payload). Tool definitions are passed through ``tokenizer.apply_chat_template``
-whenever the tokenizer advertises tool calling support.
+- mlx-lm: Language models for chat and text generation
+- mlx-vlm: Vision-language models for multimodal understanding
+- mlx-audio: Text-to-speech audio generation
+- mflux: FLUX models for image generation
+
+The implementation keeps lazy references to the MLX runtimes because importing these
+libraries requires a Metal-capable environment. When a capability is first used, we
+import the required library, load the configured model, and execute the task.
+
+The provider supports:
+- Chat with tool calling conventions
+- Vision and audio understanding
+- Text-to-speech generation
+- Text-to-image and image-to-image generation
 """
 
 from __future__ import annotations
@@ -30,7 +36,7 @@ import os
 import sys
 import tempfile
 
-from nodetool.chat.providers.base import (
+from nodetool.providers.base import (
     BaseProvider,
     ProviderCapability,
     register_provider,
@@ -49,9 +55,12 @@ from nodetool.metadata.types import (
     ImageRef,
     AudioRef,
     LanguageModel,
+    ImageModel,
 )
 from nodetool.workflows.types import Chunk
 from nodetool.io.uri_utils import fetch_uri_bytes_and_mime
+from nodetool.image.types import ImageBytes, TextToImageParams, ImageToImageParams
+from nodetool.workflows.processing_context import ProcessingContext
 
 import PIL.Image
 from pydub import AudioSegment  # type: ignore
@@ -94,13 +103,17 @@ _VLM_MODEL_CACHE_LOCK = threading.Lock()
 
 @register_provider(Provider.MLX)
 class MLXProvider(BaseProvider):
-    """Chat provider backed by the ``mlx-lm`` runtime.
+    """Unified multi-modal provider for Apple Silicon using MLX.
 
-    This provider exposes a standard chat interface that uses the MLX runtime
-    to generate responses. It lazily imports the underlying `mlx_lm` library to
-    allow running in environments where the library is not available at import
-    time. The provider supports token streaming and tool calling conventions used
-    by other Nodetool chat providers.
+    This provider exposes a complete AI interface leveraging multiple MLX libraries:
+    - Language models (mlx-lm) for chat and text generation
+    - Vision models (mlx-vlm) for multimodal understanding
+    - Audio models (mlx-audio) for text-to-speech
+    - Image models (mflux) for FLUX-based image generation
+
+    All libraries are lazily imported to allow running in environments where they
+    are not available at import time. The provider supports streaming, tool calling,
+    and all standard Nodetool provider capabilities.
     """
 
     provider: Provider = Provider.MLX
@@ -143,11 +156,13 @@ class MLXProvider(BaseProvider):
     # Public API
     # ------------------------------------------------------------------
     def get_capabilities(self) -> set[ProviderCapability]:
-        """MLX provider supports message generation and text-to-speech."""
+        """MLX provider supports message generation, text-to-speech, and image generation."""
         return {
             ProviderCapability.GENERATE_MESSAGE,
             ProviderCapability.GENERATE_MESSAGES,
             ProviderCapability.TEXT_TO_SPEECH,
+            ProviderCapability.TEXT_TO_IMAGE,
+            ProviderCapability.IMAGE_TO_IMAGE,
         }
 
     async def generate_message(
@@ -264,6 +279,49 @@ class MLXProvider(BaseProvider):
         except Exception as e:
             log.error(f"Error getting MLX models: {e}")
             return []
+
+    async def get_available_image_models(self) -> List[ImageModel]:
+        """
+        Get available MLX image models.
+
+        Returns recommended FLUX models from MFlux nodes that can be used
+        for local image generation on Apple Silicon. Always returns models
+        (does not check if MLX is available or models are cached).
+
+        Returns:
+            List of ImageModel instances for MLX
+        """
+        # Recommended FLUX models from MFlux nodes (mflux.py)
+        models = [
+            # From MFlux.get_recommended_models()
+            ImageModel(
+                id="Freepik/flux.1-lite-8B-alpha",
+                name="FLUX.1 Lite 8B Alpha",
+                provider=Provider.MLX,
+            ),
+            ImageModel(
+                id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+                name="FLUX.1 Schnell 4-bit",
+                provider=Provider.MLX,
+            ),
+            ImageModel(
+                id="dhairyashil/FLUX.1-dev-mflux-4bit",
+                name="FLUX.1 Dev 4-bit",
+                provider=Provider.MLX,
+            ),
+            ImageModel(
+                id="filipstrand/FLUX.1-Krea-dev-mflux-4bit",
+                name="FLUX.1 Krea Dev 4-bit",
+                provider=Provider.MLX,
+            ),
+            ImageModel(
+                id="akx/FLUX.1-Kontext-dev-mflux-4bit",
+                name="FLUX.1 Kontext Dev 4-bit",
+                provider=Provider.MLX,
+            ),
+        ]
+
+        return models
 
     # ------------------------------------------------------------------
     # Tool emulation helpers
@@ -1307,7 +1365,9 @@ class MLXProvider(BaseProvider):
             ValueError: If required parameters are missing
             RuntimeError: If generation fails or platform is unsupported
         """
-        log.debug(f"Generating speech with MLX model: {model}, voice: {voice}, speed: {speed}")
+        log.debug(
+            f"Generating speech with MLX model: {model}, voice: {voice}, speed: {speed}"
+        )
 
         if sys.platform != "darwin":
             raise RuntimeError("MLX TTS requires macOS (Apple Silicon / MLX)")
@@ -1326,18 +1386,23 @@ class MLXProvider(BaseProvider):
                     from mlx_audio.tts.utils import load_model
                     from huggingface_hub import try_to_load_from_cache
                     import numpy as np
+
                     return load_model, try_to_load_from_cache, np
                 except Exception as exc:
                     raise RuntimeError(
                         "Install mlx-audio package to use MLX TTS functionality"
                     ) from exc
 
-            load_model, try_to_load_from_cache, np = await asyncio.to_thread(_import_mlx_tts)
+            load_model, try_to_load_from_cache, np = await asyncio.to_thread(
+                _import_mlx_tts
+            )
 
             # Check if model is cached
             model_path = try_to_load_from_cache(model, "config.json")
             if not model_path:
-                raise ValueError(f"Model {model} must be downloaded first (not found in cache)")
+                raise ValueError(
+                    f"Model {model} must be downloaded first (not found in cache)"
+                )
 
             load_target = os.path.dirname(model_path)
 
@@ -1378,6 +1443,7 @@ class MLXProvider(BaseProvider):
                     # Convert MLX array to numpy
                     if hasattr(audio, "astype") and hasattr(audio, "numpy"):
                         import mlx.core as mx
+
                         chunk = audio.astype(mx.float32).numpy()
                     else:
                         chunk = np.asarray(audio, dtype=np.float32)
@@ -1389,7 +1455,11 @@ class MLXProvider(BaseProvider):
                     raise ValueError("MLX TTS did not produce any audio")
 
                 # Concatenate all chunks
-                combined = all_chunks[0] if len(all_chunks) == 1 else np.concatenate(all_chunks)
+                combined = (
+                    all_chunks[0]
+                    if len(all_chunks) == 1
+                    else np.concatenate(all_chunks)
+                )
 
                 # Convert to int16 PCM
                 audio_int16 = np.clip(combined, -1.0, 1.0)
@@ -1405,6 +1475,233 @@ class MLXProvider(BaseProvider):
         except Exception as e:
             log.error(f"MLX TTS generation failed: {e}")
             raise RuntimeError(f"MLX TTS generation failed: {str(e)}")
+
+    async def text_to_image(
+        self,
+        params: TextToImageParams,
+        timeout_s: int | None = None,
+        context: ProcessingContext | None = None,
+    ) -> ImageBytes:
+        """Generate an image from a text prompt using MLX.
+
+        Args:
+            params: Text-to-image generation parameters
+            timeout_s: Optional timeout in seconds
+            context: Optional processing context
+
+        Returns:
+            Raw image bytes as PNG
+
+        Raises:
+            RuntimeError: If MLX is not available or generation fails
+        """
+        # Import mflux utilities
+        try:
+            from nodetool.mlx.flux_model_loader import (
+                load_flux_model,
+                ensure_mflux_available,
+                FluxModelNotAvailableError,
+            )
+            from mflux.config.config import Config
+        except ImportError as e:
+            raise RuntimeError(
+                "Install mflux package to use MLX image generation functionality"
+            ) from e
+
+        ensure_mflux_available()
+
+        if not params.prompt:
+            raise ValueError("Prompt cannot be empty for image generation.")
+
+        self._log_api_request("text_to_image", params)
+
+        try:
+            # Load model using centralized loader
+            model = await load_flux_model(
+                model_id=params.model.id,
+                quantize=4,  # Default to 4-bit quantization
+                task="flux",
+            )
+
+            loop = asyncio.get_running_loop()
+
+            def _generate() -> PIL.Image.Image:
+                # Prepare config
+                config_kwargs: dict[str, Any] = {
+                    "num_inference_steps": params.num_inference_steps or 4,
+                    "height": params.height or 1024,
+                    "width": params.width or 1024,
+                }
+
+                if params.guidance_scale is not None:
+                    config_kwargs["guidance"] = params.guidance_scale
+
+                # Filter to only allowed config fields
+                dataclass_fields = getattr(Config, "__dataclass_fields__", None)
+                if isinstance(dataclass_fields, dict):
+                    allowed = set(dataclass_fields.keys())
+                    config_kwargs = {
+                        key: value
+                        for key, value in config_kwargs.items()
+                        if key in allowed
+                    }
+
+                config = Config(**config_kwargs)
+
+                # Generate image
+                generated = model.generate_image(
+                    seed=params.seed if params.seed is not None else 0,
+                    prompt=params.prompt,
+                    config=config,
+                )
+                return generated.image
+
+            # Run generation in executor
+            pil_image = await loop.run_in_executor(None, _generate)
+
+            # Convert to bytes
+            img_buffer = BytesIO()
+            pil_image.save(img_buffer, format="PNG")
+            image_bytes = img_buffer.getvalue()
+
+            self.usage["total_requests"] += 1
+            self.usage["total_images"] += 1
+            self._log_api_response("text_to_image", 1)
+
+            return image_bytes
+
+        except Exception as e:
+            log.error(f"MLX text-to-image generation failed: {e}")
+            raise RuntimeError(f"MLX text-to-image generation failed: {e}")
+
+    async def image_to_image(
+        self,
+        image: ImageBytes,
+        params: ImageToImageParams,
+        timeout_s: int | None = None,
+        context: ProcessingContext | None = None,
+    ) -> ImageBytes:
+        """Transform an image based on a text prompt using MLX.
+
+        Args:
+            image: Input image as bytes
+            params: Image-to-image generation parameters
+            timeout_s: Optional timeout in seconds
+            context: Optional processing context
+
+        Returns:
+            Raw image bytes as PNG
+
+        Raises:
+            RuntimeError: If MLX is not available or generation fails
+        """
+        # Import mflux utilities
+        try:
+            from nodetool.mlx.flux_model_loader import (
+                load_flux_model,
+                ensure_mflux_available,
+                FluxModelNotAvailableError,
+            )
+            from mflux.config.config import Config
+        except ImportError as e:
+            raise RuntimeError(
+                "Install mflux package to use MLX image generation functionality"
+            ) from e
+
+        ensure_mflux_available()
+
+        if not params.prompt:
+            raise ValueError("Prompt cannot be empty for image-to-image generation.")
+
+        self._log_api_request("image_to_image", params)
+
+        try:
+            # Load model using centralized loader
+            model = await load_flux_model(
+                model_id=params.model.id,
+                quantize=4,  # Default to 4-bit quantization
+                task="flux",
+            )
+
+            # Load input image
+            base_image = PIL.Image.open(BytesIO(image))
+
+            loop = asyncio.get_running_loop()
+
+            def _generate() -> PIL.Image.Image:
+                # Prepare image
+                working_image = base_image.convert("RGB")
+                target_width = 16 * ((params.target_width or 1024) // 16)
+                target_height = 16 * ((params.target_height or 1024) // 16)
+
+                if working_image.size != (target_width, target_height):
+                    working_image = working_image.resize(
+                        (target_width, target_height), PIL.Image.Resampling.LANCZOS
+                    )
+
+                # Save to temp file (mflux requires file paths)
+                from pathlib import Path
+
+                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                    image_path = Path(tmp.name)
+                    working_image.save(image_path)
+
+                try:
+                    # Prepare config
+                    config_kwargs: dict[str, Any] = {
+                        "num_inference_steps": params.num_inference_steps or 8,
+                        "height": target_height,
+                        "width": target_width,
+                        "image_strength": params.strength or 0.4,
+                        "image_path": image_path,
+                    }
+
+                    if params.guidance_scale is not None:
+                        config_kwargs["guidance"] = params.guidance_scale
+
+                    # Filter to only allowed config fields
+                    dataclass_fields = getattr(Config, "__dataclass_fields__", None)
+                    if isinstance(dataclass_fields, dict):
+                        allowed = set(dataclass_fields.keys())
+                        config_kwargs = {
+                            key: value
+                            for key, value in config_kwargs.items()
+                            if key in allowed
+                        }
+
+                    config = Config(**config_kwargs)
+
+                    # Generate image
+                    generated = model.generate_image(
+                        seed=params.seed if params.seed is not None else 0,
+                        prompt=params.prompt,
+                        config=config,
+                    )
+                    return generated.image
+                finally:
+                    # Clean up temp file
+                    try:
+                        image_path.unlink()
+                    except FileNotFoundError:
+                        pass
+
+            # Run generation in executor
+            pil_image = await loop.run_in_executor(None, _generate)
+
+            # Convert to bytes
+            img_buffer = BytesIO()
+            pil_image.save(img_buffer, format="PNG")
+            image_bytes = img_buffer.getvalue()
+
+            self.usage["total_requests"] += 1
+            self.usage["total_images"] += 1
+            self._log_api_response("image_to_image", 1)
+
+            return image_bytes
+
+        except Exception as e:
+            log.error(f"MLX image-to-image generation failed: {e}")
+            raise RuntimeError(f"MLX image-to-image generation failed: {e}")
 
 
 def _coerce_bool(value: Any) -> bool:
