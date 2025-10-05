@@ -19,22 +19,43 @@ The provider supports:
 - Text-to-image and image-to-image generation
 """
 
-from __future__ import annotations
-
 import ast
 import asyncio
 import base64
 import json
 import logging
+from pathlib import Path
 import threading
 from dataclasses import dataclass
 import time
-from typing import Any, AsyncIterator, Callable, Iterable, List, Sequence
+from typing import (
+    Any,
+    AsyncGenerator,
+    AsyncIterator,
+    Callable,
+    Iterable,
+    List,
+    Sequence,
+)
 from io import BytesIO
 from urllib.parse import urlparse, unquote
 import os
 import sys
 import tempfile
+from nodetool.media.audio.audio_helpers import convert_audio_to_standard_format
+import numpy as np
+from huggingface_hub import try_to_load_from_cache
+from mlx import nn
+import mlx_lm
+from mlx_lm.generate import stream_generate
+from mlx_lm.tokenizer_utils import TokenizerWrapper
+import mlx_vlm
+import mlx_audio
+import mlx_lm.sample_utils
+import mlx_vlm.prompt_utils
+import mlx_vlm.utils
+import mlx_audio.tts.utils
+import mlx_audio.tts.generate
 
 from nodetool.providers.base import (
     BaseProvider,
@@ -45,9 +66,12 @@ from nodetool.agents.tools.base import Tool
 from nodetool.config.environment import Environment
 from nodetool.config.logging_config import get_logger
 from nodetool.metadata.types import (
+    ASRModel,
     Message,
     Provider,
     ToolCall,
+    TTSModel,
+    ASRModel,
     MessageContent,
     MessageTextContent,
     MessageImageContent,
@@ -59,7 +83,7 @@ from nodetool.metadata.types import (
 )
 from nodetool.workflows.types import Chunk
 from nodetool.io.uri_utils import fetch_uri_bytes_and_mime
-from nodetool.image.types import ImageBytes, TextToImageParams, ImageToImageParams
+from nodetool.providers.types import ImageBytes, TextToImageParams, ImageToImageParams
 from nodetool.workflows.processing_context import ProcessingContext
 
 import PIL.Image
@@ -72,33 +96,18 @@ log.setLevel(logging.DEBUG)
 DEFAULT_MLX_MODEL = "mlx-community/Llama-3.2-3B-Instruct-4bit"
 
 
-@dataclass(slots=True)
-class _MLXRuntime:
-    """Small container bundling the callables we need from mlx-lm."""
-
-    load: Callable[..., tuple[Any, Any]]
-    stream_generate: Callable[..., Iterable[Any]]
-    make_sampler: Callable[..., Any] | None = None
-
-
-@dataclass(slots=True)
-class _MLXVLMRuntime:
-    """Container bundling callables we need from mlx-vlm for vision models."""
-
-    load: Callable[..., tuple[Any, Any]]
-    generate: Callable[..., Any]
-    apply_chat_template: Callable[..., str]
-    load_config: Callable[..., Any] | None = None
-
-
 # Simple in-memory TTL cache for loaded MLX models: 5 minutes
 _CACHE_TTL_SECONDS: int = 300
-_MODEL_CACHE: dict[str, tuple[Any, Any, float]] = {}
+_MODEL_CACHE: dict[str, tuple[nn.Module, TokenizerWrapper, float]] = {}
 _MODEL_CACHE_LOCK = threading.Lock()
 
 # Separate cache for VLM models (mlx-vlm)
-_VLM_MODEL_CACHE: dict[str, tuple[Any, Any, Any, float]] = {}
+_VLM_MODEL_CACHE: dict[str, tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any, float]] = {}
 _VLM_MODEL_CACHE_LOCK = threading.Lock()
+
+# Separate cache for TTS models (mlx-audio)
+_TTS_MODEL_CACHE: dict[str, tuple[Any, float]] = {}
+_TTS_MODEL_CACHE_LOCK = threading.Lock()
 
 
 @register_provider(Provider.MLX)
@@ -124,31 +133,15 @@ class MLXProvider(BaseProvider):
         tokenizer_config: dict[str, Any] | None = None,
         sampler_defaults: dict[str, Any] | None = None,
         lazy_load: bool | None = None,
-        runtime: _MLXRuntime | None = None,
     ) -> None:
         super().__init__()
 
         env = Environment.get_environment()
         self.adapter_path = adapter_path or env.get("MLX_ADAPTER_PATH")
 
-        self.lazy_load = _coerce_bool(
-            lazy_load if lazy_load is not None else env.get("MLX_LAZY_LOAD", "0")
-        )
-
-        self._tokenizer_config = dict(tokenizer_config or {})
-        self._sampler_defaults = dict(sampler_defaults or {})
-
-        self._runtime = runtime
-        self._tokenizer: Any | None = None
-        self._model: Any | None = None
         self._load_lock = asyncio.Lock()
         self._generation_lock = asyncio.Lock()  # Serialize generation calls
 
-        # mlx-vlm runtime + cache holders
-        self._vlm_runtime: _MLXVLMRuntime | None = None
-        self._vlm_model: Any | None = None
-        self._vlm_processor: Any | None = None
-        self._vlm_config: Any | None = None
         self._vlm_load_lock = asyncio.Lock()
         self._vlm_generation_lock = asyncio.Lock()  # Serialize VLM generation calls
 
@@ -163,6 +156,7 @@ class MLXProvider(BaseProvider):
             ProviderCapability.TEXT_TO_SPEECH,
             ProviderCapability.TEXT_TO_IMAGE,
             ProviderCapability.IMAGE_TO_IMAGE,
+            ProviderCapability.AUTOMATIC_SPEECH_RECOGNITION,
         }
 
     async def generate_message(
@@ -231,31 +225,6 @@ class MLXProvider(BaseProvider):
         # otherwise specified.
         return 8192
 
-    def has_tool_support(self, model: str) -> bool:
-        """Return True if the given model supports tools/function calling.
-
-        For MLX models, tool support is determined by checking if the tokenizer
-        has the `has_tool_calling` attribute set to True.
-
-        Args:
-            model: Model identifier.
-
-        Returns:
-            True if the tokenizer is loaded and has `has_tool_calling=True`,
-            or True by default if the model is not yet loaded (optimistic default).
-        """
-        # If tokenizer is already loaded, check its capabilities
-        if self._tokenizer is not None:
-            has_tools = getattr(self._tokenizer, "has_tool_calling", False)
-            log.debug(f"Model {model} has_tool_calling: {has_tools} (tokenizer loaded)")
-            return has_tools
-
-        # If not loaded yet, default to True (most modern MLX models support tools)
-        # The actual check will happen when the model loads
-        log.debug(
-            f"Model {model} tool support unknown (not loaded yet), defaulting to True"
-        )
-        return True
 
     async def get_available_language_models(self) -> List[LanguageModel]:
         """
@@ -322,6 +291,387 @@ class MLXProvider(BaseProvider):
         ]
 
         return models
+
+    async def get_available_asr_models(self) -> List[ASRModel]:
+        """
+        Get available MLX ASR models.
+        """
+        models = [
+            ASRModel(
+                id="mlx-community/whisper-tiny-mlx",
+                name="Whisper Tiny",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/whisper-base-mlx",
+                name="Whisper Base",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/whisper-base.en-mlx",
+                name="Whisper Base EN",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/whisper-small-mlx",
+                name="Whisper Small",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/whisper-small.en-mlx",
+                name="Whisper Small EN",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/whisper-medium-mlx",
+                name="Whisper Medium",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/whisper-medium.en-mlx",
+                name="Whisper Medium EN",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/whisper-large-v3-mlx",
+                name="Whisper Large V3",
+                provider=Provider.MLX,
+            ),
+        ]
+        return models
+
+    async def get_available_tts_models(self) -> List[TTSModel]:
+        """
+        Get available MLX TTS models.
+
+        Returns TTS models from mlx-audio nodes that can be used for
+        local text-to-speech generation on Apple Silicon.
+
+        Returns:
+            List of TTSModel instances for MLX TTS
+        """
+        # Kokoro TTS models (from KokoroTTS.Model enum)
+        kokoro_models = [
+            TTSModel(
+                id="prince-canuma/Kokoro-82M",
+                name="Kokoro TTS 82M",
+                provider=Provider.MLX,
+                voices=[
+                    "af_alloy",
+                    "af_aoede",
+                    "af_bella",
+                    "af_heart",
+                    "af_jessica",
+                    "af_kore",
+                    "af_nicole",
+                    "af_nova",
+                    "af_river",
+                    "af_sarah",
+                    "af_sky",
+                    "am_adam",
+                    "am_echo",
+                    "am_eric",
+                    "am_fenrir",
+                    "am_liam",
+                    "am_michael",
+                    "am_onyx",
+                    "am_puck",
+                    "am_santa",
+                    "bf_alice",
+                    "bf_emma",
+                    "bf_isabella",
+                    "bf_lily",
+                    "bm_daniel",
+                    "bm_fable",
+                    "bm_george",
+                    "bm_lewis",
+                    "ef_dora",
+                    "em_alex",
+                    "em_santa",
+                    "ff_siwis",
+                    "hf_alpha",
+                    "hf_beta",
+                    "hm_omega",
+                    "hm_psi",
+                    "if_sara",
+                    "im_nicola",
+                    "jf_alpha",
+                    "jf_gongitsune",
+                    "jf_nezumi",
+                    "jf_tebukuro",
+                    "jm_kumo",
+                    "pf_dora",
+                    "pm_alex",
+                    "pm_santa",
+                    "zf_xiaobei",
+                    "zf_xiaoni",
+                    "zf_xiaoxiao",
+                    "zf_xiaoyi",
+                ],
+            ),
+            TTSModel(
+                id="mlx-community/Kokoro-82M-bf16",
+                name="Kokoro TTS 82M BF16",
+                provider=Provider.MLX,
+                voices=[
+                    "af_alloy",
+                    "af_aoede",
+                    "af_bella",
+                    "af_heart",
+                    "af_jessica",
+                    "af_kore",
+                    "af_nicole",
+                    "af_nova",
+                    "af_river",
+                    "af_sarah",
+                    "af_sky",
+                    "am_adam",
+                    "am_echo",
+                    "am_eric",
+                    "am_fenrir",
+                    "am_liam",
+                    "am_michael",
+                    "am_onyx",
+                    "am_puck",
+                    "am_santa",
+                    "bf_alice",
+                    "bf_emma",
+                    "bf_isabella",
+                    "bf_lily",
+                    "bm_daniel",
+                    "bm_fable",
+                    "bm_george",
+                    "bm_lewis",
+                    "ef_dora",
+                    "em_alex",
+                    "em_santa",
+                    "ff_siwis",
+                    "hf_alpha",
+                    "hf_beta",
+                    "hm_omega",
+                    "hm_psi",
+                    "if_sara",
+                    "im_nicola",
+                    "jf_alpha",
+                    "jf_gongitsune",
+                    "jf_nezumi",
+                    "jf_tebukuro",
+                    "jm_kumo",
+                    "pf_dora",
+                    "pm_alex",
+                    "pm_santa",
+                    "zf_xiaobei",
+                    "zf_xiaoni",
+                    "zf_xiaoxiao",
+                    "zf_xiaoyi",
+                ],
+            ),
+            TTSModel(
+                id="mlx-community/Kokoro-82M-4bit",
+                name="Kokoro TTS 82M 4-bit",
+                provider=Provider.MLX,
+                voices=[
+                    "af_alloy",
+                    "af_aoede",
+                    "af_bella",
+                    "af_heart",
+                    "af_jessica",
+                    "af_kore",
+                    "af_nicole",
+                    "af_nova",
+                    "af_river",
+                    "af_sarah",
+                    "af_sky",
+                    "am_adam",
+                    "am_echo",
+                    "am_eric",
+                    "am_fenrir",
+                    "am_liam",
+                    "am_michael",
+                    "am_onyx",
+                    "am_puck",
+                    "am_santa",
+                    "bf_alice",
+                    "bf_emma",
+                    "bf_isabella",
+                    "bf_lily",
+                    "bm_daniel",
+                    "bm_fable",
+                    "bm_george",
+                    "bm_lewis",
+                    "ef_dora",
+                    "em_alex",
+                    "em_santa",
+                    "ff_siwis",
+                    "hf_alpha",
+                    "hf_beta",
+                    "hm_omega",
+                    "hm_psi",
+                    "if_sara",
+                    "im_nicola",
+                    "jf_alpha",
+                    "jf_gongitsune",
+                    "jf_nezumi",
+                    "jf_tebukuro",
+                    "jm_kumo",
+                    "pf_dora",
+                    "pm_alex",
+                    "pm_santa",
+                    "zf_xiaobei",
+                    "zf_xiaoni",
+                    "zf_xiaoxiao",
+                    "zf_xiaoyi",
+                ],
+            ),
+            TTSModel(
+                id="mlx-community/Kokoro-82M-6bit",
+                name="Kokoro TTS 82M 6-bit",
+                provider=Provider.MLX,
+                voices=[
+                    "af_alloy",
+                    "af_aoede",
+                    "af_bella",
+                    "af_heart",
+                    "af_jessica",
+                    "af_kore",
+                    "af_nicole",
+                    "af_nova",
+                    "af_river",
+                    "af_sarah",
+                    "af_sky",
+                    "am_adam",
+                    "am_echo",
+                    "am_eric",
+                    "am_fenrir",
+                    "am_liam",
+                    "am_michael",
+                    "am_onyx",
+                    "am_puck",
+                    "am_santa",
+                    "bf_alice",
+                    "bf_emma",
+                    "bf_isabella",
+                    "bf_lily",
+                    "bm_daniel",
+                    "bm_fable",
+                    "bm_george",
+                    "bm_lewis",
+                    "ef_dora",
+                    "em_alex",
+                    "em_santa",
+                    "ff_siwis",
+                    "hf_alpha",
+                    "hf_beta",
+                    "hm_omega",
+                    "hm_psi",
+                    "if_sara",
+                    "im_nicola",
+                    "jf_alpha",
+                    "jf_gongitsune",
+                    "jf_nezumi",
+                    "jf_tebukuro",
+                    "jm_kumo",
+                    "pf_dora",
+                    "pm_alex",
+                    "pm_santa",
+                    "zf_xiaobei",
+                    "zf_xiaoni",
+                    "zf_xiaoxiao",
+                    "zf_xiaoyi",
+                ],
+            ),
+            TTSModel(
+                id="mlx-community/Kokoro-82M-8bit",
+                name="Kokoro TTS 82M 8-bit",
+                provider=Provider.MLX,
+                voices=[
+                    "af_alloy",
+                    "af_aoede",
+                    "af_bella",
+                    "af_heart",
+                    "af_jessica",
+                    "af_kore",
+                    "af_nicole",
+                    "af_nova",
+                    "af_river",
+                    "af_sarah",
+                    "af_sky",
+                    "am_adam",
+                    "am_echo",
+                    "am_eric",
+                    "am_fenrir",
+                    "am_liam",
+                    "am_michael",
+                    "am_onyx",
+                    "am_puck",
+                    "am_santa",
+                    "bf_alice",
+                    "bf_emma",
+                    "bf_isabella",
+                    "bf_lily",
+                    "bm_daniel",
+                    "bm_fable",
+                    "bm_george",
+                    "bm_lewis",
+                    "ef_dora",
+                    "em_alex",
+                    "em_santa",
+                    "ff_siwis",
+                    "hf_alpha",
+                    "hf_beta",
+                    "hm_omega",
+                    "hm_psi",
+                    "if_sara",
+                    "im_nicola",
+                    "jf_alpha",
+                    "jf_gongitsune",
+                    "jf_nezumi",
+                    "jf_tebukuro",
+                    "jm_kumo",
+                    "pf_dora",
+                    "pm_alex",
+                    "pm_santa",
+                    "zf_xiaobei",
+                    "zf_xiaoni",
+                    "zf_xiaoxiao",
+                    "zf_xiaoyi",
+                ],
+            ),
+        ]
+
+        # Sesame TTS models (from SesameTTS.Model enum) - voice cloning models
+        sesame_models = [
+            TTSModel(
+                id="mlx-community/csm-1b",
+                name="Sesame TTS 1B",
+                provider=Provider.MLX,
+                voices=[],  # Voice cloning - uses reference audio
+            ),
+            TTSModel(
+                id="mlx-community/csm-1b-8bit",
+                name="Sesame TTS 1B 8-bit",
+                provider=Provider.MLX,
+                voices=[],  # Voice cloning - uses reference audio
+            ),
+        ]
+
+        # Spark TTS models (from SparkTTS.Model enum)
+        spark_models = [
+            TTSModel(
+                id="mlx-community/Spark-TTS-0.5B-bf16",
+                name="Spark TTS 0.5B BF16",
+                provider=Provider.MLX,
+                voices=[],  # Spark uses speed/pitch/gender presets instead of voices
+            ),
+            TTSModel(
+                id="mlx-community/Spark-TTS-0.5B-8bit",
+                name="Spark TTS 0.5B 8-bit",
+                provider=Provider.MLX,
+                voices=[],  # Spark uses speed/pitch/gender presets instead of voices
+            ),
+        ]
+
+        return kokoro_models + sesame_models + spark_models
 
     # ------------------------------------------------------------------
     # Tool emulation helpers
@@ -512,12 +862,10 @@ class MLXProvider(BaseProvider):
             sorted(list(kwargs.keys())),
         )
 
-        await self._ensure_model_loaded(model)
-        assert self._tokenizer is not None
-        assert self._model is not None
+        mdl, tokenizer = await self._load_model(model)
 
         # Determine if we need tool emulation
-        use_tool_emulation = len(tools) > 0 and not self.has_tool_support(model)
+        use_tool_emulation = len(tools) > 0 and not tokenizer.has_tool_calling
         if use_tool_emulation:
             log.info(f"Using tool emulation for model {model}")
 
@@ -565,16 +913,14 @@ class MLXProvider(BaseProvider):
             ]
             tool_defs = self._convert_tools(tools)
 
-        prompt = await asyncio.to_thread(
-            self._tokenizer.apply_chat_template,
+        prompt = tokenizer.apply_chat_template(  # pyright: ignore[reportCallIssue]
             converted_messages,
             tool_defs or None,
             add_generation_prompt=True,
         )
 
-        runtime = await self._get_runtime()
         runtime_overrides = dict(kwargs)
-        sampler = self._build_sampler(runtime, runtime_overrides)
+        sampler = self._build_sampler(runtime_overrides)
         stream_kwargs = self._build_stream_kwargs(runtime_overrides)
         if sampler is not None:
             stream_kwargs["sampler"] = sampler
@@ -598,9 +944,9 @@ class MLXProvider(BaseProvider):
                     },
                 )
                 try:
-                    for response in runtime.stream_generate(
-                        self._model,
-                        self._tokenizer,
+                    for response in stream_generate(
+                        mdl,
+                        tokenizer,
                         prompt,
                         max_tokens=max_tokens,
                         **stream_kwargs,
@@ -658,7 +1004,7 @@ class MLXProvider(BaseProvider):
 
                     # Process native tool calls if supported
                     segments, parsed_calls = self._process_response_text(
-                        response.text, tool_state
+                        response.text, tool_state, tokenizer
                     )
 
                     # Accumulate content for emulation
@@ -724,59 +1070,31 @@ class MLXProvider(BaseProvider):
             self._generation_lock.release()
             log.debug("MLX _stream_chat end | model=%s", model)
 
-    async def _ensure_model_loaded(self, model: str) -> None:
+    async def _load_model(self, model: str) -> tuple[nn.Module, TokenizerWrapper]:
         async with self._load_lock:
             cached = self._get_cached_model(model)
             if cached is not None:
-                self._model, self._tokenizer = cached
-                return
+                return cached
 
-            runtime = await self._get_runtime()
-
-            def _load() -> tuple[Any, Any]:
-                return runtime.load(
+            def _load() -> tuple[nn.Module, TokenizerWrapper]:
+                return mlx_lm.utils.load(
                     model,
-                    tokenizer_config=self._tokenizer_config,
                     adapter_path=self.adapter_path,
-                    lazy=self.lazy_load,
                 )
 
-            self._model, self._tokenizer = await asyncio.to_thread(_load)
-            self._set_cached_model(model, self._model, self._tokenizer)
+            mdl, tokenizer = await asyncio.to_thread(_load)
+            self._set_cached_model(model, mdl, tokenizer)
             log.info("Loaded MLX model %s", model)
-
-    async def _get_runtime(self) -> _MLXRuntime:
-        if self._runtime is not None:
-            return self._runtime
-
-        def _import_runtime() -> _MLXRuntime:
-            try:
-                import importlib
-
-                mlx_module = importlib.import_module("mlx_lm")
-                sample_utils = importlib.import_module("mlx_lm.sample_utils")
-                return _MLXRuntime(
-                    load=mlx_module.load,
-                    stream_generate=mlx_module.stream_generate,
-                    make_sampler=getattr(sample_utils, "make_sampler", None),
-                )
-            except Exception as exc:  # pragma: no cover - import failure
-                raise RuntimeError(
-                    "Install the nodetool huggingface pack using the nodetool package manager."
-                ) from exc
-
-        self._runtime = await asyncio.to_thread(_import_runtime)
-        return self._runtime
+            return mdl, tokenizer
 
     # ------------------------------------------------------------------
     # mlx-vlm runtime and flow (vision models)
     # ------------------------------------------------------------------
     def _cache_key_vlm(self, model: str) -> str:
         adapter = self.adapter_path or ""
-        lazy_flag = "1" if self.lazy_load else "0"
-        return f"vlm|{model}|{adapter}|lazy={lazy_flag}"
+        return f"vlm|{model}|{adapter}"
 
-    def _get_cached_vlm_model(self, model: str) -> tuple[Any, Any, Any] | None:
+    def _get_cached_vlm_model(self, model: str) -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any] | None:
         key = self._cache_key_vlm(model)
         now = time.monotonic()
         with _VLM_MODEL_CACHE_LOCK:
@@ -789,62 +1107,33 @@ class MLXProvider(BaseProvider):
                 return None
             return mdl, proc, cfg
 
-    def _set_cached_vlm_model(self, model: str, mdl: Any, proc: Any, cfg: Any) -> None:
+    def _set_cached_vlm_model(self, model: str, mdl: nn.Module, proc: mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, cfg: Any) -> None:
         key = self._cache_key_vlm(model)
         expires_at = time.monotonic() + _CACHE_TTL_SECONDS
         with _VLM_MODEL_CACHE_LOCK:
             _VLM_MODEL_CACHE[key] = (mdl, proc, cfg, expires_at)
 
-    async def _get_vlm_runtime(self) -> _MLXVLMRuntime:
-        if self._vlm_runtime is not None:
-            return self._vlm_runtime
-
-        def _import_vlm_runtime() -> _MLXVLMRuntime:
-            try:
-                import importlib
-
-                vlm_module = importlib.import_module("mlx_vlm")
-                prompt_utils = importlib.import_module("mlx_vlm.prompt_utils")
-                utils_module = importlib.import_module("mlx_vlm.utils")
-
-                return _MLXVLMRuntime(
-                    load=getattr(vlm_module, "load"),
-                    generate=getattr(vlm_module, "generate"),
-                    apply_chat_template=getattr(prompt_utils, "apply_chat_template"),
-                    load_config=getattr(utils_module, "load_config", None),
-                )
-            except Exception as exc:  # pragma: no cover - import failure
-                raise RuntimeError(
-                    "Install the nodetool huggingface pack using the nodetool package manager."
-                ) from exc
-
-        self._vlm_runtime = await asyncio.to_thread(_import_vlm_runtime)
-        return self._vlm_runtime
-
-    async def _ensure_vlm_model_loaded(self, model: str) -> None:
+    async def _load_vlm_model(self, model: str) -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any]:
         async with self._vlm_load_lock:
             cached = self._get_cached_vlm_model(model)
             if cached is not None:
-                self._vlm_model, self._vlm_processor, self._vlm_config = cached
-                return
+                return cached
 
-            runtime = await self._get_vlm_runtime()
-
-            def _load() -> tuple[Any, Any, Any]:
-                mdl, proc = runtime.load(model)
+            def _load() -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any]:
+                mdl, proc = mlx_vlm.load(model)
                 cfg = getattr(mdl, "config", None)
-                if cfg is None and runtime.load_config is not None:
-                    cfg = runtime.load_config(model)
-                # proc.image_processor.patch_size = 14
+                if cfg is None and mlx_vlm.utils.load_config is not None:
+                    cfg = mlx_vlm.utils.load_config(model)
                 return mdl, proc, cfg
 
-            self._vlm_model, self._vlm_processor, self._vlm_config = (
+            mdl, proc, cfg = (
                 await asyncio.to_thread(_load)
             )
             self._set_cached_vlm_model(
-                model, self._vlm_model, self._vlm_processor, self._vlm_config
+                model, mdl, proc, cfg
             )
             log.info("Loaded MLX-VLM model %s", model)
+            return mdl, proc, cfg
 
     def _is_vision_model(self, model: str) -> bool:
         name = (model or "").lower()
@@ -869,14 +1158,12 @@ class MLXProvider(BaseProvider):
         # be permissive if both image/audio present and model is vision
         return any(k in name for k in keywords) or self._is_vision_model(model)
 
-    def _ensure_vlm_processor_ready(self) -> None:
+    def _ensure_vlm_processor_ready(self, proc: mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, cfg: Any) -> None:
         """Ensure mlx-vlm processor has necessary attributes set.
 
         Some processors (e.g., LLaVA) expect a non-None patch_size. If missing,
         attempt to infer from model config or fall back to a sane default (14).
         """
-        proc = self._vlm_processor
-        cfg = self._vlm_config
         if proc is None:
             return
         image_proc = getattr(proc, "image_processor", None)
@@ -1045,10 +1332,7 @@ class MLXProvider(BaseProvider):
             len(image_parts),
             len(audio_parts),
         )
-        await self._ensure_vlm_model_loaded(model)
-        assert self._vlm_model is not None
-        assert self._vlm_processor is not None
-        assert self._vlm_config is not None
+        mdl, proc, cfg = await self._load_vlm_model(model)
 
         prompt_text = self._extract_last_user_prompt(messages)
         images = await self._prepare_vlm_images(image_parts)
@@ -1057,15 +1341,12 @@ class MLXProvider(BaseProvider):
             "MLX-VLM prepared assets | images=%d audios=%d", len(images), len(audios)
         )
 
-        runtime = await self._get_vlm_runtime()
-
         # Defensive processor normalization
-        self._ensure_vlm_processor_ready()
+        self._ensure_vlm_processor_ready(proc, cfg)
 
-        formatted_prompt = await asyncio.to_thread(
-            runtime.apply_chat_template,
-            self._vlm_processor,
-            self._vlm_config,
+        formatted_prompt = mlx_vlm.prompt_utils.apply_chat_template(
+            proc,
+            cfg,
             prompt_text,
             num_images=len(images),
             num_audios=len(audios),
@@ -1077,9 +1358,9 @@ class MLXProvider(BaseProvider):
 
         def _run_generate() -> str:
             # Keep params conservative; mlx-vlm's generate may accept more kwargs
-            result = runtime.generate(
-                self._vlm_model,
-                self._vlm_processor,
+            result = mlx_vlm.generate.generate(
+                mdl,
+                proc,
                 formatted_prompt,
                 image=images if images else None,
                 audio=audios if audios else None,
@@ -1121,10 +1402,9 @@ class MLXProvider(BaseProvider):
     # ------------------------------------------------------------------
     def _cache_key(self, model: str) -> str:
         adapter = self.adapter_path or ""
-        lazy_flag = "1" if self.lazy_load else "0"
-        return f"{model}|{adapter}|lazy={lazy_flag}"
+        return f"{model}|{adapter}"
 
-    def _get_cached_model(self, model: str) -> tuple[Any, Any] | None:
+    def _get_cached_model(self, model: str) -> tuple[nn.Module, TokenizerWrapper] | None:
         key = self._cache_key(model)
         now = time.monotonic()
         with _MODEL_CACHE_LOCK:
@@ -1138,11 +1418,74 @@ class MLXProvider(BaseProvider):
                 return None
             return mdl, tok
 
-    def _set_cached_model(self, model: str, mdl: Any, tok: Any) -> None:
+    def _set_cached_model(self, model: str, mdl: nn.Module, tok: TokenizerWrapper) -> None:
         key = self._cache_key(model)
         expires_at = time.monotonic() + _CACHE_TTL_SECONDS
         with _MODEL_CACHE_LOCK:
             _MODEL_CACHE[key] = (mdl, tok, expires_at)
+
+    # ------------------------------------------------------------------
+    # TTS model caching helpers
+    # ------------------------------------------------------------------
+    def _get_cached_tts_model(self, model: str) -> Any | None:
+        """Get cached TTS model if available and not expired."""
+        now = time.monotonic()
+        with _TTS_MODEL_CACHE_LOCK:
+            entry = _TTS_MODEL_CACHE.get(model)
+            if not entry:
+                return None
+            tts_model, expires_at = entry
+            if expires_at < now:
+                # Expired; evict
+                _TTS_MODEL_CACHE.pop(model, None)
+                return None
+            return tts_model
+
+    def _set_cached_tts_model(self, model: str, tts_model: Any) -> None:
+        """Cache a TTS model with TTL expiration."""
+        expires_at = time.monotonic() + _CACHE_TTL_SECONDS
+        with _TTS_MODEL_CACHE_LOCK:
+            _TTS_MODEL_CACHE[model] = (tts_model, expires_at)
+
+    async def _load_tts_model(self, model: str) -> Any:
+        """Load TTS model from cache or filesystem.
+
+        Args:
+            model: Model repository ID (e.g., "mlx-community/Kokoro-82M-bf16")
+
+        Returns:
+            Loaded TTS model
+
+        Raises:
+            ValueError: If model is not found in HuggingFace cache
+        """
+        # Check if model is already cached
+        tts_model = self._get_cached_tts_model(model)
+
+        if tts_model is None:
+            # Model not in cache, load it
+            model_path = try_to_load_from_cache(model, "config.json")
+            if not model_path:
+                raise ValueError(
+                    f"Model {model} must be downloaded first (not found in cache)"
+                )
+
+            load_target = os.path.dirname(model_path)
+
+            # Load the TTS model
+            def _load():
+                log.info(f"Loading MLX TTS model {model}")
+                return mlx_audio.tts.utils.load_model(Path(load_target))
+
+            tts_model = await asyncio.to_thread(_load)
+
+            # Cache the loaded model
+            self._set_cached_tts_model(model, tts_model)
+            log.debug(f"Cached TTS model {model}")
+        else:
+            log.debug(f"Using cached TTS model {model}")
+
+        return tts_model
 
     def _build_stream_kwargs(self, kwargs: dict[str, Any]) -> dict[str, Any]:
         stream_kwargs = dict(kwargs)
@@ -1159,34 +1502,19 @@ class MLXProvider(BaseProvider):
             stream_kwargs.pop(key, None)
         return stream_kwargs
 
-    def _build_sampler(
-        self, runtime: _MLXRuntime, kwargs: dict[str, Any]
-    ) -> Any | None:
-        if runtime.make_sampler is None:
+    def _build_sampler(self, kwargs: dict[str, Any]) -> Any | None:
+        if mlx_lm.sample_utils.make_sampler is None:
             return None
 
         sampler_params = {
-            "temp": self._sampler_defaults.get("temp", 0.0),
-            "top_p": self._sampler_defaults.get("top_p", 0.0),
-            "min_p": self._sampler_defaults.get("min_p", 0.0),
-            "min_tokens_to_keep": self._sampler_defaults.get("min_tokens_to_keep", 1),
-            "top_k": self._sampler_defaults.get("top_k", 0),
-            "xtc_probability": self._sampler_defaults.get("xtc_probability", 0.0),
-            "xtc_threshold": self._sampler_defaults.get("xtc_threshold", 0.0),
+            "temp": kwargs.pop("temperature", 0.5),
+            "top_p": kwargs.pop("top_p", 0.95),
+            "top_k": kwargs.pop("top_k", 50),
+            "min_p": kwargs.pop("min_p", 0.0),
+            "min_tokens_to_keep": kwargs.pop("min_tokens_to_keep", 1),
+            "xtc_probability": kwargs.pop("xtc_probability", 0.0),
+            "xtc_threshold": kwargs.pop("xtc_threshold", 0.0),
         }
-
-        overrides = {
-            "temp": kwargs.pop("temperature", None),
-            "top_p": kwargs.pop("top_p", None),
-            "top_k": kwargs.pop("top_k", None),
-            "min_p": kwargs.pop("min_p", None),
-            "min_tokens_to_keep": kwargs.pop("min_tokens_to_keep", None),
-            "xtc_probability": kwargs.pop("xtc_probability", None),
-            "xtc_threshold": kwargs.pop("xtc_threshold", None),
-        }
-        for key, value in overrides.items():
-            if value is not None:
-                sampler_params[key] = value
 
         # When temperature is explicitly zero we avoid allocating a sampler.
         if (
@@ -1195,7 +1523,7 @@ class MLXProvider(BaseProvider):
         ):
             return None
 
-        return runtime.make_sampler(**sampler_params)
+        return mlx_lm.sample_utils.make_sampler(**sampler_params)
 
     def _update_usage(self, response: Any) -> None:
         prompt_tokens = int(getattr(response, "prompt_tokens", 0))
@@ -1260,15 +1588,16 @@ class MLXProvider(BaseProvider):
         self,
         text: str,
         tool_state: dict[str, Any],
+        tokenizer: TokenizerWrapper,
     ) -> tuple[list[str], list[ToolCall]]:
         if not text:
             return [], []
 
-        if not getattr(self._tokenizer, "has_tool_calling", False):
+        if not tokenizer.has_tool_calling:
             return [text], []
 
-        start_token = getattr(self._tokenizer, "tool_call_start", None)
-        end_token = getattr(self._tokenizer, "tool_call_end", None)
+        start_token = getattr(tokenizer, "tool_call_start", None)
+        end_token = getattr(tokenizer, "tool_call_end", None)
         if not start_token or not end_token:
             return [text], []
         segments: list[str] = []
@@ -1346,8 +1675,10 @@ class MLXProvider(BaseProvider):
         timeout_s: int | None = None,
         context: Any = None,
         **kwargs: Any,
-    ) -> bytes:
-        """Generate speech audio from text using MLX text-to-speech models.
+    ) -> AsyncGenerator[Any, None]:  # Returns np.ndarray[np.int16]
+        """Generate speech audio from text using MLX text-to-speech models with streaming.
+
+        MLX TTS models support true streaming, yielding audio chunks as they're generated.
 
         Args:
             text: Input text to convert to speech
@@ -1358,15 +1689,15 @@ class MLXProvider(BaseProvider):
             context: Optional processing context
             **kwargs: Additional MLX TTS parameters (e.g., temperature, language)
 
-        Returns:
-            Raw audio bytes (16-bit PCM WAV format)
+        Yields:
+            numpy.ndarray: Int16 audio chunks at 24kHz mono
 
         Raises:
             ValueError: If required parameters are missing
             RuntimeError: If generation fails or platform is unsupported
         """
         log.debug(
-            f"Generating speech with MLX model: {model}, voice: {voice}, speed: {speed}"
+            f"Generating streaming speech with MLX model: {model}, voice: {voice}, speed: {speed}"
         )
 
         if sys.platform != "darwin":
@@ -1380,44 +1711,14 @@ class MLXProvider(BaseProvider):
         speed = max(0.5, min(2.0, speed))
 
         try:
-            # Lazy import mlx-audio TTS utilities
-            def _import_mlx_tts():
-                try:
-                    from mlx_audio.tts.utils import load_model
-                    from huggingface_hub import try_to_load_from_cache
-                    import numpy as np
+            # Load TTS model (from cache or filesystem)
+            tts_model = await self._load_tts_model(model)
 
-                    return load_model, try_to_load_from_cache, np
-                except Exception as exc:
-                    raise RuntimeError(
-                        "Install mlx-audio package to use MLX TTS functionality"
-                    ) from exc
-
-            load_model, try_to_load_from_cache, np = await asyncio.to_thread(
-                _import_mlx_tts
-            )
-
-            # Check if model is cached
-            model_path = try_to_load_from_cache(model, "config.json")
-            if not model_path:
-                raise ValueError(
-                    f"Model {model} must be downloaded first (not found in cache)"
-                )
-
-            load_target = os.path.dirname(model_path)
-
-            # Load the TTS model
-            def _load_tts_model():
-                log.info(f"Loading MLX TTS model {model}")
-                return load_model(load_target)
-
-            tts_model = await asyncio.to_thread(_load_tts_model)
-
-            # Prepare generation parameters
+            # Prepare generation parameters - enable streaming
             gen_params = {
                 "text": text,
                 "speed": speed,
-                "stream": False,
+                "stream": True,  # Enable streaming
                 "verbose": False,
             }
 
@@ -1433,44 +1734,57 @@ class MLXProvider(BaseProvider):
             if "language" in kwargs:
                 gen_params["lang_code"] = kwargs["language"]
 
-            # Generate audio
-            def _generate_audio():
-                all_chunks = []
-                for result in tts_model.generate(**gen_params):
-                    audio = getattr(result, "audio", None)
-                    if audio is None:
-                        continue
-                    # Convert MLX array to numpy
-                    if hasattr(audio, "astype") and hasattr(audio, "numpy"):
-                        import mlx.core as mx
+            # Stream audio chunks
+            queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
+            loop = asyncio.get_running_loop()
 
-                        chunk = audio.astype(mx.float32).numpy()
-                    else:
-                        chunk = np.asarray(audio, dtype=np.float32)
+            def _stream_audio():
+                """Stream audio chunks in background thread."""
+                try:
+                    assert tts_model.generate is not None
+                    for result in tts_model.generate(**gen_params):
+                        audio = result.audio
+                        if audio is None:
+                            continue
 
-                    if chunk.size > 0:
-                        all_chunks.append(chunk)
+                        # Convert MLX array to numpy float32
+                        if hasattr(audio, "astype") and hasattr(audio, "numpy"):
+                            chunk_float = audio.astype(np.float32).numpy()
+                        else:
+                            chunk_float = np.asarray(audio, dtype=np.float32)
 
-                if not all_chunks:
-                    raise ValueError("MLX TTS did not produce any audio")
+                        chunk_int16 = np.clip(chunk_float, -1.0, 1.0)
+                        chunk_int16 = (chunk_int16 * 32767.0).astype(np.int16)
 
-                # Concatenate all chunks
-                combined = (
-                    all_chunks[0]
-                    if len(all_chunks) == 1
-                    else np.concatenate(all_chunks)
-                )
+                        if chunk_float.size > 0:
+                            # Put float chunk in queue
+                            asyncio.run_coroutine_threadsafe(
+                                queue.put(("chunk", chunk_int16)), loop
+                            ).result()
 
-                # Convert to int16 PCM
-                audio_int16 = np.clip(combined, -1.0, 1.0)
-                audio_int16 = (audio_int16 * 32767.0).astype(np.int16)
+                    # Signal completion
+                    asyncio.run_coroutine_threadsafe(
+                        queue.put(("done", None)), loop
+                    ).result()
 
-                return audio_int16.tobytes()
+                except Exception as exc:
+                    log.exception(f"MLX TTS streaming error: {exc}")
+                    asyncio.run_coroutine_threadsafe(
+                        queue.put(("error", exc)), loop
+                    ).result()
 
-            audio_bytes = await asyncio.to_thread(_generate_audio)
+            # Start streaming thread
+            threading.Thread(target=_stream_audio, daemon=True).start()
 
-            log.debug(f"Generated {len(audio_bytes)} bytes of audio")
-            return audio_bytes
+            while True:
+                kind, payload = await queue.get()
+
+                if kind == "chunk":
+                    yield payload
+                elif kind == "error":
+                    raise payload
+                elif kind == "done":
+                    break
 
         except Exception as e:
             log.error(f"MLX TTS generation failed: {e}")
@@ -1512,8 +1826,6 @@ class MLXProvider(BaseProvider):
 
         if not params.prompt:
             raise ValueError("Prompt cannot be empty for image generation.")
-
-        self._log_api_request("text_to_image", params)
 
         try:
             # Load model using centralized loader
@@ -1564,10 +1876,6 @@ class MLXProvider(BaseProvider):
             pil_image.save(img_buffer, format="PNG")
             image_bytes = img_buffer.getvalue()
 
-            self.usage["total_requests"] += 1
-            self.usage["total_images"] += 1
-            self._log_api_response("text_to_image", 1)
-
             return image_bytes
 
         except Exception as e:
@@ -1612,8 +1920,6 @@ class MLXProvider(BaseProvider):
 
         if not params.prompt:
             raise ValueError("Prompt cannot be empty for image-to-image generation.")
-
-        self._log_api_request("image_to_image", params)
 
         try:
             # Load model using centralized loader
@@ -1695,7 +2001,6 @@ class MLXProvider(BaseProvider):
 
             self.usage["total_requests"] += 1
             self.usage["total_images"] += 1
-            self._log_api_response("image_to_image", 1)
 
             return image_bytes
 
@@ -1703,15 +2008,6 @@ class MLXProvider(BaseProvider):
             log.error(f"MLX image-to-image generation failed: {e}")
             raise RuntimeError(f"MLX image-to-image generation failed: {e}")
 
-
-def _coerce_bool(value: Any) -> bool:
-    if isinstance(value, bool):
-        return value
-    if value is None:
-        return False
-    if isinstance(value, str):
-        return value.lower() in {"1", "true", "t", "yes", "y"}
-    return bool(value)
 
 
 async def main() -> None:
@@ -1770,7 +2066,7 @@ async def main() -> None:
             }
 
     provider = MLXProvider()
-    model_name = "mlx-community/Llama-3.2-3B-Instruct-4bit"
+    model_name = "ibm-granite/granite-4.0-micro"
 
     print("=" * 70)
     print("TEST 1: Basic single generation")

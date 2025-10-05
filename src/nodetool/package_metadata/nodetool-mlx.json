@@ -152,7 +152,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 1732,
+          "downloads": 1085,
           "likes": 427,
           "trending_score": null
         },
@@ -211,7 +211,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10,
+          "downloads": 9,
           "likes": 2,
           "trending_score": null
         },
@@ -462,7 +462,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10,
+          "downloads": 9,
           "likes": 2,
           "trending_score": null
         },
@@ -493,7 +493,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 4289,
+          "downloads": 3994,
           "likes": 191,
           "trending_score": null
         },
@@ -524,8 +524,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10398,
-          "likes": 830,
+          "downloads": 10339,
+          "likes": 831,
           "trending_score": null
         }
       ],
@@ -710,7 +710,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 7395,
+          "downloads": 7138,
           "likes": 222,
           "trending_score": null
         }
@@ -892,7 +892,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10,
+          "downloads": 9,
           "likes": 2,
           "trending_score": null
         },
@@ -1135,8 +1135,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 343769,
-          "likes": 929,
+          "downloads": 340797,
+          "likes": 931,
           "trending_score": null
         }
       ],
@@ -1308,8 +1308,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 316415,
-          "likes": 2321,
+          "downloads": 325150,
+          "likes": 2322,
           "trending_score": null
         }
       ],
@@ -1502,8 +1502,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 343769,
-          "likes": 929,
+          "downloads": 340797,
+          "likes": 931,
           "trending_score": null
         }
       ],
@@ -1686,8 +1686,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 24637,
-          "likes": 565,
+          "downloads": 24864,
+          "likes": 566,
           "trending_score": null
         }
       ],
@@ -1892,7 +1892,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1812,
+          "downloads": 1828,
           "likes": 4,
           "trending_score": null
         },
@@ -1920,7 +1920,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 7613,
+          "downloads": 7749,
           "likes": 24,
           "trending_score": null
         },
@@ -1948,7 +1948,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 419,
+          "downloads": 346,
           "likes": 3,
           "trending_score": null
         },
@@ -1976,7 +1976,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 37,
+          "downloads": 41,
           "likes": 2,
           "trending_score": null
         },
@@ -2004,7 +2004,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 97,
+          "downloads": 98,
           "likes": 5,
           "trending_score": null
         }
@@ -2017,6 +2017,7 @@
         "language",
         "temperature"
       ],
+      "is_streaming_output": true,
       "expose_as_tool": true
     },
     {
@@ -2110,7 +2111,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 167,
+          "downloads": 178,
           "likes": 20,
           "trending_score": null
         },
@@ -2141,7 +2142,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 50,
+          "downloads": 51,
           "likes": 0,
           "trending_score": null
         }
@@ -2152,6 +2153,7 @@
         "model",
         "reference_audio"
       ],
+      "is_streaming_output": true,
       "expose_as_tool": true
     },
     {
@@ -2282,7 +2284,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 878,
+          "downloads": 774,
           "likes": 4,
           "trending_score": null
         },
@@ -2312,7 +2314,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 59,
+          "downloads": 56,
           "likes": 3,
           "trending_score": null
         }
@@ -2325,6 +2327,7 @@
         "pitch",
         "gender"
       ],
+      "is_streaming_output": true,
       "expose_as_tool": true
     },
     {
@@ -2452,7 +2455,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 122,
+          "downloads": 125,
           "likes": 2,
           "trending_score": null
         },
@@ -2476,7 +2479,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 276,
+          "downloads": 268,
           "likes": 0,
           "trending_score": null
         },
@@ -2500,7 +2503,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2776,
+          "downloads": 2685,
           "likes": 0,
           "trending_score": null
         },
@@ -2548,7 +2551,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2023,
+          "downloads": 1881,
           "likes": 3,
           "trending_score": null
         },
@@ -2572,7 +2575,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 48,
+          "downloads": 43,
           "likes": 0,
           "trending_score": null
         },
@@ -2596,7 +2599,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2421,
+          "downloads": 2275,
           "likes": 3,
           "trending_score": null
         },
@@ -2620,7 +2623,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 89,
+          "downloads": 91,
           "likes": 1,
           "trending_score": null
         },
@@ -2645,7 +2648,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2041,
+          "downloads": 1833,
           "likes": 59,
           "trending_score": null
         }
@@ -2669,6 +2672,15 @@
     }
   ],
   "examples": [
+    {
+      "id": "5f2e290a9fa311f0819a000010e9066c",
+      "name": "Image To Audio Story",
+      "description": "Generate and narrate creative stories from images using AI",
+      "tags": [
+        "start",
+        "multimodal"
+      ]
+    },
     {
       "id": "70a49fd69d7111f0b86500005fdf8376",
       "name": "Movie Posters MLX",
