@@ -8,17 +8,10 @@
   "repo_id": "",
   "nodes": [
     {
-      "title": "Base MFlux",
-      "description": "",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.BaseMFlux",
-      "expose_as_tool": true
-    },
-    {
       "title": "MFlux",
       "description": "Generate images locally using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image generation, apple-silicon\n\n    Use cases:\n    - Create high quality images on Apple Silicon without external APIs\n    - Prototype prompts locally before running on cloud inference providers\n    - Experiment with quantized FLUX models (schnell/dev/krea-dev variants)\n\n    Recommended models:\n    - schnell: Fastest model, good for quick generations (2-4 steps)\n    - dev: More powerful model, higher quality (20-25 steps)\n    - krea-dev: Enhanced photorealism with distinctive aesthetics\n    - Freepik/flux.1-lite-8B-alpha: Lighter version of FLUX\n    - Quantized 4-bit models: Reduced memory usage versions of the official models",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.MFlux",
+      "namespace": "mlx.text_to_image",
+      "node_type": "mlx.text_to_image.MFlux",
       "properties": [
         {
           "name": "prompt",
@@ -56,7 +49,7 @@
               6,
               8
             ],
-            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -152,7 +145,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 1092,
+          "downloads": 1064,
           "likes": 427,
           "trending_score": null
         },
@@ -181,7 +174,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 19,
+          "downloads": 15,
           "likes": 1,
           "trending_score": null
         },
@@ -211,7 +204,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 9,
+          "downloads": 6,
           "likes": 2,
           "trending_score": null
         },
@@ -286,8 +279,8 @@
     {
       "title": "MFlux ControlNet",
       "description": "Generate images with MFlux ControlNet guidance using local MLX acceleration.\n    mlx, flux, controlnet, conditioning, edge-detection\n\n    Use cases:\n    - Apply edge-aware guidance via ControlNet canny models\n    - Leverage local Apple Silicon acceleration for conditioned generations\n    - Upscale images using ControlNet upscaler weights",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.MFluxControlNet",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxControlNet",
       "properties": [
         {
           "name": "prompt",
@@ -356,7 +349,7 @@
               6,
               8
             ],
-            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -462,7 +455,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 9,
+          "downloads": 6,
           "likes": 2,
           "trending_score": null
         },
@@ -493,7 +486,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 3977,
+          "downloads": 3740,
           "likes": 191,
           "trending_score": null
         },
@@ -524,8 +517,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10273,
-          "likes": 831,
+          "downloads": 10325,
+          "likes": 836,
           "trending_score": null
         }
       ],
@@ -547,8 +540,8 @@
     {
       "title": "MFlux Depth",
       "description": "Generate images with depth guidance via the MFlux depth pipeline using local MLX acceleration.\n    mlx, flux, depth, conditioning, structure-preserving\n\n    Use cases:\n    - Use a depth map to control structural composition while keeping prompt-driven appearance\n    - Provide both source image and depth map to transfer scene layout to a new generation\n    - Generate depth-guided outputs when only a depth map is available (source image optional)",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.MFluxDepth",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxDepth",
       "properties": [
         {
           "name": "prompt",
@@ -615,7 +608,7 @@
               6,
               8
             ],
-            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -710,7 +703,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 7155,
+          "downloads": 7011,
           "likes": 222,
           "trending_score": null
         }
@@ -732,8 +725,8 @@
     {
       "title": "MFlux ImageToImage",
       "description": "Transform an existing image using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image-to-image, apple-silicon\n\n    Use cases:\n    - Apply prompt-based edits to an existing image without relying on external APIs\n    - Experiment with strength-controlled transformations locally",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.MFluxImageToImage",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxImageToImage",
       "properties": [
         {
           "name": "prompt",
@@ -786,7 +779,7 @@
               6,
               8
             ],
-            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -892,7 +885,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 9,
+          "downloads": 6,
           "likes": 2,
           "trending_score": null
         },
@@ -921,7 +914,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 19,
+          "downloads": 15,
           "likes": 1,
           "trending_score": null
         },
@@ -972,8 +965,8 @@
     {
       "title": "MFlux Inpaint",
       "description": "Inpaint portions of an image locally using the MFLUX MLX implementation of FLUX.1 Fill.\n    mlx, flux, inpainting, mask editing\n\n    Use cases:\n    - Restore masked regions with prompt-guided content\n    - Blend new elements into an existing composition while preserving unmasked areas",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.MFluxInpaint",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxInpaint",
       "properties": [
         {
           "name": "prompt",
@@ -1040,7 +1033,7 @@
               6,
               8
             ],
-            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -1135,8 +1128,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 343185,
-          "likes": 931,
+          "downloads": 348002,
+          "likes": 933,
           "trending_score": null
         }
       ],
@@ -1157,8 +1150,8 @@
     {
       "title": "MFlux Kontext",
       "description": "Generate images using Kontext reference image fusion on Apple Silicon.\n    mlx, flux, kontext, reference guidance\n\n    Use cases:\n    - Leverage a reference image and prompt to produce stylistically consistent outputs\n    - Perform context-aware edits without external services\n    - Prototype Kontext-driven workflows locally",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.MFluxKontext",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxKontext",
       "properties": [
         {
           "name": "prompt",
@@ -1211,7 +1204,7 @@
               6,
               8
             ],
-            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -1308,8 +1301,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 325150,
-          "likes": 2324,
+          "downloads": 337498,
+          "likes": 2329,
           "trending_score": null
         }
       ],
@@ -1329,8 +1322,8 @@
     {
       "title": "MFlux Outpaint",
       "description": "Outpaint an existing image by extending the canvas using the MFLUX Fill pipeline.\n    mlx, flux, outpainting, canvas extension\n\n    Use cases:\n    - Expand scene borders while maintaining continuity with the original image\n    - Add sky, foreground elements, or contextual scenery around a provided image",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.MFluxOutpaint",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxOutpaint",
       "properties": [
         {
           "name": "prompt",
@@ -1397,7 +1390,7 @@
               6,
               8
             ],
-            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -1502,8 +1495,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 343185,
-          "likes": 931,
+          "downloads": 348002,
+          "likes": 933,
           "trending_score": null
         }
       ],
@@ -1525,8 +1518,8 @@
     {
       "title": "MFlux Redux",
       "description": "Generate images using reference images with Flux Redux guidance on Apple Silicon.\n    mlx, flux, redux, reference fusion\n\n    Use cases:\n    - Blend multiple reference images with a text prompt to steer style and content\n    - Reinterpret a photo collection into a coherent output while keeping structure from the references\n    - Experiment locally with the Flux Redux pipeline without external APIs",
-      "namespace": "mlx.mflux",
-      "node_type": "mlx.mflux.MFluxRedux",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxRedux",
       "properties": [
         {
           "name": "prompt",
@@ -1591,7 +1584,7 @@
               6,
               8
             ],
-            "type_name": "nodetool.nodes.mlx.mflux.QuantizationLevel"
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
           "default": 4,
           "title": "Quantize",
@@ -1686,8 +1679,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 24904,
-          "likes": 566,
+          "downloads": 26227,
+          "likes": 567,
           "trending_score": null
         }
       ],
@@ -1892,7 +1885,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1836,
+          "downloads": 1832,
           "likes": 4,
           "trending_score": null
         },
@@ -1920,7 +1913,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 7780,
+          "downloads": 7860,
           "likes": 24,
           "trending_score": null
         },
@@ -1948,7 +1941,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 345,
+          "downloads": 301,
           "likes": 3,
           "trending_score": null
         },
@@ -1976,7 +1969,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 39,
+          "downloads": 37,
           "likes": 2,
           "trending_score": null
         },
@@ -2004,7 +1997,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 98,
+          "downloads": 94,
           "likes": 5,
           "trending_score": null
         }
@@ -2111,7 +2104,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 178,
+          "downloads": 192,
           "likes": 20,
           "trending_score": null
         },
@@ -2142,7 +2135,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 50,
+          "downloads": 56,
           "likes": 0,
           "trending_score": null
         }
@@ -2284,7 +2277,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 740,
+          "downloads": 645,
           "likes": 4,
           "trending_score": null
         },
@@ -2314,7 +2307,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 53,
+          "downloads": 50,
           "likes": 3,
           "trending_score": null
         }
@@ -2331,10 +2324,288 @@
       "expose_as_tool": true
     },
     {
+      "title": "MLX Text Generation",
+      "description": "Generate text using locally cached MLX models on Apple Silicon.\n    text, generation, mlx, local-llm\n\n    Use cases:\n    - Fast local iteration with MLX-converted instruction models\n    - Privacy-preserving summarization, drafting, or Q&A\n    - Building multi-node agent workflows without external APIs",
+      "namespace": "mlx.text_generation",
+      "node_type": "mlx.text_generation.TextGeneration",
+      "properties": [
+        {
+          "name": "model",
+          "type": {
+            "type": "language_model"
+          },
+          "default": {
+            "type": "language_model",
+            "provider": "mlx",
+            "id": "mlx-community/Llama-3.2-3B-Instruct-4bit",
+            "name": "Llama-3.2-3B Instruct (4-bit)"
+          },
+          "title": "Model",
+          "description": "MLX language model to use for generation. The model must be available in the local Hugging Face cache."
+        },
+        {
+          "name": "system_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "You are a helpful assistant.",
+          "title": "System Prompt",
+          "description": "Optional system prompt used to steer the model."
+        },
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Prompt",
+          "description": "The user prompt used for generation."
+        },
+        {
+          "name": "max_new_tokens",
+          "type": {
+            "type": "int"
+          },
+          "default": 256,
+          "title": "Max New Tokens",
+          "description": "Maximum number of tokens the model should generate.",
+          "min": 1.0,
+          "max": 4096.0
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.7,
+          "title": "Temperature",
+          "description": "Sampling temperature. Set to 0 for deterministic output.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "top_p",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.95,
+          "title": "Top P",
+          "description": "Nucleus sampling probability mass.",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
+          "name": "top_k",
+          "type": {
+            "type": "int"
+          },
+          "default": 50,
+          "title": "Top K",
+          "description": "Limits sampling to the top K tokens at each step.",
+          "min": 0.0,
+          "max": 1000.0
+        },
+        {
+          "name": "min_p",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.0,
+          "title": "Min P",
+          "description": "Minimum token probability threshold (0 disables).",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
+          "name": "min_tokens_to_keep",
+          "type": {
+            "type": "int"
+          },
+          "default": 1,
+          "title": "Min Tokens To Keep",
+          "description": "Ensures at least this many tokens remain after filtering.",
+          "min": 1.0,
+          "max": 20.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "text"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Llama-3.2-3B-Instruct-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Llama-3.2-3B-Instruct-4bit",
+          "repo_id": "mlx-community/Llama-3.2-3B-Instruct-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 1824825759,
+          "downloaded": false,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "llama",
+            "text-generation",
+            "facebook",
+            "meta",
+            "pytorch",
+            "llama-3",
+            "mlx",
+            "conversational",
+            "en",
+            "de",
+            "fr",
+            "it",
+            "pt",
+            "hi",
+            "es",
+            "th",
+            "base_model:mlx-community/Llama-3.2-3B-Instruct",
+            "base_model:quantized:mlx-community/Llama-3.2-3B-Instruct",
+            "license:llama3.2",
+            "autotrain_compatible",
+            "text-generation-inference",
+            "endpoints_compatible",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 17102,
+          "likes": 31,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/Llama-3.1-8B-Instruct-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Llama-3.1-8B-Instruct-4bit",
+          "repo_id": "mlx-community/Llama-3.1-8B-Instruct-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 4534824337,
+          "downloaded": false,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "llama",
+            "facebook",
+            "meta",
+            "pytorch",
+            "llama-3",
+            "text-generation",
+            "conversational",
+            "en",
+            "de",
+            "fr",
+            "it",
+            "pt",
+            "hi",
+            "es",
+            "th",
+            "base_model:meta-llama/Llama-3.1-8B-Instruct",
+            "base_model:quantized:meta-llama/Llama-3.1-8B-Instruct",
+            "license:llama3.1",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 103,
+          "likes": 2,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/Qwen2.5-7B-Instruct-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen2.5-7B-Instruct-4bit",
+          "repo_id": "mlx-community/Qwen2.5-7B-Instruct-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 4295889861,
+          "downloaded": false,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen2",
+            "chat",
+            "text-generation",
+            "conversational",
+            "en",
+            "base_model:Qwen/Qwen2.5-7B",
+            "base_model:finetune:Qwen/Qwen2.5-7B",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1611,
+          "likes": 8,
+          "trending_score": null
+        },
+        {
+          "id": "mlx-community/Mistral-7B-Instruct-v0.2-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Mistral-7B-Instruct-v0.2-4bit",
+          "repo_id": "mlx-community/Mistral-7B-Instruct-v0.2-4bit",
+          "path": null,
+          "cache_path": null,
+          "allow_patterns": null,
+          "ignore_patterns": null,
+          "description": null,
+          "readme": null,
+          "size_on_disk": 4264704510,
+          "downloaded": false,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "mistral",
+            "finetuned",
+            "text-generation",
+            "conversational",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 123,
+          "likes": 1,
+          "trending_score": null
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "prompt"
+      ],
+      "is_streaming_output": true
+    },
+    {
       "title": "MLX Whisper",
       "description": "Transcribe an audio asset using MLX Whisper.\n    whisper, mlx, asr, speech-to-text\n\n    - Uses MLX for efficient Apple Silicon acceleration\n    - Returns transcript and segments with optional word-level timestamps",
-      "namespace": "mlx.whisper",
-      "node_type": "mlx.whisper.MLXWhisper",
+      "namespace": "mlx.automatic_speech_recognition",
+      "node_type": "mlx.automatic_speech_recognition.Whisper",
       "properties": [
         {
           "name": "model",
@@ -2351,7 +2622,7 @@
               "mlx-community/whisper-medium.en-mlx",
               "mlx-community/whisper-large-v3-mlx"
             ],
-            "type_name": "nodetool.nodes.mlx.whisper.MLXWhisper.Model"
+            "type_name": "nodetool.nodes.mlx.automatic_speech_recognition.Whisper.Model"
           },
           "default": "mlx-community/whisper-tiny.en-mlx",
           "title": "Model",
@@ -2455,7 +2726,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 127,
+          "downloads": 129,
           "likes": 2,
           "trending_score": null
         },
@@ -2479,7 +2750,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 268,
+          "downloads": 254,
           "likes": 0,
           "trending_score": null
         },
@@ -2503,7 +2774,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2701,
+          "downloads": 2447,
           "likes": 0,
           "trending_score": null
         },
@@ -2527,7 +2798,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 31,
+          "downloads": 30,
           "likes": 0,
           "trending_score": null
         },
@@ -2551,7 +2822,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1883,
+          "downloads": 1791,
           "likes": 3,
           "trending_score": null
         },
@@ -2575,7 +2846,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 44,
+          "downloads": 40,
           "likes": 0,
           "trending_score": null
         },
@@ -2599,7 +2870,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2259,
+          "downloads": 2353,
           "likes": 3,
           "trending_score": null
         },
@@ -2623,7 +2894,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 90,
+          "downloads": 91,
           "likes": 1,
           "trending_score": null
         },
@@ -2648,7 +2919,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1814,
+          "downloads": 1707,
           "likes": 59,
           "trending_score": null
         }
@@ -2672,15 +2943,6 @@
     }
   ],
   "examples": [
-    {
-      "id": "5f2e290a9fa311f0819a000010e9066c",
-      "name": "Image To Audio Story",
-      "description": "Generate and narrate creative stories from images using AI",
-      "tags": [
-        "start",
-        "multimodal"
-      ]
-    },
     {
       "id": "70a49fd69d7111f0b86500005fdf8376",
       "name": "Movie Posters MLX",

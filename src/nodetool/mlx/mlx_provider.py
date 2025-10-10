@@ -24,6 +24,7 @@ import asyncio
 import base64
 import json
 import logging
+import inspect
 from pathlib import Path
 import threading
 from dataclasses import dataclass
@@ -44,7 +45,7 @@ import sys
 import tempfile
 from nodetool.media.audio.audio_helpers import convert_audio_to_standard_format
 import numpy as np
-from huggingface_hub import try_to_load_from_cache
+from huggingface_hub import CacheNotFound, scan_cache_dir
 from mlx import nn
 import mlx_lm
 from mlx_lm.generate import stream_generate
@@ -56,12 +57,14 @@ import mlx_vlm.prompt_utils
 import mlx_vlm.utils
 import mlx_audio.tts.utils
 import mlx_audio.tts.generate
-
-from nodetool.providers.base import (
-    BaseProvider,
-    ProviderCapability,
-    register_provider,
+from nodetool.mlx.flux_model_loader import (
+    load_flux_model,
+    ensure_mflux_available,
+    FluxModelNotAvailableError,
 )
+from mflux.config.config import Config
+
+from nodetool.providers.base import BaseProvider, register_provider
 from nodetool.agents.tools.base import Tool
 from nodetool.config.environment import Environment
 from nodetool.config.logging_config import get_logger
@@ -88,6 +91,10 @@ from nodetool.workflows.processing_context import ProcessingContext
 
 import PIL.Image
 from pydub import AudioSegment  # type: ignore
+from nodetool.integrations.huggingface.huggingface_models import (
+    get_mlx_language_models_from_hf_cache,
+)
+
 
 log = get_logger(__name__)
 log.setLevel(logging.DEBUG)
@@ -148,17 +155,6 @@ class MLXProvider(BaseProvider):
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    def get_capabilities(self) -> set[ProviderCapability]:
-        """MLX provider supports message generation, text-to-speech, and image generation."""
-        return {
-            ProviderCapability.GENERATE_MESSAGE,
-            ProviderCapability.GENERATE_MESSAGES,
-            ProviderCapability.TEXT_TO_SPEECH,
-            ProviderCapability.TEXT_TO_IMAGE,
-            ProviderCapability.IMAGE_TO_IMAGE,
-            ProviderCapability.AUTOMATIC_SPEECH_RECOGNITION,
-        }
-
     async def generate_message(
         self,
         messages: Sequence[Message],
@@ -236,18 +232,9 @@ class MLXProvider(BaseProvider):
         Returns:
             List of LanguageModel instances for MLX
         """
-        try:
-            # Import the function to get locally cached MLX models
-            from nodetool.integrations.huggingface.huggingface_models import (
-                get_mlx_language_models_from_hf_cache,
-            )
-
-            models = await get_mlx_language_models_from_hf_cache()
-            log.debug(f"Found {len(models)} MLX models in HF cache")
-            return models
-        except Exception as e:
-            log.error(f"Error getting MLX models: {e}")
-            return []
+        models = await get_mlx_language_models_from_hf_cache()
+        log.debug(f"Found {len(models)} MLX models in HF cache")
+        return models
 
     async def get_available_image_models(self) -> List[ImageModel]:
         """
@@ -339,6 +326,111 @@ class MLXProvider(BaseProvider):
             ),
         ]
         return models
+
+    async def automatic_speech_recognition(
+        self,
+        audio: bytes,
+        model: str,
+        language: str | None = None,
+        prompt: str | None = None,
+        temperature: float = 0.0,
+        timeout_s: int | None = None,
+        context: Any = None,
+        **kwargs: Any,
+    ) -> str:
+        """Transcribe audio to text using MLX Whisper checkpoints."""
+        _ = context  # Context not currently used but kept for interface compatibility.
+        if sys.platform != "darwin":
+            raise RuntimeError("MLX automatic speech recognition requires macOS")
+
+        if not audio:
+            raise ValueError("audio must not be empty")
+
+        # Whisper expects 16 kHz mono audio normalized to [-1, 1]
+        samples = convert_audio_to_standard_format(audio, target_sample_rate=16_000)
+        if samples.size == 0:
+            return ""
+        audio_float = (samples.astype(np.float32) / 32768.0).flatten()
+        audio_float = np.ascontiguousarray(audio_float, dtype=np.float32)
+
+        # Ensure the model is present in the local Hugging Face cache
+        if self._resolve_cached_repo_path(model) is None:
+            raise ValueError(
+                f"Model {model} must be downloaded first (not found in cache)"
+            )
+
+        log.debug(
+            "Transcribing audio with MLX Whisper model=%s language=%s temperature=%s",
+            model,
+            language,
+            temperature,
+        )
+
+        def _run_transcription() -> dict[str, Any] | str | None:
+            import mlx_whisper
+
+            transcribe_fn = mlx_whisper.transcribe
+            sig_params = set(inspect.signature(transcribe_fn).parameters)
+
+            call_kwargs: dict[str, Any] = {"path_or_hf_repo": model}
+
+            # Standard Whisper options with sensible defaults
+            default_options: dict[str, Any] = {
+                "compression_ratio_threshold": kwargs.get(
+                    "compression_ratio_threshold", 2.4
+                ),
+                "logprob_threshold": kwargs.get("logprob_threshold", -1.0),
+                "no_speech_threshold": kwargs.get("no_speech_threshold", 0.6),
+                "condition_on_previous_text": kwargs.get(
+                    "condition_on_previous_text", True
+                ),
+                "word_timestamps": kwargs.get("word_timestamps", False),
+                "temperature": kwargs.get("temperature", temperature),
+            }
+
+            optional_options: dict[str, Any] = {
+                "language": kwargs.get("language", language),
+                "initial_prompt": kwargs.get("initial_prompt", prompt),
+            }
+
+            # Include any additional keyword arguments provided by the caller
+            extra_options = {
+                key: value
+                for key, value in kwargs.items()
+                if key not in default_options and key not in optional_options
+            }
+
+            for options in (default_options, optional_options, extra_options):
+                for key, value in options.items():
+                    if value is not None and key in sig_params:
+                        call_kwargs[key] = value
+
+            return transcribe_fn(audio_float, **call_kwargs)
+
+        transcribe_task = asyncio.to_thread(_run_transcription)
+        try:
+            if timeout_s is not None:
+                result = await asyncio.wait_for(transcribe_task, timeout=timeout_s)
+            else:
+                result = await transcribe_task
+        except asyncio.TimeoutError as exc:
+            raise TimeoutError(
+                f"MLX automatic speech recognition timed out after {timeout_s} seconds"
+            ) from exc
+        except Exception as exc:
+            log.error("MLX Whisper transcription failed: %s", exc)
+            raise RuntimeError(f"MLX Whisper transcription failed: {exc}") from exc
+
+        text: str
+        if isinstance(result, dict):
+            text = str(result.get("text", "") or "")
+        elif isinstance(result, str):
+            text = result
+        else:
+            text = "" if result is None else str(result)
+
+        log.debug("MLX Whisper transcription complete", extra={"length": len(text)})
+        return text
 
     async def get_available_tts_models(self) -> List[TTSModel]:
         """
@@ -1464,13 +1556,13 @@ class MLXProvider(BaseProvider):
 
         if tts_model is None:
             # Model not in cache, load it
-            model_path = try_to_load_from_cache(model, "config.json")
-            if not model_path:
+            repo_path = self._resolve_cached_repo_path(model)
+            if repo_path is None:
                 raise ValueError(
                     f"Model {model} must be downloaded first (not found in cache)"
                 )
 
-            load_target = os.path.dirname(model_path)
+            load_target = repo_path
 
             # Load the TTS model
             def _load():
@@ -1486,6 +1578,33 @@ class MLXProvider(BaseProvider):
             log.debug(f"Using cached TTS model {model}")
 
         return tts_model
+
+    def _resolve_cached_repo_path(self, repo_id: str) -> Path | None:
+        """
+        Locate the snapshot directory for a cached Hugging Face repo.
+
+        Returns:
+            Path to the cached repo snapshot, or None if not found.
+        """
+        try:
+            cache_info = scan_cache_dir()
+        except CacheNotFound:
+            return None
+
+        for repo in cache_info.repos:
+            if repo.repo_type != "model" or repo.repo_id != repo_id:
+                continue
+
+            for revision in repo.revisions:
+                snapshot_path = getattr(revision, "snapshot_path", None)
+                if snapshot_path and os.path.isdir(snapshot_path):
+                    return Path(snapshot_path)
+
+            repo_path = getattr(repo, "repo_path", None)
+            if repo_path and os.path.isdir(repo_path):
+                return Path(repo_path)
+
+        return None
 
     def _build_stream_kwargs(self, kwargs: dict[str, Any]) -> dict[str, Any]:
         stream_kwargs = dict(kwargs)
@@ -1809,18 +1928,6 @@ class MLXProvider(BaseProvider):
         Raises:
             RuntimeError: If MLX is not available or generation fails
         """
-        # Import mflux utilities
-        try:
-            from nodetool.mlx.flux_model_loader import (
-                load_flux_model,
-                ensure_mflux_available,
-                FluxModelNotAvailableError,
-            )
-            from mflux.config.config import Config
-        except ImportError as e:
-            raise RuntimeError(
-                "Install mflux package to use MLX image generation functionality"
-            ) from e
 
         ensure_mflux_available()
 
@@ -1904,18 +2011,6 @@ class MLXProvider(BaseProvider):
             RuntimeError: If MLX is not available or generation fails
         """
         # Import mflux utilities
-        try:
-            from nodetool.mlx.flux_model_loader import (
-                load_flux_model,
-                ensure_mflux_available,
-                FluxModelNotAvailableError,
-            )
-            from mflux.config.config import Config
-        except ImportError as e:
-            raise RuntimeError(
-                "Install mflux package to use MLX image generation functionality"
-            ) from e
-
         ensure_mflux_available()
 
         if not params.prompt:
@@ -1944,9 +2039,6 @@ class MLXProvider(BaseProvider):
                     working_image = working_image.resize(
                         (target_width, target_height), PIL.Image.Resampling.LANCZOS
                     )
-
-                # Save to temp file (mflux requires file paths)
-                from pathlib import Path
 
                 with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                     image_path = Path(tmp.name)

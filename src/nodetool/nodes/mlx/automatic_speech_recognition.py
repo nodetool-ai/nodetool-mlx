@@ -15,7 +15,7 @@ from nodetool.workflows.processing_context import ProcessingContext
 log = logging.getLogger(__name__)
 
 
-class MLXWhisper(BaseNode):
+class Whisper(BaseNode):
     """
     Transcribe an audio asset using MLX Whisper.
     whisper, mlx, asr, speech-to-text
