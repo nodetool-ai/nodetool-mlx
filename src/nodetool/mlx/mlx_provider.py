@@ -68,6 +68,7 @@ from nodetool.providers.base import BaseProvider, register_provider
 from nodetool.agents.tools.base import Tool
 from nodetool.config.environment import Environment
 from nodetool.config.logging_config import get_logger
+from nodetool.ml.core.model_manager import ModelManager
 from nodetool.metadata.types import (
     ASRModel,
     Message,
@@ -1163,21 +1164,28 @@ class MLXProvider(BaseProvider):
             log.debug("MLX _stream_chat end | model=%s", model)
 
     async def _load_model(self, model: str) -> tuple[nn.Module, TokenizerWrapper]:
-        async with self._load_lock:
-            cached = self._get_cached_model(model)
-            if cached is not None:
-                return cached
+        # Use ModelManager lock for thread-safe model loading
+        async with ModelManager.lock_model(model, "language_model", self.adapter_path):
+            async with self._load_lock:
+                # Try to get cached model from ModelManager
+                cached = ModelManager.get_model(model, "language_model", self.adapter_path)
+                if cached is not None:
+                    return cached
 
-            def _load() -> tuple[nn.Module, TokenizerWrapper]:
-                return mlx_lm.utils.load(
-                    model,
-                    adapter_path=self.adapter_path,
-                )
+                def _load() -> tuple[nn.Module, TokenizerWrapper]:
+                    return mlx_lm.utils.load(
+                        model,
+                        adapter_path=self.adapter_path,
+                    )
 
-            mdl, tokenizer = await asyncio.to_thread(_load)
-            self._set_cached_model(model, mdl, tokenizer)
-            log.info("Loaded MLX model %s", model)
-            return mdl, tokenizer
+                mdl, tokenizer = await asyncio.to_thread(_load)
+
+                # Cache in ModelManager (requires a node_id, use a synthetic one for provider-level caching)
+                node_id = f"mlx_provider_{model}_{self.adapter_path or 'default'}"
+                ModelManager.set_model(node_id, model, "language_model", (mdl, tokenizer), self.adapter_path)
+
+                log.info("Loaded MLX model %s", model)
+                return mdl, tokenizer
 
     # ------------------------------------------------------------------
     # mlx-vlm runtime and flow (vision models)
@@ -1206,26 +1214,29 @@ class MLXProvider(BaseProvider):
             _VLM_MODEL_CACHE[key] = (mdl, proc, cfg, expires_at)
 
     async def _load_vlm_model(self, model: str) -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any]:
-        async with self._vlm_load_lock:
-            cached = self._get_cached_vlm_model(model)
-            if cached is not None:
-                return cached
+        # Use ModelManager lock for thread-safe model loading
+        async with ModelManager.lock_model(model, "vision_model", self.adapter_path):
+            async with self._vlm_load_lock:
+                # Try to get cached model from ModelManager
+                cached = ModelManager.get_model(model, "vision_model", self.adapter_path)
+                if cached is not None:
+                    return cached
 
-            def _load() -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any]:
-                mdl, proc = mlx_vlm.load(model)
-                cfg = getattr(mdl, "config", None)
-                if cfg is None and mlx_vlm.utils.load_config is not None:
-                    cfg = mlx_vlm.utils.load_config(model)
+                def _load() -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any]:
+                    mdl, proc = mlx_vlm.load(model)
+                    cfg = getattr(mdl, "config", None)
+                    if cfg is None and mlx_vlm.utils.load_config is not None:
+                        cfg = mlx_vlm.utils.load_config(model)
+                    return mdl, proc, cfg
+
+                mdl, proc, cfg = await asyncio.to_thread(_load)
+
+                # Cache in ModelManager
+                node_id = f"mlx_vlm_provider_{model}_{self.adapter_path or 'default'}"
+                ModelManager.set_model(node_id, model, "vision_model", (mdl, proc, cfg), self.adapter_path)
+
+                log.info("Loaded MLX-VLM model %s", model)
                 return mdl, proc, cfg
-
-            mdl, proc, cfg = (
-                await asyncio.to_thread(_load)
-            )
-            self._set_cached_vlm_model(
-                model, mdl, proc, cfg
-            )
-            log.info("Loaded MLX-VLM model %s", model)
-            return mdl, proc, cfg
 
     def _is_vision_model(self, model: str) -> bool:
         name = (model or "").lower()
@@ -1551,33 +1562,36 @@ class MLXProvider(BaseProvider):
         Raises:
             ValueError: If model is not found in HuggingFace cache
         """
-        # Check if model is already cached
-        tts_model = self._get_cached_tts_model(model)
+        # Use ModelManager lock for thread-safe model loading
+        async with ModelManager.lock_model(model, "tts_model", None):
+            # Try to get cached model from ModelManager
+            tts_model = ModelManager.get_model(model, "tts_model", None)
 
-        if tts_model is None:
-            # Model not in cache, load it
-            repo_path = self._resolve_cached_repo_path(model)
-            if repo_path is None:
-                raise ValueError(
-                    f"Model {model} must be downloaded first (not found in cache)"
-                )
+            if tts_model is None:
+                # Model not in cache, load it
+                repo_path = self._resolve_cached_repo_path(model)
+                if repo_path is None:
+                    raise ValueError(
+                        f"Model {model} must be downloaded first (not found in cache)"
+                    )
 
-            load_target = repo_path
+                load_target = repo_path
 
-            # Load the TTS model
-            def _load():
-                log.info(f"Loading MLX TTS model {model}")
-                return mlx_audio.tts.utils.load_model(Path(load_target))
+                # Load the TTS model
+                def _load():
+                    log.info(f"Loading MLX TTS model {model}")
+                    return mlx_audio.tts.utils.load_model(Path(load_target))
 
-            tts_model = await asyncio.to_thread(_load)
+                tts_model = await asyncio.to_thread(_load)
 
-            # Cache the loaded model
-            self._set_cached_tts_model(model, tts_model)
-            log.debug(f"Cached TTS model {model}")
-        else:
-            log.debug(f"Using cached TTS model {model}")
+                # Cache in ModelManager
+                node_id = f"mlx_tts_provider_{model}"
+                ModelManager.set_model(node_id, model, "tts_model", tts_model, None)
+                log.debug(f"Cached TTS model {model}")
+            else:
+                log.debug(f"Using cached TTS model {model}")
 
-        return tts_model
+            return tts_model
 
     def _resolve_cached_repo_path(self, repo_id: str) -> Path | None:
         """
@@ -1935,48 +1949,50 @@ class MLXProvider(BaseProvider):
             raise ValueError("Prompt cannot be empty for image generation.")
 
         try:
-            # Load model using centralized loader
-            model = await load_flux_model(
-                model_id=params.model.id,
-                quantize=4,  # Default to 4-bit quantization
-                task="flux",
-            )
+            # Use ModelManager lock for thread-safe model loading
+            async with ModelManager.lock_model(params.model.id, "flux_model", None):
+                # Load model using centralized loader
+                model = await load_flux_model(
+                    model_id=params.model.id,
+                    quantize=4,  # Default to 4-bit quantization
+                    task="flux",
+                )
 
-            loop = asyncio.get_running_loop()
+                loop = asyncio.get_running_loop()
 
-            def _generate() -> PIL.Image.Image:
-                # Prepare config
-                config_kwargs: dict[str, Any] = {
-                    "num_inference_steps": params.num_inference_steps or 4,
-                    "height": params.height or 1024,
-                    "width": params.width or 1024,
-                }
-
-                if params.guidance_scale is not None:
-                    config_kwargs["guidance"] = params.guidance_scale
-
-                # Filter to only allowed config fields
-                dataclass_fields = getattr(Config, "__dataclass_fields__", None)
-                if isinstance(dataclass_fields, dict):
-                    allowed = set(dataclass_fields.keys())
-                    config_kwargs = {
-                        key: value
-                        for key, value in config_kwargs.items()
-                        if key in allowed
+                def _generate() -> PIL.Image.Image:
+                    # Prepare config
+                    config_kwargs: dict[str, Any] = {
+                        "num_inference_steps": params.num_inference_steps or 4,
+                        "height": params.height or 1024,
+                        "width": params.width or 1024,
                     }
 
-                config = Config(**config_kwargs)
+                    if params.guidance_scale is not None:
+                        config_kwargs["guidance"] = params.guidance_scale
 
-                # Generate image
-                generated = model.generate_image(
-                    seed=params.seed if params.seed is not None else 0,
-                    prompt=params.prompt,
-                    config=config,
-                )
-                return generated.image
+                    # Filter to only allowed config fields
+                    dataclass_fields = getattr(Config, "__dataclass_fields__", None)
+                    if isinstance(dataclass_fields, dict):
+                        allowed = set(dataclass_fields.keys())
+                        config_kwargs = {
+                            key: value
+                            for key, value in config_kwargs.items()
+                            if key in allowed
+                        }
 
-            # Run generation in executor
-            pil_image = await loop.run_in_executor(None, _generate)
+                    config = Config(**config_kwargs)
+
+                    # Generate image
+                    generated = model.generate_image(
+                        seed=params.seed if params.seed is not None else 0,
+                        prompt=params.prompt,
+                        config=config,
+                    )
+                    return generated.image
+
+                # Run generation in executor
+                pil_image = await loop.run_in_executor(None, _generate)
 
             # Convert to bytes
             img_buffer = BytesIO()
