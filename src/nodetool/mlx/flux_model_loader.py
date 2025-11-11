@@ -6,13 +6,18 @@ with proper caching and availability checks.
 """
 
 import asyncio
-import sys
 from typing import Any
+from mflux.generate import Flux1
+from mflux.generate_controlnet import Flux1Controlnet
 from nodetool.ml.core.model_manager import ModelManager
 from nodetool.integrations.huggingface.huggingface_cache import has_cached_files
 from nodetool.config.logging_config import get_logger
-
-from mflux.flux.flux import Flux1
+from mflux.config.model_config import ModelConfig
+from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
+from mflux.models.flux.variants.depth.flux_depth import Flux1Depth
+from mflux.models.flux.variants.controlnet.flux_controlnet import Flux1Controlnet
+from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
+from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
 
 log = get_logger(__name__)
 
@@ -31,15 +36,6 @@ class FluxModelNotAvailableError(Exception):
             f"4. Try again once the download is complete\n\n"
             f"Note: MLX models are only loaded from local cache and will not be downloaded automatically "
             f"to avoid unexpected network usage and storage consumption."
-        )
-
-
-def ensure_mflux_available() -> None:
-    """Ensure mflux is installed and we're on macOS."""
-    if sys.platform != "darwin":
-        raise RuntimeError(
-            "MLX/MFlux requires macOS with Apple Silicon. "
-            "This feature is not available on other platforms."
         )
 
 
@@ -86,8 +82,6 @@ async def load_flux_model(
         RuntimeError: If mflux is not available or not on macOS
         FluxModelNotAvailableError: If the model is not in the local cache
     """
-    ensure_mflux_available()
-
     # Check if model is available in HF cache
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
@@ -128,7 +122,7 @@ async def load_flux_controlnet_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Any:  # Returns Flux1Controlnet
+) -> Flux1Controlnet:
     """
     Load a Flux ControlNet model with proper caching and availability checks.
 
@@ -146,8 +140,6 @@ async def load_flux_controlnet_model(
         RuntimeError: If mflux is not available or not on macOS
         FluxModelNotAvailableError: If either model is not in the local cache
     """
-    ensure_mflux_available()
-
     # Check if both models are available
     if not is_flux_model_available(base_model_id):
         raise FluxModelNotAvailableError(base_model_id)
@@ -161,10 +153,6 @@ async def load_flux_controlnet_model(
         if cached_model is not None:
             log.info(f"Using cached Flux ControlNet model: {cache_key}")
             return cached_model
-
-    # Load model
-    from mflux.controlnet.flux_controlnet import Flux1Controlnet
-    from mflux.config.model_config import ModelConfig
 
     loop = asyncio.get_running_loop()
 
@@ -196,7 +184,7 @@ async def load_flux_fill_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Any:  # Returns Flux1Fill
+) -> Flux1Fill:
     """
     Load a Flux Fill (inpainting/outpainting) model.
 
@@ -209,8 +197,6 @@ async def load_flux_fill_model(
     Returns:
         The loaded Flux1Fill model instance
     """
-    ensure_mflux_available()
-
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
@@ -219,8 +205,6 @@ async def load_flux_fill_model(
         if cached_model is not None:
             log.info(f"Using cached Flux Fill model: {model_id}")
             return cached_model
-
-    from mflux.flux_tools.fill.flux_fill import Flux1Fill
 
     loop = asyncio.get_running_loop()
 
@@ -245,10 +229,8 @@ async def load_flux_depth_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Any:  # Returns Flux1Depth
+) -> Flux1Depth:
     """Load a Flux Depth model."""
-    ensure_mflux_available()
-
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
@@ -257,9 +239,6 @@ async def load_flux_depth_model(
         if cached_model is not None:
             log.info(f"Using cached Flux Depth model: {model_id}")
             return cached_model
-
-    from mflux.flux_tools.depth.flux_depth import Flux1Depth
-
     loop = asyncio.get_running_loop()
 
     def _load() -> Flux1Depth:
@@ -283,10 +262,8 @@ async def load_flux_redux_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Any:  # Returns Flux1Redux
+) -> Flux1Redux:
     """Load a Flux Redux model."""
-    ensure_mflux_available()
-
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
@@ -295,9 +272,6 @@ async def load_flux_redux_model(
         if cached_model is not None:
             log.info(f"Using cached Flux Redux model: {model_id}")
             return cached_model
-
-    from mflux.flux_tools.redux.flux_redux import Flux1Redux
-    from mflux.config.model_config import ModelConfig
 
     loop = asyncio.get_running_loop()
 
@@ -326,10 +300,8 @@ async def load_flux_kontext_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Any:  # Returns Flux1Kontext
+) -> Flux1Kontext:
     """Load a Flux Kontext model."""
-    ensure_mflux_available()
-
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
@@ -338,8 +310,6 @@ async def load_flux_kontext_model(
         if cached_model is not None:
             log.info(f"Using cached Flux Kontext model: {model_id}")
             return cached_model
-
-    from mflux.kontext.flux_kontext import Flux1Kontext
 
     loop = asyncio.get_running_loop()
 

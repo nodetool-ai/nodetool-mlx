@@ -57,12 +57,8 @@ import mlx_vlm.prompt_utils
 import mlx_vlm.utils
 import mlx_audio.tts.utils
 import mlx_audio.tts.generate
-from nodetool.mlx.flux_model_loader import (
-    load_flux_model,
-    ensure_mflux_available,
-    FluxModelNotAvailableError,
-)
-from mflux.config.config import Config
+# mflux imports are lazy - only imported when image generation is used
+# This allows the MLX provider to be registered even if mflux isn't installed
 
 from nodetool.providers.base import BaseProvider, register_provider
 from nodetool.agents.tools.base import Tool
@@ -95,6 +91,10 @@ from pydub import AudioSegment  # type: ignore
 from nodetool.integrations.huggingface.huggingface_models import (
     get_mlx_language_models_from_hf_cache,
 )
+from nodetool.mlx.flux_model_loader import (
+    load_flux_model,
+)
+from mflux.config.config import Config
 
 
 log = get_logger(__name__)
@@ -137,12 +137,13 @@ class MLXProvider(BaseProvider):
 
     def __init__(
         self,
+        secrets: dict[str, str] = {},
         adapter_path: str | None = None,
         tokenizer_config: dict[str, Any] | None = None,
         sampler_defaults: dict[str, Any] | None = None,
         lazy_load: bool | None = None,
     ) -> None:
-        super().__init__()
+        super().__init__(secrets=secrets)
 
         env = Environment.get_environment()
         self.adapter_path = adapter_path or env.get("MLX_ADAPTER_PATH")
@@ -242,13 +243,13 @@ class MLXProvider(BaseProvider):
         Get available MLX image models.
 
         Returns recommended FLUX models from MFlux nodes that can be used
-        for local image generation on Apple Silicon. Always returns models
-        (does not check if MLX is available or models are cached).
+        for local image generation on Apple Silicon. Also discovers mflux models
+        from the HuggingFace cache.
 
         Returns:
             List of ImageModel instances for MLX
         """
-        # Recommended FLUX models from MFlux nodes (mflux.py)
+        # Start with hardcoded recommended FLUX models from MFlux nodes (mflux.py)
         models = [
             # From MFlux.get_recommended_models()
             ImageModel(
@@ -277,6 +278,22 @@ class MLXProvider(BaseProvider):
                 provider=Provider.MLX,
             ),
         ]
+
+        # Also discover mflux models from HuggingFace cache
+        try:
+            from nodetool.integrations.huggingface.huggingface_models import (
+                get_mlx_image_models_from_hf_cache,
+            )
+            cached_models = await get_mlx_image_models_from_hf_cache()
+            # Add cached models, avoiding duplicates
+            seen_ids = {m.id for m in models}
+            for cached_model in cached_models:
+                if cached_model.id not in seen_ids:
+                    models.append(cached_model)
+                    seen_ids.add(cached_model.id)
+            log.debug(f"Discovered {len(cached_models)} mflux models from HF cache")
+        except Exception as e:
+            log.debug(f"Could not discover mflux models from cache: {e}")
 
         return models
 
@@ -1173,7 +1190,7 @@ class MLXProvider(BaseProvider):
                     return cached
 
                 def _load() -> tuple[nn.Module, TokenizerWrapper]:
-                    return mlx_lm.utils.load(
+                    return mlx_lm.utils.load(  # pyright: ignore[reportReturnType]
                         model,
                         adapter_path=self.adapter_path,
                     )
@@ -1942,9 +1959,6 @@ class MLXProvider(BaseProvider):
         Raises:
             RuntimeError: If MLX is not available or generation fails
         """
-
-        ensure_mflux_available()
-
         if not params.prompt:
             raise ValueError("Prompt cannot be empty for image generation.")
 
@@ -1961,9 +1975,12 @@ class MLXProvider(BaseProvider):
                 loop = asyncio.get_running_loop()
 
                 def _generate() -> PIL.Image.Image:
+                    # Default to 4 steps for text-to-image (FLUX-schnell models are optimized for 4 steps)
+                    default_steps = 4
+                    
                     # Prepare config
                     config_kwargs: dict[str, Any] = {
-                        "num_inference_steps": params.num_inference_steps or 4,
+                        "num_inference_steps": params.num_inference_steps or default_steps,
                         "height": params.height or 1024,
                         "width": params.width or 1024,
                     }
@@ -2026,96 +2043,93 @@ class MLXProvider(BaseProvider):
         Raises:
             RuntimeError: If MLX is not available or generation fails
         """
-        # Import mflux utilities
-        ensure_mflux_available()
 
         if not params.prompt:
             raise ValueError("Prompt cannot be empty for image-to-image generation.")
 
-        try:
-            # Load model using centralized loader
-            model = await load_flux_model(
-                model_id=params.model.id,
-                quantize=4,  # Default to 4-bit quantization
-                task="flux",
-            )
+        # Load model using centralized loader
+        model = await load_flux_model(
+            model_id=params.model.id,
+            quantize=4,  # Default to 4-bit quantization
+            task="flux",
+        )
 
-            # Load input image
-            base_image = PIL.Image.open(BytesIO(image))
+        # Load input image
+        base_image = PIL.Image.open(BytesIO(image))
 
-            loop = asyncio.get_running_loop()
+        loop = asyncio.get_running_loop()
 
-            def _generate() -> PIL.Image.Image:
-                # Prepare image
-                working_image = base_image.convert("RGB")
-                target_width = 16 * ((params.target_width or 1024) // 16)
-                target_height = 16 * ((params.target_height or 1024) // 16)
+        def _generate() -> PIL.Image.Image:
+            # Prepare image
+            working_image = base_image.convert("RGB")
+            target_width = 16 * ((params.target_width or 1024) // 16)
+            target_height = 16 * ((params.target_height or 1024) // 16)
 
-                if working_image.size != (target_width, target_height):
-                    working_image = working_image.resize(
-                        (target_width, target_height), PIL.Image.Resampling.LANCZOS
-                    )
+            if working_image.size != (target_width, target_height):
+                working_image = working_image.resize(
+                    (target_width, target_height), PIL.Image.Resampling.LANCZOS
+                )
 
-                with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                    image_path = Path(tmp.name)
-                    working_image.save(image_path)
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                image_path = Path(tmp.name)
+                working_image.save(image_path)
 
-                try:
-                    # Prepare config
-                    config_kwargs: dict[str, Any] = {
-                        "num_inference_steps": params.num_inference_steps or 8,
-                        "height": target_height,
-                        "width": target_width,
-                        "image_strength": params.strength or 0.4,
-                        "image_path": image_path,
+            try:
+                # Auto-detect inference steps based on model name
+                # FLUX-schnell models are optimized for 4 steps
+                model_name_lower = params.model.id.lower()
+                default_steps = 4 if "schnell" in model_name_lower else 8
+                
+                # Prepare config
+                config_kwargs: dict[str, Any] = {
+                    "num_inference_steps": params.num_inference_steps or default_steps,
+                    "height": target_height,
+                    "width": target_width,
+                    "image_strength": params.strength or 0.4,
+                    "image_path": image_path,
+                }
+
+                if params.guidance_scale is not None:
+                    config_kwargs["guidance"] = params.guidance_scale
+
+                # Filter to only allowed config fields
+                dataclass_fields = getattr(Config, "__dataclass_fields__", None)
+                if isinstance(dataclass_fields, dict):
+                    allowed = set(dataclass_fields.keys())
+                    config_kwargs = {
+                        key: value
+                        for key, value in config_kwargs.items()
+                        if key in allowed
                     }
 
-                    if params.guidance_scale is not None:
-                        config_kwargs["guidance"] = params.guidance_scale
+                config = Config(**config_kwargs)
 
-                    # Filter to only allowed config fields
-                    dataclass_fields = getattr(Config, "__dataclass_fields__", None)
-                    if isinstance(dataclass_fields, dict):
-                        allowed = set(dataclass_fields.keys())
-                        config_kwargs = {
-                            key: value
-                            for key, value in config_kwargs.items()
-                            if key in allowed
-                        }
+                # Generate image
+                generated = model.generate_image(
+                    seed=params.seed if params.seed is not None else 0,
+                    prompt=params.prompt,
+                    config=config,
+                )
+                return generated.image
+            finally:
+                # Clean up temp file
+                try:
+                    image_path.unlink()
+                except FileNotFoundError:
+                    pass
 
-                    config = Config(**config_kwargs)
+        # Run generation in executor
+        pil_image = await loop.run_in_executor(None, _generate)
 
-                    # Generate image
-                    generated = model.generate_image(
-                        seed=params.seed if params.seed is not None else 0,
-                        prompt=params.prompt,
-                        config=config,
-                    )
-                    return generated.image
-                finally:
-                    # Clean up temp file
-                    try:
-                        image_path.unlink()
-                    except FileNotFoundError:
-                        pass
+        # Convert to bytes
+        img_buffer = BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        image_bytes = img_buffer.getvalue()
 
-            # Run generation in executor
-            pil_image = await loop.run_in_executor(None, _generate)
+        self.usage["total_requests"] += 1
+        self.usage["total_images"] += 1
 
-            # Convert to bytes
-            img_buffer = BytesIO()
-            pil_image.save(img_buffer, format="PNG")
-            image_bytes = img_buffer.getvalue()
-
-            self.usage["total_requests"] += 1
-            self.usage["total_images"] += 1
-
-            return image_bytes
-
-        except Exception as e:
-            log.error(f"MLX image-to-image generation failed: {e}")
-            raise RuntimeError(f"MLX image-to-image generation failed: {e}")
-
+        return image_bytes
 
 
 async def main() -> None:
