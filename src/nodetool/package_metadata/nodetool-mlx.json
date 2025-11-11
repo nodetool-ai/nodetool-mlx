@@ -1,1570 +1,12 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
   "repo_id": "",
   "nodes": [
-    {
-      "title": "MFlux",
-      "description": "Generate images locally using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image generation, apple-silicon\n\n    Use cases:\n    - Create high quality images on Apple Silicon without external APIs\n    - Prototype prompts locally before running on cloud inference providers\n    - Experiment with quantized FLUX models (schnell/dev/krea-dev variants)\n\n    Recommended models:\n    - schnell: Fastest model, good for quick generations (2-4 steps)\n    - dev: More powerful model, higher quality (20-25 steps)\n    - krea-dev: Enhanced photorealism with distinctive aesthetics\n    - Freepik/flux.1-lite-8B-alpha: Lighter version of FLUX\n    - Quantized 4-bit models: Reduced memory usage versions of the official models",
-      "namespace": "mlx.text_to_image",
-      "node_type": "mlx.text_to_image.MFlux",
-      "properties": [
-        {
-          "name": "prompt",
-          "type": {
-            "type": "str"
-          },
-          "default": "A vivid concept art piece of a futuristic city at sunset",
-          "title": "Prompt",
-          "description": "The text prompt describing the image to generate."
-        },
-        {
-          "name": "model",
-          "type": {
-            "type": "hf.flux"
-          },
-          "default": {
-            "type": "hf.flux",
-            "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Model",
-          "description": "MFLUX model variant to load. Options include official models (schnell, dev, krea-dev), third-party community models (Freepik/flux.1-lite-8B-alpha), and quantized 4-bit versions for reduced memory usage."
-        },
-        {
-          "name": "quantize",
-          "type": {
-            "type": "enum",
-            "values": [
-              3,
-              4,
-              5,
-              6,
-              8
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
-          },
-          "default": 4,
-          "title": "Quantize",
-          "description": "Optional quantization level for model weights (reduces memory usage)."
-        },
-        {
-          "name": "steps",
-          "type": {
-            "type": "int"
-          },
-          "default": 4,
-          "title": "Steps",
-          "description": "Number of denoising steps for the generation run.",
-          "min": 1.0,
-          "max": 50.0
-        },
-        {
-          "name": "guidance",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": 3.5,
-          "title": "Guidance",
-          "description": "Classifier-free guidance scale. Used by dev/krea-dev models.",
-          "min": 0.0
-        },
-        {
-          "name": "height",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Height",
-          "description": "Height of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "width",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Width",
-          "description": "Width of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "seed",
-          "type": {
-            "type": "int"
-          },
-          "default": 0,
-          "title": "Seed",
-          "description": "Seed for deterministic generation. Leave as 0 for random."
-        }
-      ],
-      "outputs": [
-        {
-          "type": {
-            "type": "image"
-          },
-          "name": "output"
-        }
-      ],
-      "recommended_models": [
-        {
-          "id": "Freepik/flux.1-lite-8B-alpha",
-          "type": "hf.flux",
-          "name": "Freepik/flux.1-lite-8B-alpha",
-          "repo_id": "Freepik/flux.1-lite-8B-alpha",
-          "size_on_disk": 42642793609,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "diffusers",
-            "safetensors",
-            "flux",
-            "text-to-image",
-            "base_model:black-forest-labs/FLUX.1-dev",
-            "base_model:finetune:black-forest-labs/FLUX.1-dev",
-            "license:other",
-            "endpoints_compatible",
-            "diffusers:FluxPipeline",
-            "region:us"
-          ],
-          "has_model_index": true,
-          "downloads": 1086,
-          "likes": 427
-        },
-        {
-          "id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "size_on_disk": 9615583654,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "flux-rectified-flow",
-            "text-to-image",
-            "diffusion",
-            "mflux",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 15,
-          "likes": 1
-        },
-        {
-          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "size_on_disk": 9621508754,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "flux-rectified-flow",
-            "text-to-image",
-            "diffusion",
-            "mflux",
-            "development",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 5,
-          "likes": 2
-        },
-        {
-          "id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "repo_id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "size_on_disk": 9614920957,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "mflux",
-            "flux",
-            "krea-dev",
-            "text-to-image",
-            "base_model:black-forest-labs/FLUX.1-Krea-dev",
-            "base_model:finetune:black-forest-labs/FLUX.1-Krea-dev",
-            "license:other",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 3
-        },
-        {
-          "id": "akx/FLUX.1-Kontext-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "akx/FLUX.1-Kontext-dev-mflux-4bit",
-          "repo_id": "akx/FLUX.1-Kontext-dev-mflux-4bit",
-          "size_on_disk": 9614920180,
-          "tags": [
-            "mflux",
-            "base_model:black-forest-labs/FLUX.1-Kontext-dev",
-            "base_model:quantized:black-forest-labs/FLUX.1-Kontext-dev",
-            "license:other",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 2
-        }
-      ],
-      "basic_fields": [
-        "prompt",
-        "model",
-        "quantize",
-        "steps",
-        "guidance",
-        "height",
-        "width",
-        "seed"
-      ],
-      "expose_as_tool": true
-    },
-    {
-      "title": "MFlux ControlNet",
-      "description": "Generate images with MFlux ControlNet guidance using local MLX acceleration.\n    mlx, flux, controlnet, conditioning, edge-detection\n\n    Use cases:\n    - Apply edge-aware guidance via ControlNet canny models\n    - Leverage local Apple Silicon acceleration for conditioned generations\n    - Upscale images using ControlNet upscaler weights",
-      "namespace": "mlx.image_to_image",
-      "node_type": "mlx.image_to_image.MFluxControlNet",
-      "properties": [
-        {
-          "name": "prompt",
-          "type": {
-            "type": "str"
-          },
-          "default": "Highly detailed cinematic portrait",
-          "title": "Prompt",
-          "description": "Primary text prompt for image generation."
-        },
-        {
-          "name": "control_image",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Control Image",
-          "description": "Reference image used by ControlNet for conditioning."
-        },
-        {
-          "name": "model",
-          "type": {
-            "type": "hf.flux"
-          },
-          "default": {
-            "type": "hf.flux",
-            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Model",
-          "description": "Base Flux model to load for conditioned generation."
-        },
-        {
-          "name": "controlnet_model",
-          "type": {
-            "type": "hf.controlnet_flux"
-          },
-          "default": {
-            "type": "hf.controlnet_flux",
-            "repo_id": "InstantX/FLUX.1-dev-Controlnet-Canny",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Controlnet Model",
-          "description": "ControlNet weights that match the selected Flux base model."
-        },
-        {
-          "name": "quantize",
-          "type": {
-            "type": "enum",
-            "optional": true,
-            "values": [
-              3,
-              4,
-              5,
-              6,
-              8
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
-          },
-          "default": 4,
-          "title": "Quantize",
-          "description": "Optional quantization level for model weights (reduces memory usage)."
-        },
-        {
-          "name": "steps",
-          "type": {
-            "type": "int"
-          },
-          "default": 8,
-          "title": "Steps",
-          "description": "Number of denoising steps for diffusion.",
-          "min": 1.0,
-          "max": 50.0
-        },
-        {
-          "name": "guidance",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": 3.5,
-          "title": "Guidance",
-          "description": "Classifier-free guidance scale when supported by the selected model.",
-          "min": 0.0
-        },
-        {
-          "name": "controlnet_strength",
-          "type": {
-            "type": "float"
-          },
-          "default": 0.5,
-          "title": "Controlnet Strength",
-          "description": "Blend factor between ControlNet conditioning and base model prior.",
-          "min": 0.0,
-          "max": 2.0
-        },
-        {
-          "name": "height",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Height",
-          "description": "Height of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "width",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Width",
-          "description": "Width of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "seed",
-          "type": {
-            "type": "int"
-          },
-          "default": 0,
-          "title": "Seed",
-          "description": "Seed for deterministic generation. Leave 0 for random."
-        }
-      ],
-      "outputs": [
-        {
-          "type": {
-            "type": "image"
-          },
-          "name": "output"
-        }
-      ],
-      "recommended_models": [
-        {
-          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "size_on_disk": 9621508754,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "flux-rectified-flow",
-            "text-to-image",
-            "diffusion",
-            "mflux",
-            "development",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 5,
-          "likes": 2
-        },
-        {
-          "id": "InstantX/FLUX.1-dev-Controlnet-Canny",
-          "type": "hf.controlnet_flux",
-          "name": "InstantX/FLUX.1-dev-Controlnet-Canny",
-          "repo_id": "InstantX/FLUX.1-dev-Controlnet-Canny",
-          "size_on_disk": 3588002196,
-          "tags": [
-            "diffusers",
-            "safetensors",
-            "Text-to-Image",
-            "ControlNet",
-            "Diffusers",
-            "Stable Diffusion",
-            "base_model:black-forest-labs/FLUX.1-dev",
-            "base_model:finetune:black-forest-labs/FLUX.1-dev",
-            "license:other",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 3334,
-          "likes": 191
-        },
-        {
-          "id": "jasperai/Flux.1-dev-Controlnet-Upscaler",
-          "type": "hf.controlnet_flux",
-          "name": "jasperai/Flux.1-dev-Controlnet-Upscaler",
-          "repo_id": "jasperai/Flux.1-dev-Controlnet-Upscaler",
-          "size_on_disk": 3591390928,
-          "pipeline_tag": "image-to-image",
-          "tags": [
-            "diffusers",
-            "safetensors",
-            "ControlNet",
-            "super-resolution",
-            "upscaler",
-            "image-to-image",
-            "base_model:black-forest-labs/FLUX.1-dev",
-            "base_model:finetune:black-forest-labs/FLUX.1-dev",
-            "license:other",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 9994,
-          "likes": 839
-        }
-      ],
-      "basic_fields": [
-        "prompt",
-        "control_image",
-        "model",
-        "controlnet_model",
-        "quantize",
-        "steps",
-        "guidance",
-        "controlnet_strength",
-        "height",
-        "width",
-        "seed"
-      ],
-      "expose_as_tool": true
-    },
-    {
-      "title": "MFlux Depth",
-      "description": "Generate images with depth guidance via the MFlux depth pipeline using local MLX acceleration.\n    mlx, flux, depth, conditioning, structure-preserving\n\n    Use cases:\n    - Use a depth map to control structural composition while keeping prompt-driven appearance\n    - Provide both source image and depth map to transfer scene layout to a new generation\n    - Generate depth-guided outputs when only a depth map is available (source image optional)",
-      "namespace": "mlx.image_to_image",
-      "node_type": "mlx.image_to_image.MFluxDepth",
-      "properties": [
-        {
-          "name": "prompt",
-          "type": {
-            "type": "str"
-          },
-          "default": "Highly detailed cinematic portrait with depth cues",
-          "title": "Prompt",
-          "description": "Primary text prompt for the depth-guided generation."
-        },
-        {
-          "name": "image",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Image",
-          "description": "Optional reference image used for depth extraction or as a content guide."
-        },
-        {
-          "name": "depth_image",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Depth Image",
-          "description": "Optional depth map to guide geometry. If omitted, depth is inferred from the image when provided."
-        },
-        {
-          "name": "model",
-          "type": {
-            "type": "hf.depth_generation"
-          },
-          "default": {
-            "type": "hf.depth_generation",
-            "repo_id": "black-forest-labs/FLUX.1-Depth-dev",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Model",
-          "description": "Depth model weights compatible with the Flux depth pipeline."
-        },
-        {
-          "name": "quantize",
-          "type": {
-            "type": "enum",
-            "optional": true,
-            "values": [
-              3,
-              4,
-              5,
-              6,
-              8
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
-          },
-          "default": 4,
-          "title": "Quantize",
-          "description": "Optional quantization level for model weights (reduces memory usage)."
-        },
-        {
-          "name": "steps",
-          "type": {
-            "type": "int"
-          },
-          "default": 20,
-          "title": "Steps",
-          "description": "Number of denoising steps for the generation run.",
-          "min": 1.0,
-          "max": 50.0
-        },
-        {
-          "name": "guidance",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": 10.0,
-          "title": "Guidance",
-          "description": "Classifier-free guidance scale. Defaults higher to encourage prompt adherence in depth mode.",
-          "min": 0.0
-        },
-        {
-          "name": "height",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Height",
-          "description": "Height of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "width",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Width",
-          "description": "Width of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "seed",
-          "type": {
-            "type": "int"
-          },
-          "default": 0,
-          "title": "Seed",
-          "description": "Seed for deterministic generation. Leave 0 for random seed."
-        }
-      ],
-      "outputs": [
-        {
-          "type": {
-            "type": "image"
-          },
-          "name": "output"
-        }
-      ],
-      "recommended_models": [
-        {
-          "id": "black-forest-labs/FLUX.1-Depth-dev",
-          "type": "hf.depth_generation",
-          "name": "black-forest-labs/FLUX.1-Depth-dev",
-          "repo_id": "black-forest-labs/FLUX.1-Depth-dev",
-          "size_on_disk": 67823838679,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "diffusers",
-            "safetensors",
-            "image-generation",
-            "flux",
-            "diffusion-single-file",
-            "en",
-            "license:other",
-            "diffusers:FluxControlPipeline",
-            "region:us"
-          ],
-          "has_model_index": true,
-          "downloads": 6943,
-          "likes": 223
-        }
-      ],
-      "basic_fields": [
-        "prompt",
-        "image",
-        "depth_image",
-        "model",
-        "quantize",
-        "steps",
-        "guidance",
-        "height",
-        "width",
-        "seed"
-      ],
-      "expose_as_tool": true
-    },
-    {
-      "title": "MFlux ImageToImage",
-      "description": "Transform an existing image using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image-to-image, apple-silicon\n\n    Use cases:\n    - Apply prompt-based edits to an existing image without relying on external APIs\n    - Experiment with strength-controlled transformations locally",
-      "namespace": "mlx.image_to_image",
-      "node_type": "mlx.image_to_image.MFluxImageToImage",
-      "properties": [
-        {
-          "name": "prompt",
-          "type": {
-            "type": "str"
-          },
-          "default": "Refine this image with cinematic lighting",
-          "title": "Prompt",
-          "description": "Text prompt describing how to transform the input image."
-        },
-        {
-          "name": "image",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Image",
-          "description": "Base image that will be transformed."
-        },
-        {
-          "name": "model",
-          "type": {
-            "type": "hf.flux"
-          },
-          "default": {
-            "type": "hf.flux",
-            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Model",
-          "description": "MFLUX model variant to load for image-to-image generation."
-        },
-        {
-          "name": "quantize",
-          "type": {
-            "type": "enum",
-            "optional": true,
-            "values": [
-              3,
-              4,
-              5,
-              6,
-              8
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
-          },
-          "default": 4,
-          "title": "Quantize",
-          "description": "Optional quantization level for model weights (reduces memory usage)."
-        },
-        {
-          "name": "steps",
-          "type": {
-            "type": "int"
-          },
-          "default": 8,
-          "title": "Steps",
-          "description": "Number of denoising steps for the transformation.",
-          "min": 1.0,
-          "max": 50.0
-        },
-        {
-          "name": "guidance",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": 3.5,
-          "title": "Guidance",
-          "description": "Classifier-free guidance scale. Used by dev/krea-dev models.",
-          "min": 0.0
-        },
-        {
-          "name": "image_strength",
-          "type": {
-            "type": "float"
-          },
-          "default": 0.4,
-          "title": "Image Strength",
-          "description": "Blend factor between the original image and the generation (0 keeps original).",
-          "min": 0.0,
-          "max": 1.0
-        },
-        {
-          "name": "height",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Height",
-          "description": "Height of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "width",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Width",
-          "description": "Width of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "seed",
-          "type": {
-            "type": "int"
-          },
-          "default": 0,
-          "title": "Seed",
-          "description": "Seed for deterministic generation. Leave as 0 for random."
-        }
-      ],
-      "outputs": [
-        {
-          "type": {
-            "type": "image"
-          },
-          "name": "output"
-        }
-      ],
-      "recommended_models": [
-        {
-          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "size_on_disk": 9621508754,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "flux-rectified-flow",
-            "text-to-image",
-            "diffusion",
-            "mflux",
-            "development",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 5,
-          "likes": 2
-        },
-        {
-          "id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "size_on_disk": 9615583654,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "flux-rectified-flow",
-            "text-to-image",
-            "diffusion",
-            "mflux",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 15,
-          "likes": 1
-        },
-        {
-          "id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "repo_id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "size_on_disk": 9614920957,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "mflux",
-            "flux",
-            "krea-dev",
-            "text-to-image",
-            "base_model:black-forest-labs/FLUX.1-Krea-dev",
-            "base_model:finetune:black-forest-labs/FLUX.1-Krea-dev",
-            "license:other",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 3
-        }
-      ],
-      "basic_fields": [
-        "prompt",
-        "image",
-        "model",
-        "quantize",
-        "steps",
-        "guidance",
-        "image_strength",
-        "height",
-        "width",
-        "seed"
-      ],
-      "expose_as_tool": true
-    },
-    {
-      "title": "MFlux Inpaint",
-      "description": "Inpaint portions of an image locally using the MFLUX MLX implementation of FLUX.1 Fill.\n    mlx, flux, inpainting, mask editing\n\n    Use cases:\n    - Restore masked regions with prompt-guided content\n    - Blend new elements into an existing composition while preserving unmasked areas",
-      "namespace": "mlx.image_to_image",
-      "node_type": "mlx.image_to_image.MFluxInpaint",
-      "properties": [
-        {
-          "name": "prompt",
-          "type": {
-            "type": "str"
-          },
-          "default": "Refine the masked region with additional details",
-          "title": "Prompt",
-          "description": "Text prompt describing what to generate inside the mask."
-        },
-        {
-          "name": "image",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Image",
-          "description": "Base image that will stay fixed outside the masked regions."
-        },
-        {
-          "name": "mask",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Mask",
-          "description": "Mask image: white areas will be regenerated, black areas remain untouched."
-        },
-        {
-          "name": "model",
-          "type": {
-            "type": "hf.inpainting"
-          },
-          "default": {
-            "type": "hf.inpainting",
-            "repo_id": "black-forest-labs/FLUX.1-Fill-dev",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Model",
-          "description": "Inpainting model to load. Defaults to FLUX.1 Fill dev weights."
-        },
-        {
-          "name": "quantize",
-          "type": {
-            "type": "enum",
-            "optional": true,
-            "values": [
-              3,
-              4,
-              5,
-              6,
-              8
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
-          },
-          "default": 4,
-          "title": "Quantize",
-          "description": "Optional quantization level for model weights (reduces memory usage)."
-        },
-        {
-          "name": "steps",
-          "type": {
-            "type": "int"
-          },
-          "default": 20,
-          "title": "Steps",
-          "description": "Number of denoising steps for the inpainting run.",
-          "min": 1.0,
-          "max": 50.0
-        },
-        {
-          "name": "guidance",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": 30.0,
-          "title": "Guidance",
-          "description": "Classifier-free guidance scale. Higher values tend to better respect the prompt in Fill mode.",
-          "min": 0.0
-        },
-        {
-          "name": "height",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Height",
-          "description": "Target output height in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "width",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Width",
-          "description": "Target output width in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "seed",
-          "type": {
-            "type": "int"
-          },
-          "default": 0,
-          "title": "Seed",
-          "description": "Seed for deterministic generation. Leave 0 for random seed."
-        }
-      ],
-      "outputs": [
-        {
-          "type": {
-            "type": "image"
-          },
-          "name": "output"
-        }
-      ],
-      "recommended_models": [
-        {
-          "id": "black-forest-labs/FLUX.1-Fill-dev",
-          "type": "hf.inpainting",
-          "name": "black-forest-labs/FLUX.1-Fill-dev",
-          "repo_id": "black-forest-labs/FLUX.1-Fill-dev",
-          "size_on_disk": 58056239932,
-          "tags": [
-            "diffusers",
-            "safetensors",
-            "image-generation",
-            "flux",
-            "diffusion-single-file",
-            "en",
-            "license:other",
-            "diffusers:FluxFillPipeline",
-            "region:us"
-          ],
-          "has_model_index": true,
-          "downloads": 332491,
-          "likes": 936
-        }
-      ],
-      "basic_fields": [
-        "prompt",
-        "image",
-        "mask",
-        "model",
-        "quantize",
-        "steps",
-        "guidance",
-        "height",
-        "width",
-        "seed"
-      ],
-      "expose_as_tool": true
-    },
-    {
-      "title": "MFlux Kontext",
-      "description": "Generate images using Kontext reference image fusion on Apple Silicon.\n    mlx, flux, kontext, reference guidance\n\n    Use cases:\n    - Leverage a reference image and prompt to produce stylistically consistent outputs\n    - Perform context-aware edits without external services\n    - Prototype Kontext-driven workflows locally",
-      "namespace": "mlx.image_to_image",
-      "node_type": "mlx.image_to_image.MFluxKontext",
-      "properties": [
-        {
-          "name": "prompt",
-          "type": {
-            "type": "str"
-          },
-          "default": "Create an atmospheric scene based on the reference image",
-          "title": "Prompt",
-          "description": "Primary text prompt for Kontext-guided generation."
-        },
-        {
-          "name": "reference_image",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Reference Image",
-          "description": "Reference image that will guide the Kontext generation."
-        },
-        {
-          "name": "model",
-          "type": {
-            "type": "hf.kontext_generation"
-          },
-          "default": {
-            "type": "hf.kontext_generation",
-            "repo_id": "black-forest-labs/FLUX.1-Kontext-dev",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Model",
-          "description": "Kontext model weights compatible with the Flux Kontext pipeline."
-        },
-        {
-          "name": "quantize",
-          "type": {
-            "type": "enum",
-            "optional": true,
-            "values": [
-              3,
-              4,
-              5,
-              6,
-              8
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
-          },
-          "default": 4,
-          "title": "Quantize",
-          "description": "Optional quantization level for model weights (reduces memory usage)."
-        },
-        {
-          "name": "steps",
-          "type": {
-            "type": "int"
-          },
-          "default": 20,
-          "title": "Steps",
-          "description": "Number of denoising steps for the generation run.",
-          "min": 1.0,
-          "max": 50.0
-        },
-        {
-          "name": "guidance",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": 2.5,
-          "title": "Guidance",
-          "description": "Classifier-free guidance scale. Kontext often works best with moderate values.",
-          "min": 0.0
-        },
-        {
-          "name": "height",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Height",
-          "description": "Height of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "width",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Width",
-          "description": "Width of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "seed",
-          "type": {
-            "type": "int"
-          },
-          "default": 0,
-          "title": "Seed",
-          "description": "Seed for deterministic generation. Leave 0 for random seed."
-        }
-      ],
-      "outputs": [
-        {
-          "type": {
-            "type": "image"
-          },
-          "name": "output"
-        }
-      ],
-      "recommended_models": [
-        {
-          "id": "black-forest-labs/FLUX.1-Kontext-dev",
-          "type": "hf.kontext_generation",
-          "name": "black-forest-labs/FLUX.1-Kontext-dev",
-          "repo_id": "black-forest-labs/FLUX.1-Kontext-dev",
-          "size_on_disk": 57890836779,
-          "pipeline_tag": "image-to-image",
-          "tags": [
-            "diffusers",
-            "safetensors",
-            "image-generation",
-            "flux",
-            "diffusion-single-file",
-            "image-to-image",
-            "en",
-            "arxiv:2506.15742",
-            "license:other",
-            "diffusers:FluxKontextPipeline",
-            "region:us"
-          ],
-          "has_model_index": true,
-          "downloads": 322520,
-          "likes": 2332
-        }
-      ],
-      "basic_fields": [
-        "prompt",
-        "reference_image",
-        "model",
-        "quantize",
-        "steps",
-        "guidance",
-        "height",
-        "width",
-        "seed"
-      ],
-      "expose_as_tool": true
-    },
-    {
-      "title": "MFlux Outpaint",
-      "description": "Outpaint an existing image by extending the canvas using the MFLUX Fill pipeline.\n    mlx, flux, outpainting, canvas extension\n\n    Use cases:\n    - Expand scene borders while maintaining continuity with the original image\n    - Add sky, foreground elements, or contextual scenery around a provided image",
-      "namespace": "mlx.image_to_image",
-      "node_type": "mlx.image_to_image.MFluxOutpaint",
-      "properties": [
-        {
-          "name": "prompt",
-          "type": {
-            "type": "str"
-          },
-          "default": "Expand the scene with complementary surroundings",
-          "title": "Prompt",
-          "description": "Prompt guiding what to generate in the newly added canvas regions."
-        },
-        {
-          "name": "image",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Image",
-          "description": "Base image that will remain visible inside the padded region."
-        },
-        {
-          "name": "mask",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Mask",
-          "description": "Mask defining areas to regenerate (white) after padding. If blank, generated automatically."
-        },
-        {
-          "name": "model",
-          "type": {
-            "type": "hf.outpainting"
-          },
-          "default": {
-            "type": "hf.outpainting",
-            "repo_id": "black-forest-labs/FLUX.1-Fill-dev",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Model",
-          "description": "Outpainting model to load. Defaults to FLUX.1 Fill dev weights."
-        },
-        {
-          "name": "quantize",
-          "type": {
-            "type": "enum",
-            "optional": true,
-            "values": [
-              3,
-              4,
-              5,
-              6,
-              8
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
-          },
-          "default": 4,
-          "title": "Quantize",
-          "description": "Optional quantization level for model weights (reduces memory usage)."
-        },
-        {
-          "name": "steps",
-          "type": {
-            "type": "int"
-          },
-          "default": 20,
-          "title": "Steps",
-          "description": "Number of denoising steps for the outpainting run.",
-          "min": 1.0,
-          "max": 50.0
-        },
-        {
-          "name": "guidance",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": 30.0,
-          "title": "Guidance",
-          "description": "Classifier-free guidance scale. Higher values tend to better respect the prompt in Fill mode.",
-          "min": 0.0
-        },
-        {
-          "name": "padding",
-          "type": {
-            "type": "str",
-            "optional": true
-          },
-          "default": null,
-          "title": "Padding",
-          "description": "CSS-style padding string (e.g. '128', '96,64', '10%,5%') describing additional canvas to create before generation."
-        },
-        {
-          "name": "height",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Height",
-          "description": "Target output height after padding.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "width",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Width",
-          "description": "Target output width after padding.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "seed",
-          "type": {
-            "type": "int"
-          },
-          "default": 0,
-          "title": "Seed",
-          "description": "Seed for deterministic generation. Leave 0 for random seed."
-        }
-      ],
-      "outputs": [
-        {
-          "type": {
-            "type": "image"
-          },
-          "name": "output"
-        }
-      ],
-      "recommended_models": [
-        {
-          "id": "black-forest-labs/FLUX.1-Fill-dev",
-          "type": "hf.outpainting",
-          "name": "black-forest-labs/FLUX.1-Fill-dev",
-          "repo_id": "black-forest-labs/FLUX.1-Fill-dev",
-          "size_on_disk": 58056239932,
-          "tags": [
-            "diffusers",
-            "safetensors",
-            "image-generation",
-            "flux",
-            "diffusion-single-file",
-            "en",
-            "license:other",
-            "diffusers:FluxFillPipeline",
-            "region:us"
-          ],
-          "has_model_index": true,
-          "downloads": 332491,
-          "likes": 936
-        }
-      ],
-      "basic_fields": [
-        "prompt",
-        "image",
-        "mask",
-        "model",
-        "quantize",
-        "steps",
-        "guidance",
-        "padding",
-        "height",
-        "width",
-        "seed"
-      ],
-      "expose_as_tool": true
-    },
-    {
-      "title": "MFlux Redux",
-      "description": "Generate images using reference images with Flux Redux guidance on Apple Silicon.\n    mlx, flux, redux, reference fusion\n\n    Use cases:\n    - Blend multiple reference images with a text prompt to steer style and content\n    - Reinterpret a photo collection into a coherent output while keeping structure from the references\n    - Experiment locally with the Flux Redux pipeline without external APIs",
-      "namespace": "mlx.image_to_image",
-      "node_type": "mlx.image_to_image.MFluxRedux",
-      "properties": [
-        {
-          "name": "prompt",
-          "type": {
-            "type": "str"
-          },
-          "default": "Create a cinematic composition inspired by the reference images",
-          "title": "Prompt",
-          "description": "Primary text prompt for the Redux generation."
-        },
-        {
-          "name": "redux_image",
-          "type": {
-            "type": "image"
-          },
-          "default": {
-            "type": "image",
-            "uri": "",
-            "asset_id": null,
-            "data": null
-          },
-          "title": "Redux Image",
-          "description": "Reference image that will guide the generation."
-        },
-        {
-          "name": "redux_image_strength",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": null,
-          "title": "Redux Image Strength",
-          "description": "Optional strength value (0-1) for the reference image.",
-          "min": 0.0,
-          "max": 1.0
-        },
-        {
-          "name": "model",
-          "type": {
-            "type": "hf.redux_generation"
-          },
-          "default": {
-            "type": "hf.redux_generation",
-            "repo_id": "black-forest-labs/FLUX.1-Redux-dev",
-            "path": null,
-            "variant": null,
-            "allow_patterns": null,
-            "ignore_patterns": null
-          },
-          "title": "Model",
-          "description": "Redux model variant to load. Defaults to FLUX.1 Redux dev weights."
-        },
-        {
-          "name": "quantize",
-          "type": {
-            "type": "enum",
-            "optional": true,
-            "values": [
-              3,
-              4,
-              5,
-              6,
-              8
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
-          },
-          "default": 4,
-          "title": "Quantize",
-          "description": "Optional quantization level for model weights (reduces memory usage)."
-        },
-        {
-          "name": "steps",
-          "type": {
-            "type": "int"
-          },
-          "default": 20,
-          "title": "Steps",
-          "description": "Number of denoising steps for the generation run.",
-          "min": 1.0,
-          "max": 50.0
-        },
-        {
-          "name": "guidance",
-          "type": {
-            "type": "float",
-            "optional": true
-          },
-          "default": 7.0,
-          "title": "Guidance",
-          "description": "Classifier-free guidance scale. A moderate default balances prompt adherence and references.",
-          "min": 0.0
-        },
-        {
-          "name": "height",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Height",
-          "description": "Height of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "width",
-          "type": {
-            "type": "int"
-          },
-          "default": 1024,
-          "title": "Width",
-          "description": "Width of the generated image in pixels.",
-          "min": 256.0,
-          "max": 2048.0
-        },
-        {
-          "name": "seed",
-          "type": {
-            "type": "int"
-          },
-          "default": 0,
-          "title": "Seed",
-          "description": "Seed for deterministic generation. Leave 0 for random seed."
-        }
-      ],
-      "outputs": [
-        {
-          "type": {
-            "type": "image"
-          },
-          "name": "output"
-        }
-      ],
-      "recommended_models": [
-        {
-          "id": "black-forest-labs/FLUX.1-Redux-dev",
-          "type": "hf.redux_generation",
-          "name": "black-forest-labs/FLUX.1-Redux-dev",
-          "repo_id": "black-forest-labs/FLUX.1-Redux-dev",
-          "size_on_disk": 1115068289,
-          "tags": [
-            "diffusers",
-            "safetensors",
-            "image-generation",
-            "flux",
-            "diffusion-single-file",
-            "en",
-            "license:other",
-            "diffusers:FluxPriorReduxPipeline",
-            "region:us"
-          ],
-          "has_model_index": true,
-          "downloads": 26126,
-          "likes": 567
-        }
-      ],
-      "basic_fields": [
-        "prompt",
-        "redux_image",
-        "redux_image_strength",
-        "model",
-        "quantize",
-        "steps",
-        "guidance",
-        "height",
-        "width",
-        "seed"
-      ],
-      "expose_as_tool": true
-    },
     {
       "title": "Kokoro TTS",
       "description": "MLX Kokoro text-to-speech.",
@@ -1745,7 +187,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1820,
+          "downloads": 200,
           "likes": 4
         },
         {
@@ -1765,8 +207,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 8043,
-          "likes": 24
+          "downloads": 5540,
+          "likes": 26
         },
         {
           "id": "mlx-community/Kokoro-82M-4bit",
@@ -1785,8 +227,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 277,
-          "likes": 3
+          "downloads": 238,
+          "likes": 4
         },
         {
           "id": "mlx-community/Kokoro-82M-6bit",
@@ -1805,7 +247,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 33,
+          "downloads": 26,
           "likes": 2
         },
         {
@@ -1825,8 +267,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 93,
-          "likes": 5
+          "downloads": 84,
+          "likes": 6
         }
       ],
       "basic_fields": [
@@ -1924,8 +366,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 184,
-          "likes": 20
+          "downloads": 150,
+          "likes": 21
         },
         {
           "id": "mlx-community/csm-1b-8bit",
@@ -1947,7 +389,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 52,
+          "downloads": 17,
           "likes": 0
         }
       ],
@@ -2081,7 +523,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 537,
+          "downloads": 91,
           "likes": 4
         },
         {
@@ -2103,7 +545,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 49,
+          "downloads": 24,
           "likes": 3
         }
       ],
@@ -2274,7 +716,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 16428,
+          "downloads": 13633,
           "likes": 31
         },
         {
@@ -2301,7 +743,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1102,
+          "downloads": 335,
           "likes": 3
         },
         {
@@ -2326,8 +768,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1453,
-          "likes": 5
+          "downloads": 974,
+          "likes": 7
         },
         {
           "id": "mlx-community/gemma-3-4b-it-8bit",
@@ -2351,7 +793,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1333,
+          "downloads": 445,
           "likes": 5
         },
         {
@@ -2376,7 +818,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 725,
+          "downloads": 267,
           "likes": 6
         },
         {
@@ -2401,7 +843,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 770,
+          "downloads": 238,
           "likes": 2
         },
         {
@@ -2426,7 +868,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 837,
+          "downloads": 338,
           "likes": 9
         },
         {
@@ -2451,7 +893,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 802,
+          "downloads": 189,
           "likes": 7
         },
         {
@@ -2476,7 +918,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 730,
+          "downloads": 358,
           "likes": 2
         },
         {
@@ -2501,8 +943,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 315,
-          "likes": 0
+          "downloads": 276,
+          "likes": 2
         },
         {
           "id": "mlx-community/granite-4.0-tiny-preview-4bit",
@@ -2526,7 +968,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 149,
+          "downloads": 22,
           "likes": 0
         },
         {
@@ -2551,7 +993,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 244,
+          "downloads": 651,
           "likes": 0
         },
         {
@@ -2576,7 +1018,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 159,
+          "downloads": 65,
           "likes": 0
         },
         {
@@ -2612,7 +1054,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 168,
+          "downloads": 53,
           "likes": 0
         },
         {
@@ -2637,7 +1079,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 276,
+          "downloads": 69,
           "likes": 0
         },
         {
@@ -2662,7 +1104,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 221,
+          "downloads": 59,
           "likes": 0
         },
         {
@@ -2685,7 +1127,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 9946,
+          "downloads": 4641,
           "likes": 5
         },
         {
@@ -2708,8 +1150,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1241,
-          "likes": 3
+          "downloads": 841,
+          "likes": 5
         },
         {
           "id": "mlx-community/Qwen3-1.7B-4bit",
@@ -2731,7 +1173,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 11269,
+          "downloads": 7884,
           "likes": 4
         },
         {
@@ -2754,7 +1196,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 81,
+          "downloads": 62,
           "likes": 0
         },
         {
@@ -2777,8 +1219,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 7656,
-          "likes": 8
+          "downloads": 4987,
+          "likes": 9
         },
         {
           "id": "mlx-community/Qwen3-4B-8bit",
@@ -2800,7 +1242,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1171,
+          "downloads": 478,
           "likes": 1
         },
         {
@@ -2823,7 +1265,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1875,
+          "downloads": 1718,
           "likes": 5
         },
         {
@@ -2846,7 +1288,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 938,
+          "downloads": 330,
           "likes": 4
         },
         {
@@ -2869,7 +1311,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 810,
+          "downloads": 411,
           "likes": 11
         },
         {
@@ -2892,7 +1334,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 527,
+          "downloads": 61,
           "likes": 8
         },
         {
@@ -2927,7 +1369,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 540,
+          "downloads": 259,
           "likes": 1
         },
         {
@@ -2963,8 +1405,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 690,
-          "likes": 2
+          "downloads": 1494,
+          "likes": 3
         },
         {
           "id": "mlx-community/LFM2-8B-A1B-5bit",
@@ -2999,7 +1441,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 32,
+          "downloads": 36,
           "likes": 0
         },
         {
@@ -3034,7 +1476,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 62,
+          "downloads": 74,
           "likes": 0
         },
         {
@@ -3070,8 +1512,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 131,
-          "likes": 1
+          "downloads": 289,
+          "likes": 2
         },
         {
           "id": "mlx-community/LFM2-8B-A1B-fp16",
@@ -3105,8 +1547,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 55,
-          "likes": 1
+          "downloads": 96,
+          "likes": 2
         },
         {
           "id": "nightmedia/LFM2-8B-A1B-qx86-hi-mlx",
@@ -3141,8 +1583,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 78,
-          "likes": 0
+          "downloads": 71,
+          "likes": 1
         }
       ],
       "basic_fields": [
@@ -3268,7 +1710,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 130,
+          "downloads": 153,
           "likes": 2
         },
         {
@@ -3283,7 +1725,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 231,
+          "downloads": 271,
           "likes": 0
         },
         {
@@ -3298,7 +1740,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2229,
+          "downloads": 1155,
           "likes": 0
         },
         {
@@ -3313,7 +1755,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 35,
+          "downloads": 29,
           "likes": 0
         },
         {
@@ -3328,7 +1770,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 3195,
+          "downloads": 126331,
           "likes": 3
         },
         {
@@ -3343,7 +1785,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 42,
+          "downloads": 43,
           "likes": 0
         },
         {
@@ -3358,7 +1800,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2169,
+          "downloads": 1914,
           "likes": 3
         },
         {
@@ -3373,7 +1815,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 84,
+          "downloads": 62,
           "likes": 1
         },
         {
@@ -3389,8 +1831,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1762,
-          "likes": 59
+          "downloads": 8388,
+          "likes": 61
         }
       ],
       "basic_fields": [
