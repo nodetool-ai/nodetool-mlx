@@ -1945,6 +1945,7 @@ class MLXProvider(BaseProvider):
         params: TextToImageParams,
         timeout_s: int | None = None,
         context: ProcessingContext | None = None,
+        node_id: str | None = None,
     ) -> ImageBytes:
         """Generate an image from a text prompt using MLX.
 
@@ -2028,6 +2029,7 @@ class MLXProvider(BaseProvider):
         params: ImageToImageParams,
         timeout_s: int | None = None,
         context: ProcessingContext | None = None,
+        node_id: str | None = None,
     ) -> ImageBytes:
         """Transform an image based on a text prompt using MLX.
 

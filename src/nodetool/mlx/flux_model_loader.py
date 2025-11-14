@@ -10,7 +10,7 @@ from typing import Any
 from mflux.generate import Flux1
 from mflux.generate_controlnet import Flux1Controlnet
 from nodetool.ml.core.model_manager import ModelManager
-from nodetool.integrations.huggingface.huggingface_cache import has_cached_files
+from nodetool.integrations.huggingface.hf_cache import has_cached_files
 from nodetool.config.logging_config import get_logger
 from mflux.config.model_config import ModelConfig
 from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
