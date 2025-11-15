@@ -124,7 +124,6 @@ class MFlux(BaseMFluxNode):
     - schnell: Fastest model, good for quick generations (2-4 steps)
     - dev: More powerful model, higher quality (20-25 steps)
     - krea-dev: Enhanced photorealism with distinctive aesthetics
-    - Freepik/flux.1-lite-8B-alpha: Lighter version of FLUX
     - Quantized 4-bit models: Reduced memory usage versions of the official models
     """
 
@@ -136,7 +135,7 @@ class MFlux(BaseMFluxNode):
         default=HFFlux(
             repo_id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
         ),
-        description="MFLUX model variant to load. Options include official models (schnell, dev, krea-dev), third-party community models (Freepik/flux.1-lite-8B-alpha), and quantized 4-bit versions for reduced memory usage.",
+        description="MFLUX model variant to load"
     )
     quantize: QuantizationLevel = Field(
         default=QuantizationLevel.BITS_4,
@@ -257,7 +256,6 @@ class MFlux(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HFFlux]:
         return [
-            HFFlux(repo_id="Freepik/flux.1-lite-8B-alpha"),
             HFFlux(repo_id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit"),
             HFFlux(repo_id="dhairyashil/FLUX.1-dev-mflux-4bit"),
             HFFlux(repo_id="filipstrand/FLUX.1-Krea-dev-mflux-4bit"),

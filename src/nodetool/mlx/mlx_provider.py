@@ -89,6 +89,7 @@ from nodetool.workflows.processing_context import ProcessingContext
 import PIL.Image
 from pydub import AudioSegment  # type: ignore
 from nodetool.integrations.huggingface.huggingface_models import (
+    get_mlx_image_models_from_hf_cache,
     get_mlx_language_models_from_hf_cache,
 )
 from nodetool.mlx.flux_model_loader import (
@@ -242,60 +243,19 @@ class MLXProvider(BaseProvider):
         """
         Get available MLX image models.
 
-        Returns recommended FLUX models from MFlux nodes that can be used
-        for local image generation on Apple Silicon. Also discovers mflux models
-        from the HuggingFace cache.
+        Reads the local HuggingFace cache and returns only the MLX-compatible
+        (mflux) checkpoints that are actually installed.
 
         Returns:
             List of ImageModel instances for MLX
         """
-        # Start with hardcoded recommended FLUX models from MFlux nodes (mflux.py)
-        models = [
-            # From MFlux.get_recommended_models()
-            ImageModel(
-                id="Freepik/flux.1-lite-8B-alpha",
-                name="FLUX.1 Lite 8B Alpha",
-                provider=Provider.MLX,
-            ),
-            ImageModel(
-                id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-                name="FLUX.1 Schnell 4-bit",
-                provider=Provider.MLX,
-            ),
-            ImageModel(
-                id="dhairyashil/FLUX.1-dev-mflux-4bit",
-                name="FLUX.1 Dev 4-bit",
-                provider=Provider.MLX,
-            ),
-            ImageModel(
-                id="filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-                name="FLUX.1 Krea Dev 4-bit",
-                provider=Provider.MLX,
-            ),
-            ImageModel(
-                id="akx/FLUX.1-Kontext-dev-mflux-4bit",
-                name="FLUX.1 Kontext Dev 4-bit",
-                provider=Provider.MLX,
-            ),
-        ]
-
-        # Also discover mflux models from HuggingFace cache
         try:
-            from nodetool.integrations.huggingface.huggingface_models import (
-                get_mlx_image_models_from_hf_cache,
-            )
-            cached_models = await get_mlx_image_models_from_hf_cache()
-            # Add cached models, avoiding duplicates
-            seen_ids = {m.id for m in models}
-            for cached_model in cached_models:
-                if cached_model.id not in seen_ids:
-                    models.append(cached_model)
-                    seen_ids.add(cached_model.id)
-            log.debug(f"Discovered {len(cached_models)} mflux models from HF cache")
-        except Exception as e:
-            log.debug(f"Could not discover mflux models from cache: {e}")
-
-        return models
+            models = await get_mlx_image_models_from_hf_cache()
+            log.debug("Found %d installed MLX image models", len(models))
+            return models
+        except Exception as e:  # pragma: no cover
+            log.debug("Could not read installed MLX image models: %s", e)
+            return []
 
     async def get_available_asr_models(self) -> List[ASRModel]:
         """
