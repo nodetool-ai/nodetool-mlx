@@ -9,13 +9,13 @@ from typing import Any, ClassVar
 import PIL.Image
 from mflux.config.config import Config
 import PIL.Image
-from mflux.controlnet.flux_controlnet import Flux1Controlnet
 from mflux.config.model_config import ModelConfig
-from mflux.flux.flux import Flux1
-from mflux.flux_tools.fill.flux_fill import Flux1Fill
-from mflux.flux_tools.depth.flux_depth import Flux1Depth
-from mflux.flux_tools.redux.flux_redux import Flux1Redux
-from mflux.kontext.flux_kontext import Flux1Kontext
+from mflux.generate import Flux1
+from mflux.generate_fill import Flux1Fill
+from mflux.generate_controlnet import Flux1Controlnet
+from mflux.generate_depth import Flux1Depth
+from mflux.generate_redux import Flux1Redux
+from mflux.generate_kontext import Flux1Kontext
 from mflux.callbacks.callback_registry import CallbackRegistry
 from mflux.callbacks.callback import InLoopCallback
 import PIL.Image
@@ -32,11 +32,10 @@ from nodetool.metadata.types import (
     HFFlux,
     HFControlNet,
     HFControlNetFlux,
-    HFDepthGeneration,
-    HFReduxGeneration,
-    HFKontextGeneration,
-    HFInpainting,
-    HFOutpainting,
+    HFFluxDepth,
+    HFFluxRedux,
+    HFFluxKontext,
+    HFFluxFill,
     HuggingFaceModel,
     ImageRef,
 )
@@ -418,8 +417,8 @@ class MFluxInpaint(BaseMFluxNode):
         default=ImageRef(),
         description="Mask image: white areas will be regenerated, black areas remain untouched.",
     )
-    model: HFInpainting = Field(
-        default=HFInpainting(repo_id="black-forest-labs/FLUX.1-Fill-dev"),
+    model: HFFluxFill = Field(
+        default=HFFluxFill(repo_id="black-forest-labs/FLUX.1-Fill-dev"),
         description="Inpainting model to load. Defaults to FLUX.1 Fill dev weights.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -562,9 +561,9 @@ class MFluxInpaint(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HFInpainting]:
+    def get_recommended_models(cls) -> list[HFFluxFill]:
         return [
-            HFInpainting(repo_id="black-forest-labs/FLUX.1-Fill-dev"),
+            HFFluxFill(repo_id="black-forest-labs/FLUX.1-Fill-dev"),
         ]
 
 
@@ -590,8 +589,8 @@ class MFluxOutpaint(BaseMFluxNode):
         default=ImageRef(),
         description="Mask defining areas to regenerate (white) after padding. If blank, generated automatically.",
     )
-    model: HFOutpainting = Field(
-        default=HFOutpainting(repo_id="black-forest-labs/FLUX.1-Fill-dev"),
+    model: HFFluxFill = Field(
+        default=HFFluxFill(repo_id="black-forest-labs/FLUX.1-Fill-dev"),
         description="Outpainting model to load. Defaults to FLUX.1 Fill dev weights.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -774,9 +773,9 @@ class MFluxOutpaint(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HFOutpainting]:
+    def get_recommended_models(cls) -> list[HFFluxFill]:
         return [
-            HFOutpainting(repo_id="black-forest-labs/FLUX.1-Fill-dev"),
+            HFFluxFill(repo_id="black-forest-labs/FLUX.1-Fill-dev"),
         ]
 
 
@@ -803,8 +802,8 @@ class MFluxDepth(BaseMFluxNode):
         default=ImageRef(),
         description="Optional depth map to guide geometry. If omitted, depth is inferred from the image when provided.",
     )
-    model: HFDepthGeneration = Field(
-        default=HFDepthGeneration(repo_id="black-forest-labs/FLUX.1-Depth-dev"),
+    model: HFFluxDepth = Field(
+        default=HFFluxDepth(repo_id="black-forest-labs/FLUX.1-Depth-dev"),
         description="Depth model weights compatible with the Flux depth pipeline.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -967,9 +966,9 @@ class MFluxDepth(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HFDepthGeneration]:
+    def get_recommended_models(cls) -> list[HFFluxDepth]:
         return [
-            HFDepthGeneration(repo_id="black-forest-labs/FLUX.1-Depth-dev"),
+            HFFluxDepth(repo_id="black-forest-labs/FLUX.1-Depth-dev"),
         ]
 
 
@@ -998,8 +997,8 @@ class MFluxRedux(BaseMFluxNode):
         le=1.0,
         description="Optional strength value (0-1) for the reference image.",
     )
-    model: HFReduxGeneration = Field(
-        default=HFReduxGeneration(repo_id="black-forest-labs/FLUX.1-Redux-dev"),
+    model: HFFluxRedux = Field(
+        default=HFFluxRedux(repo_id="black-forest-labs/FLUX.1-Redux-dev"),
         description="Redux model variant to load. Defaults to FLUX.1 Redux dev weights.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -1141,9 +1140,9 @@ class MFluxRedux(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HFReduxGeneration]:
+    def get_recommended_models(cls) -> list[HFFluxRedux]:
         return [
-            HFReduxGeneration(repo_id="black-forest-labs/FLUX.1-Redux-dev"),
+            HFFluxRedux(repo_id="black-forest-labs/FLUX.1-Redux-dev"),
         ]
 
 
@@ -1166,8 +1165,8 @@ class MFluxKontext(BaseMFluxNode):
         default=ImageRef(),
         description="Reference image that will guide the Kontext generation.",
     )
-    model: HFKontextGeneration = Field(
-        default=HFKontextGeneration(repo_id="black-forest-labs/FLUX.1-Kontext-dev"),
+    model: HFFluxKontext = Field(
+        default=HFFluxKontext(repo_id="black-forest-labs/FLUX.1-Kontext-dev"),
         description="Kontext model weights compatible with the Flux Kontext pipeline.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -1297,7 +1296,7 @@ class MFluxKontext(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HFKontextGeneration]:
+    def get_recommended_models(cls) -> list[HFFluxKontext]:
         return [
-            HFKontextGeneration(repo_id="black-forest-labs/FLUX.1-Kontext-dev"),
+            HFFluxKontext(repo_id="black-forest-labs/FLUX.1-Kontext-dev"),
         ]

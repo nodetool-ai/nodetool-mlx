@@ -45,7 +45,6 @@ import sys
 import tempfile
 from nodetool.media.audio.audio_helpers import convert_audio_to_standard_format
 import numpy as np
-from huggingface_hub import CacheNotFound, scan_cache_dir
 from mlx import nn
 import mlx_lm
 from mlx_lm.generate import stream_generate
@@ -89,6 +88,7 @@ from nodetool.workflows.processing_context import ProcessingContext
 import PIL.Image
 from pydub import AudioSegment  # type: ignore
 from nodetool.integrations.huggingface.huggingface_models import (
+    HF_FAST_CACHE,
     get_mlx_image_models_from_hf_cache,
     get_mlx_language_models_from_hf_cache,
 )
@@ -332,7 +332,7 @@ class MLXProvider(BaseProvider):
         audio_float = np.ascontiguousarray(audio_float, dtype=np.float32)
 
         # Ensure the model is present in the local Hugging Face cache
-        if self._resolve_cached_repo_path(model) is None:
+        if await self._resolve_cached_repo_path(model) is None:
             raise ValueError(
                 f"Model {model} must be downloaded first (not found in cache)"
             )
@@ -1546,7 +1546,7 @@ class MLXProvider(BaseProvider):
 
             if tts_model is None:
                 # Model not in cache, load it
-                repo_path = self._resolve_cached_repo_path(model)
+                repo_path = await self._resolve_cached_repo_path(model)
                 if repo_path is None:
                     raise ValueError(
                         f"Model {model} must be downloaded first (not found in cache)"
@@ -1570,32 +1570,18 @@ class MLXProvider(BaseProvider):
 
             return tts_model
 
-    def _resolve_cached_repo_path(self, repo_id: str) -> Path | None:
+    async def _resolve_cached_repo_path(self, repo_id: str) -> Path | None:
         """
         Locate the snapshot directory for a cached Hugging Face repo.
 
         Returns:
             Path to the cached repo snapshot, or None if not found.
         """
-        try:
-            cache_info = scan_cache_dir()
-        except CacheNotFound:
+        repo_root = await HF_FAST_CACHE.resolve(repo_id, ".", repo_type="model")
+        if not repo_root:
             return None
-
-        for repo in cache_info.repos:
-            if repo.repo_type != "model" or repo.repo_id != repo_id:
-                continue
-
-            for revision in repo.revisions:
-                snapshot_path = getattr(revision, "snapshot_path", None)
-                if snapshot_path and os.path.isdir(snapshot_path):
-                    return Path(snapshot_path)
-
-            repo_path = getattr(repo, "repo_path", None)
-            if repo_path and os.path.isdir(repo_path):
-                return Path(repo_path)
-
-        return None
+        path = Path(repo_root)
+        return path if path.exists() else None
 
     def _build_stream_kwargs(self, kwargs: dict[str, Any]) -> dict[str, Any]:
         stream_kwargs = dict(kwargs)
@@ -2150,7 +2136,7 @@ async def main() -> None:
             }
 
     provider = MLXProvider()
-    model_name = "ibm-granite/granite-4.0-micro"
+    model_name = "Qwen/Qwen3-4B-MLX-4bit"
 
     print("=" * 70)
     print("TEST 1: Basic single generation")
@@ -2276,5 +2262,14 @@ async def main() -> None:
     print("=" * 70)
 
 
+async def available_models():
+    models = await get_mlx_language_models_from_hf_cache()
+    for model in models:
+        print(model.id)
+    return models
+
+
 if __name__ == "__main__":
+    # asyncio.run(available_models())
+
     asyncio.run(main())

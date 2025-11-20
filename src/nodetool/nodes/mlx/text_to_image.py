@@ -9,13 +9,7 @@ from typing import Any, ClassVar
 import PIL.Image
 from mflux.config.config import Config
 import PIL.Image
-from mflux.controlnet.flux_controlnet import Flux1Controlnet
-from mflux.config.model_config import ModelConfig
-from mflux.flux.flux import Flux1
-from mflux.flux_tools.fill.flux_fill import Flux1Fill
-from mflux.flux_tools.depth.flux_depth import Flux1Depth
-from mflux.flux_tools.redux.flux_redux import Flux1Redux
-from mflux.kontext.flux_kontext import Flux1Kontext
+from mflux.generate import Flux1
 from mflux.callbacks.callback_registry import CallbackRegistry
 from mflux.callbacks.callback import InLoopCallback
 import PIL.Image
@@ -29,14 +23,6 @@ from pydantic import Field
 from nodetool.config.logging_config import get_logger
 from nodetool.metadata.types import (
     HFFlux,
-    HFControlNet,
-    HFControlNetFlux,
-    HFDepthGeneration,
-    HFReduxGeneration,
-    HFKontextGeneration,
-    HFInpainting,
-    HFOutpainting,
-    HuggingFaceModel,
     ImageRef,
 )
 from nodetool.workflows.base_node import BaseNode
@@ -135,7 +121,7 @@ class MFlux(BaseMFluxNode):
         default=HFFlux(
             repo_id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
         ),
-        description="MFLUX model variant to load"
+        description="MFLUX model variant to load",
     )
     quantize: QuantizationLevel = Field(
         default=QuantizationLevel.BITS_4,
@@ -260,4 +246,5 @@ class MFlux(BaseMFluxNode):
             HFFlux(repo_id="dhairyashil/FLUX.1-dev-mflux-4bit"),
             HFFlux(repo_id="filipstrand/FLUX.1-Krea-dev-mflux-4bit"),
             HFFlux(repo_id="akx/FLUX.1-Kontext-dev-mflux-4bit"),
+            HFFlux(repo_id="filipstrand/Qwen-Image-mflux-6bit"),
         ]
