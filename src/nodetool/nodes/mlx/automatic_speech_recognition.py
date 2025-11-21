@@ -1,16 +1,19 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from enum import Enum
 import sys
-from typing import Any, Optional, TypedDict
-
-from huggingface_hub import try_to_load_from_cache
-from nodetool.metadata.types import AudioRef, HuggingFaceModel
-import numpy as np
+from typing import TYPE_CHECKING, Any, Optional, TypedDict
 from pydantic import Field
 
+from nodetool.metadata.types import AudioRef, HuggingFaceModel
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
+
+if TYPE_CHECKING:
+    import numpy as np
+    from huggingface_hub import try_to_load_from_cache
 
 log = logging.getLogger(__name__)
 
@@ -88,6 +91,8 @@ class Whisper(BaseNode):
         segments: list
 
     async def preload_model(self, context: ProcessingContext):
+        from huggingface_hub import try_to_load_from_cache
+
         local_path = try_to_load_from_cache(self.model.value, "config.json")
         if not local_path:
             raise ValueError(
@@ -103,6 +108,7 @@ class Whisper(BaseNode):
         if sys.platform != "darwin":
             raise RuntimeError("MLX Whisper is only supported on macOS")
 
+        import numpy as np
         import mlx_whisper
 
         log.info("Starting audio processing...")

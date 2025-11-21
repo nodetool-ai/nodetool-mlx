@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import base64
 import logging
@@ -7,17 +9,18 @@ import tempfile
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncGenerator, ClassVar, Optional, TypedDict, cast
-
-from huggingface_hub import try_to_load_from_cache
-import mlx.core as mx
-import numpy as np
+from typing import TYPE_CHECKING, Any, AsyncGenerator, ClassVar, Optional, TypedDict, cast
 from pydantic import Field, PrivateAttr
 
 from nodetool.metadata.types import AudioRef, HuggingFaceModel, Provider
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
+
+if TYPE_CHECKING:
+    import mlx.core as mx
+    import numpy as np
+    from huggingface_hub import try_to_load_from_cache
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -72,6 +75,8 @@ class BaseMLXTTS(BaseNode):
         if self._tts_model is not None and self._model_id_loaded == model_id:
             return
 
+        from huggingface_hub import try_to_load_from_cache
+
         model_path = try_to_load_from_cache(model_id, "config.json")
         if not model_path:
             raise ValueError(f"Model {model_id} must be downloaded first")
@@ -96,6 +101,7 @@ class BaseMLXTTS(BaseNode):
         self, context: ProcessingContext
     ) -> AsyncGenerator[OutputType, None]:
         self._ensure_supported_platform()
+        import numpy as np
 
         if self._tts_model is None or self._model_id_loaded != self._get_model_id():
             await self.preload_model(context)
@@ -163,6 +169,9 @@ class BaseMLXTTS(BaseNode):
 
     @staticmethod
     def _mx_array_to_numpy(audio: Any) -> np.ndarray:
+        import mlx.core as mx
+        import numpy as np
+
         if audio is None:
             return np.array([], dtype=np.float32)
         if hasattr(audio, "astype") and hasattr(audio, "numpy"):
@@ -173,6 +182,8 @@ class BaseMLXTTS(BaseNode):
         return np.asarray(audio, dtype=np.float32)
 
     def _encode_chunk(self, chunk: np.ndarray) -> tuple[Chunk, np.ndarray]:
+        import numpy as np
+
         audio_int16 = self._to_int16(chunk)
         chunk_msg = Chunk(
             content=base64.b64encode(audio_int16.tobytes()).decode("utf-8"),
@@ -188,6 +199,8 @@ class BaseMLXTTS(BaseNode):
 
     @staticmethod
     def _to_int16(chunk: np.ndarray) -> np.ndarray:
+        import numpy as np
+
         if chunk.dtype != np.int16:
             audio = np.clip(chunk, -1.0, 1.0)
             return (audio * 32767.0).astype(np.int16)

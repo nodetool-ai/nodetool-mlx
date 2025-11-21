@@ -1,47 +1,43 @@
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import random
 import sys
 import tempfile
-from enum import IntEnum
 from pathlib import Path
-from typing import Any, ClassVar
-import PIL.Image
-from mflux.config.config import Config
-import PIL.Image
-from mflux.config.model_config import ModelConfig
-from mflux.generate import Flux1
-from mflux.generate_fill import Flux1Fill
-from mflux.generate_controlnet import Flux1Controlnet
-from mflux.generate_depth import Flux1Depth
-from mflux.generate_redux import Flux1Redux
-from mflux.generate_kontext import Flux1Kontext
-from mflux.callbacks.callback_registry import CallbackRegistry
-from mflux.callbacks.callback import InLoopCallback
-import PIL.Image
-from nodetool.nodes.mlx.text_to_image import BaseMFluxNode, QuantizationLevel
-import numpy as np
-from mflux.config.config import Config
-from mflux.post_processing.image_util import ImageUtil
-from mflux.ui.box_values import BoxValues, parse_box_value
-from mflux.config.model_config import ModelConfig
-from nodetool.ml.core.model_manager import ModelManager
+from typing import Any, ClassVar, TYPE_CHECKING
+
 from pydantic import Field
+
 from nodetool.config.logging_config import get_logger
 from nodetool.metadata.types import (
-    HFFlux,
     HFControlNet,
     HFControlNetFlux,
+    HFFlux,
     HFFluxDepth,
-    HFFluxRedux,
-    HFFluxKontext,
     HFFluxFill,
+    HFFluxKontext,
+    HFFluxRedux,
     HuggingFaceModel,
     ImageRef,
 )
-from nodetool.workflows.base_node import BaseNode
+from nodetool.ml.core.model_manager import ModelManager
+from nodetool.nodes.mlx.text_to_image import BaseMFluxNode, QuantizationLevel
 from nodetool.workflows.processing_context import ProcessingContext
-from nodetool.workflows.types import NodeProgress
+
+if TYPE_CHECKING:
+    import numpy as np
+    import PIL.Image
+    from mflux.config.model_config import ModelConfig
+    from mflux.generate import Flux1
+    from mflux.generate_controlnet import Flux1Controlnet
+    from mflux.generate_depth import Flux1Depth
+    from mflux.generate_fill import Flux1Fill
+    from mflux.generate_kontext import Flux1Kontext
+    from mflux.generate_redux import Flux1Redux
+    from mflux.post_processing.image_util import ImageUtil
+    from mflux.ui.box_values import BoxValues
 
 log = get_logger(__name__)
 
@@ -109,7 +105,7 @@ class MFluxImageToImage(BaseMFluxNode):
         description="Seed for deterministic generation. Leave as 0 for random.",
     )
 
-    _flux_model: Flux1 | None = None
+    _flux_model: Any | None = None
 
     @classmethod
     def get_title(cls):
@@ -125,7 +121,9 @@ class MFluxImageToImage(BaseMFluxNode):
 
         loop = asyncio.get_running_loop()
 
-        def _load_model() -> Flux1:
+        def _load_model() -> "Flux1":
+            from mflux.generate import Flux1
+
             log.info(
                 "Loading MFlux image-to-image model %s (quantize=%s)",
                 self.model.repo_id,
@@ -158,7 +156,10 @@ class MFluxImageToImage(BaseMFluxNode):
         total_steps = self.steps
         progress_callback = self._register_progress_callback(context, total_steps)
 
-        def _generate() -> PIL.Image.Image:
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
+            from mflux.config.config import Config
+
             working_image = base_image.convert("RGB")
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
@@ -288,7 +289,7 @@ class MFluxControlNet(BaseMFluxNode):
         description="Seed for deterministic generation. Leave 0 for random.",
     )
 
-    _flux_model: Flux1Controlnet | None = None
+    _flux_model: Any | None = None
 
     @classmethod
     def get_title(cls):
@@ -305,6 +306,9 @@ class MFluxControlNet(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Controlnet":
+            from mflux.config.model_config import ModelConfig
+            from mflux.generate_controlnet import Flux1Controlnet
+
             log.info(
                 "Loading MFlux ControlNet model %s with controlnet %s (quantize=%s)",
                 self.model.repo_id,
@@ -347,7 +351,8 @@ class MFluxControlNet(BaseMFluxNode):
         total_steps = self.steps
         progress_callback = self._register_progress_callback(context, total_steps)
 
-        def _generate() -> PIL.Image.Image:
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
             from mflux.config.config import Config
 
             config_kwargs: dict[str, Any] = {
@@ -453,7 +458,7 @@ class MFluxInpaint(BaseMFluxNode):
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
 
-    _flux_model: Flux1Fill | None = None
+    _flux_model: Any | None = None
 
     @classmethod
     def get_title(cls):
@@ -473,7 +478,9 @@ class MFluxInpaint(BaseMFluxNode):
 
         loop = asyncio.get_running_loop()
 
-        def _load_model() -> Flux1Fill:
+        def _load_model() -> "Flux1Fill":
+            from mflux.generate_fill import Flux1Fill
+
             log.info(
                 "Loading MFlux Fill model %s (quantize=%s)",
                 self.model.repo_id,
@@ -504,7 +511,10 @@ class MFluxInpaint(BaseMFluxNode):
         total_steps = self.steps
         progress_callback = self._register_progress_callback(context, total_steps)
 
-        def _generate() -> PIL.Image.Image:
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
+            from mflux.config.config import Config
+
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
@@ -629,7 +639,7 @@ class MFluxOutpaint(BaseMFluxNode):
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
 
-    _flux_model: Flux1Fill | None = None
+    _flux_model: Any | None = None
 
     @classmethod
     def get_title(cls):
@@ -649,7 +659,9 @@ class MFluxOutpaint(BaseMFluxNode):
 
         loop = asyncio.get_running_loop()
 
-        def _load_model() -> Flux1Fill:
+        def _load_model() -> "Flux1Fill":
+            from mflux.generate_fill import Flux1Fill
+
             log.info(
                 "Loading MFlux Fill model %s (quantize=%s)",
                 self.model.repo_id,
@@ -680,7 +692,13 @@ class MFluxOutpaint(BaseMFluxNode):
         total_steps = self.steps
         progress_callback = self._register_progress_callback(context, total_steps)
 
-        def _generate() -> PIL.Image.Image:
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
+            import numpy as np
+            from mflux.config.config import Config
+            from mflux.post_processing.image_util import ImageUtil
+            from mflux.ui.box_values import BoxValues, parse_box_value
+
             working_image = base_image.convert("RGB")
 
             target_width = 16 * (self.width // 16)
@@ -838,7 +856,7 @@ class MFluxDepth(BaseMFluxNode):
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
 
-    _flux_model: Flux1Depth | None = None
+    _flux_model: Any | None = None
 
     @classmethod
     def get_title(cls):
@@ -858,7 +876,9 @@ class MFluxDepth(BaseMFluxNode):
 
         loop = asyncio.get_running_loop()
 
-        def _load_model() -> Flux1Depth:
+        def _load_model() -> "Flux1Depth":
+            from mflux.generate_depth import Flux1Depth
+
             log.info(
                 "Loading MFlux depth model %s (quantize=%s)",
                 self.model.repo_id,
@@ -898,7 +918,10 @@ class MFluxDepth(BaseMFluxNode):
         total_steps = self.steps
         progress_callback = self._register_progress_callback(context, total_steps)
 
-        def _generate() -> PIL.Image.Image:
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
+            from mflux.config.config import Config
+
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
@@ -1033,7 +1056,7 @@ class MFluxRedux(BaseMFluxNode):
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
 
-    _flux_model: Flux1Redux | None = None
+    _flux_model: Any | None = None
 
     @classmethod
     def get_title(cls):
@@ -1053,7 +1076,10 @@ class MFluxRedux(BaseMFluxNode):
 
         loop = asyncio.get_running_loop()
 
-        def _load_model() -> Flux1Redux:
+        def _load_model() -> "Flux1Redux":
+            from mflux.config.model_config import ModelConfig
+            from mflux.generate_redux import Flux1Redux
+
             log.info(
                 "Loading MFlux Redux model %s (quantize=%s)",
                 self.model.repo_id,
@@ -1089,6 +1115,9 @@ class MFluxRedux(BaseMFluxNode):
         total_steps = self.steps
         progress_callback = self._register_progress_callback(context, total_steps)
         try:
+            import PIL.Image
+            from mflux.config.config import Config
+
             temp_paths: list[Path] = []
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
@@ -1201,7 +1230,7 @@ class MFluxKontext(BaseMFluxNode):
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
 
-    _flux_model: Flux1Kontext | None = None
+    _flux_model: Any | None = None
 
     @classmethod
     def get_title(cls):
@@ -1221,7 +1250,9 @@ class MFluxKontext(BaseMFluxNode):
 
         loop = asyncio.get_running_loop()
 
-        def _load_model() -> Flux1Kontext:
+        def _load_model() -> "Flux1Kontext":
+            from mflux.generate_kontext import Flux1Kontext
+
             log.info(
                 "Loading MFlux Kontext model %s (quantize=%s)",
                 self.model.repo_id,
@@ -1253,7 +1284,10 @@ class MFluxKontext(BaseMFluxNode):
         total_steps = self.steps
         progress_callback = self._register_progress_callback(context, total_steps)
 
-        def _generate() -> PIL.Image.Image:
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
+            from mflux.config.config import Config
+
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
