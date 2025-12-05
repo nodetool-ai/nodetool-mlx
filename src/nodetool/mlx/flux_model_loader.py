@@ -21,6 +21,62 @@ from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
 
 log = get_logger(__name__)
 
+# Estimated memory requirements in GB for different quantization levels
+# These are rough estimates for Flux.1 models (approx 12B params)
+# 4-bit: ~12GB (model) + overhead
+# 8-bit: ~20GB (model) + overhead
+# 16-bit: ~34GB (model) + overhead
+FLUX_MEMORY_ESTIMATES = {
+    4: 12.0,
+    8: 20.0,
+    None: 34.0,  # Default/16-bit
+}
+
+def estimate_required_memory(quantize: int | None, is_controlnet: bool = False) -> float:
+    """Estimate the required memory in GB for loading the model."""
+    base_mem = FLUX_MEMORY_ESTIMATES.get(quantize, 34.0)
+    
+    # If quantization is not one of the standard values, estimate linearly
+    if quantize not in FLUX_MEMORY_ESTIMATES and quantize is not None:
+        # Rough linear interpolation: ~1.5GB per bit for 12B params + overhead
+        base_mem = quantize * 2.5 
+        
+    if is_controlnet:
+        # ControlNet adds extra parameters (approx 2-3GB for Flux ControlNet)
+        base_mem += 3.0
+        
+    return base_mem
+
+def check_memory_availability(required_gb: float):
+    """
+    Check if there is enough available RAM to load the model.
+    Raises MemoryError if insufficient memory.
+    """
+    import psutil
+    vm = psutil.virtual_memory()
+    
+    # Calculate available memory in GB
+    # available includes memory that can be reclaimed (cache/buffers)
+    available_gb = vm.available / (1024**3)
+    total_gb = vm.total / (1024**3)
+    
+    # 5% safety buffer
+    buffer_gb = total_gb * 0.05
+    
+    if available_gb < (required_gb + buffer_gb):
+        raise MemoryError(
+            f"Insufficient memory to load Flux model.\n"
+            f"Required: {required_gb:.1f} GB\n"
+            f"Available: {available_gb:.1f} GB\n"
+            f"Safety Buffer: {buffer_gb:.1f} GB (5% of total)\n"
+            f"Total System RAM: {total_gb:.1f} GB\n\n"
+            f"Please close other applications or try a higher quantization level (e.g., 4-bit)."
+        )
+        
+    log.info(f"Memory check passed: {available_gb:.1f} GB available, {required_gb:.1f} GB required")
+    
+
+
 
 class FluxModelNotAvailableError(Exception):
     """Raised when a Flux model is not available in the local cache."""
@@ -94,6 +150,9 @@ async def load_flux_model(
             return cached_model
 
     # Load model from local cache
+    required_mem = estimate_required_memory(quantize)
+    check_memory_availability(required_mem)
+
     loop = asyncio.get_running_loop()
 
     def _load() -> Flux1:
@@ -154,6 +213,9 @@ async def load_flux_controlnet_model(
             log.info(f"Using cached Flux ControlNet model: {cache_key}")
             return cached_model
 
+    required_mem = estimate_required_memory(quantize, is_controlnet=True)
+    check_memory_availability(required_mem)
+
     loop = asyncio.get_running_loop()
 
     def _load() -> Flux1Controlnet:
@@ -206,6 +268,9 @@ async def load_flux_fill_model(
             log.info(f"Using cached Flux Fill model: {model_id}")
             return cached_model
 
+    required_mem = estimate_required_memory(quantize)
+    check_memory_availability(required_mem)
+
     loop = asyncio.get_running_loop()
 
     def _load() -> Flux1Fill:
@@ -239,6 +304,10 @@ async def load_flux_depth_model(
         if cached_model is not None:
             log.info(f"Using cached Flux Depth model: {model_id}")
             return cached_model
+    
+    required_mem = estimate_required_memory(quantize)
+    check_memory_availability(required_mem)
+
     loop = asyncio.get_running_loop()
 
     def _load() -> Flux1Depth:
@@ -272,6 +341,9 @@ async def load_flux_redux_model(
         if cached_model is not None:
             log.info(f"Using cached Flux Redux model: {model_id}")
             return cached_model
+
+    required_mem = estimate_required_memory(quantize)
+    check_memory_availability(required_mem)
 
     loop = asyncio.get_running_loop()
 
@@ -310,6 +382,9 @@ async def load_flux_kontext_model(
         if cached_model is not None:
             log.info(f"Using cached Flux Kontext model: {model_id}")
             return cached_model
+
+    required_mem = estimate_required_memory(quantize)
+    check_memory_availability(required_mem)
 
     loop = asyncio.get_running_loop()
 

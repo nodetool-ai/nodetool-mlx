@@ -136,7 +136,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 8,
+          "downloads": 10,
           "likes": 1
         },
         {
@@ -180,7 +180,7 @@
           ],
           "has_model_index": false,
           "downloads": 0,
-          "likes": 3
+          "likes": 5
         },
         {
           "id": "akx/FLUX.1-Kontext-dev-mflux-4bit",
@@ -425,7 +425,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 3939,
+          "downloads": 3778,
           "likes": 191
         },
         {
@@ -448,8 +448,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 14036,
-          "likes": 849
+          "downloads": 13456,
+          "likes": 852
         }
       ],
       "basic_fields": [
@@ -626,8 +626,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 5766,
-          "likes": 228
+          "downloads": 5283,
+          "likes": 229
         }
       ],
       "basic_fields": [
@@ -821,7 +821,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 8,
+          "downloads": 10,
           "likes": 1
         },
         {
@@ -843,7 +843,7 @@
           ],
           "has_model_index": false,
           "downloads": 0,
-          "likes": 3
+          "likes": 5
         }
       ],
       "basic_fields": [
@@ -1018,8 +1018,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 224657,
-          "likes": 958
+          "downloads": 178454,
+          "likes": 962
         }
       ],
       "basic_fields": [
@@ -1183,8 +1183,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 308068,
-          "likes": 2439
+          "downloads": 328544,
+          "likes": 2448
         }
       ],
       "basic_fields": [
@@ -1368,8 +1368,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 224657,
-          "likes": 958
+          "downloads": 178454,
+          "likes": 962
         }
       ],
       "basic_fields": [
@@ -1543,8 +1543,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 17952,
-          "likes": 574
+          "downloads": 18474,
+          "likes": 573
         }
       ],
       "basic_fields": [
@@ -1741,7 +1741,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 160,
+          "downloads": 161,
           "likes": 4
         },
         {
@@ -1761,7 +1761,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5038,
+          "downloads": 5089,
           "likes": 26
         },
         {
@@ -1781,7 +1781,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 218,
+          "downloads": 213,
           "likes": 5
         },
         {
@@ -1801,7 +1801,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 28,
+          "downloads": 31,
           "likes": 2
         },
         {
@@ -1821,7 +1821,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 66,
+          "downloads": 64,
           "likes": 6
         }
       ],
@@ -1920,7 +1920,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 132,
+          "downloads": 146,
           "likes": 21
         },
         {
@@ -1943,7 +1943,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 15,
+          "downloads": 16,
           "likes": 0
         }
       ],
@@ -2077,7 +2077,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 89,
+          "downloads": 78,
           "likes": 4
         },
         {
@@ -2099,7 +2099,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 31,
+          "downloads": 29,
           "likes": 3
         }
       ],
@@ -2272,7 +2272,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 12917,
+          "downloads": 12904,
           "likes": 32
         },
         {
@@ -2299,7 +2299,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 301,
+          "downloads": 484,
           "likes": 3
         },
         {
@@ -2313,8 +2313,9 @@
             "transformers",
             "safetensors",
             "gemma3",
-            "image-text-to-text",
+            "any-to-any",
             "mlx",
+            "image-text-to-text",
             "conversational",
             "base_model:google/gemma-3-4b-pt",
             "base_model:quantized:google/gemma-3-4b-pt",
@@ -2324,7 +2325,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1058,
+          "downloads": 1000,
           "likes": 7
         },
         {
@@ -2338,8 +2339,9 @@
             "transformers",
             "safetensors",
             "gemma3",
-            "image-text-to-text",
+            "any-to-any",
             "mlx",
+            "image-text-to-text",
             "conversational",
             "base_model:google/gemma-3-4b-pt",
             "base_model:finetune:google/gemma-3-4b-pt",
@@ -2349,7 +2351,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 418,
+          "downloads": 589,
           "likes": 6
         },
         {
@@ -2363,8 +2365,9 @@
             "transformers",
             "safetensors",
             "gemma3",
-            "image-text-to-text",
+            "any-to-any",
             "mlx",
+            "image-text-to-text",
             "conversational",
             "base_model:google/gemma-3-12b-pt",
             "base_model:finetune:google/gemma-3-12b-pt",
@@ -2374,7 +2377,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 234,
+          "downloads": 205,
           "likes": 6
         },
         {
@@ -2388,8 +2391,9 @@
             "transformers",
             "safetensors",
             "gemma3",
-            "image-text-to-text",
+            "any-to-any",
             "mlx",
+            "image-text-to-text",
             "conversational",
             "base_model:google/gemma-3-12b-pt",
             "base_model:finetune:google/gemma-3-12b-pt",
@@ -2399,7 +2403,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 258,
+          "downloads": 245,
           "likes": 2
         },
         {
@@ -2413,8 +2417,9 @@
             "transformers",
             "safetensors",
             "gemma3",
-            "image-text-to-text",
+            "any-to-any",
             "mlx",
+            "image-text-to-text",
             "conversational",
             "base_model:google/gemma-3-27b-pt",
             "base_model:finetune:google/gemma-3-27b-pt",
@@ -2424,7 +2429,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 494,
+          "downloads": 499,
           "likes": 10
         },
         {
@@ -2438,8 +2443,9 @@
             "transformers",
             "safetensors",
             "gemma3",
-            "image-text-to-text",
+            "any-to-any",
             "mlx",
+            "image-text-to-text",
             "conversational",
             "base_model:google/gemma-3-27b-pt",
             "base_model:finetune:google/gemma-3-27b-pt",
@@ -2449,7 +2455,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 200,
+          "downloads": 208,
           "likes": 7
         },
         {
@@ -2474,7 +2480,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 216,
+          "downloads": 169,
           "likes": 2
         },
         {
@@ -2499,7 +2505,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 253,
+          "downloads": 214,
           "likes": 2
         },
         {
@@ -2524,7 +2530,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 20,
+          "downloads": 10,
           "likes": 0
         },
         {
@@ -2549,7 +2555,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 664,
+          "downloads": 309,
           "likes": 0
         },
         {
@@ -2574,7 +2580,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 58,
+          "downloads": 46,
           "likes": 0
         },
         {
@@ -2610,7 +2616,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 52,
+          "downloads": 33,
           "likes": 0
         },
         {
@@ -2635,7 +2641,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 55,
+          "downloads": 51,
           "likes": 0
         },
         {
@@ -2660,7 +2666,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 54,
+          "downloads": 46,
           "likes": 0
         },
         {
@@ -2683,7 +2689,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 4486,
+          "downloads": 5181,
           "likes": 6
         },
         {
@@ -2706,7 +2712,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 450,
+          "downloads": 485,
           "likes": 5
         },
         {
@@ -2729,7 +2735,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 7261,
+          "downloads": 7764,
           "likes": 4
         },
         {
@@ -2752,7 +2758,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 82,
+          "downloads": 66,
           "likes": 0
         },
         {
@@ -2775,7 +2781,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5777,
+          "downloads": 7053,
           "likes": 9
         },
         {
@@ -2798,7 +2804,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 348,
+          "downloads": 511,
           "likes": 1
         },
         {
@@ -2821,7 +2827,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1948,
+          "downloads": 1805,
           "likes": 6
         },
         {
@@ -2844,7 +2850,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 310,
+          "downloads": 473,
           "likes": 4
         },
         {
@@ -2867,8 +2873,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 417,
-          "likes": 11
+          "downloads": 608,
+          "likes": 12
         },
         {
           "id": "mlx-community/Qwen3-30B-A3B-8bit",
@@ -2890,7 +2896,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 57,
+          "downloads": 116,
           "likes": 8
         },
         {
@@ -2925,7 +2931,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 57,
+          "downloads": 75,
           "likes": 1
         },
         {
@@ -2961,7 +2967,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 785,
+          "downloads": 725,
           "likes": 3
         },
         {
@@ -2997,7 +3003,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 23,
+          "downloads": 31,
           "likes": 0
         },
         {
@@ -3032,7 +3038,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 44,
+          "downloads": 26,
           "likes": 0
         },
         {
@@ -3068,7 +3074,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 160,
+          "downloads": 171,
           "likes": 4
         },
         {
@@ -3103,7 +3109,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 53,
+          "downloads": 47,
           "likes": 2
         },
         {
@@ -3139,7 +3145,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 37,
+          "downloads": 39,
           "likes": 1
         }
       ],
@@ -3266,7 +3272,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 205,
+          "downloads": 204,
           "likes": 2
         },
         {
@@ -3281,7 +3287,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 245,
+          "downloads": 265,
           "likes": 0
         },
         {
@@ -3296,7 +3302,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1207,
+          "downloads": 1196,
           "likes": 0
         },
         {
@@ -3311,7 +3317,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 29,
+          "downloads": 31,
           "likes": 0
         },
         {
@@ -3326,7 +3332,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 27084,
+          "downloads": 126692,
           "likes": 3
         },
         {
@@ -3341,7 +3347,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 43,
+          "downloads": 57,
           "likes": 0
         },
         {
@@ -3356,7 +3362,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1560,
+          "downloads": 1700,
           "likes": 3
         },
         {
@@ -3371,7 +3377,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 56,
+          "downloads": 54,
           "likes": 1
         },
         {
@@ -3387,7 +3393,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2087,
+          "downloads": 2309,
           "likes": 64
         }
       ],
