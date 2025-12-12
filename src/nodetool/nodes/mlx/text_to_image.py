@@ -171,8 +171,9 @@ class MFlux(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}_flux"
 
-        model = ModelManager.get_model(self.model.repo_id, "flux")
+        model = ModelManager.get_model(cache_key)
         if model is not None:
             self._flux_model = model
             return
@@ -191,7 +192,7 @@ class MFlux(BaseMFluxNode):
                 model_name=self.model.repo_id,
                 quantize=quantize_value,
             )
-            ModelManager.set_model(self.id, self.model.repo_id, "flux", model)
+            ModelManager.set_model(self.id, cache_key, model)
             return model
 
         self._flux_model = await loop.run_in_executor(None, _load_model)

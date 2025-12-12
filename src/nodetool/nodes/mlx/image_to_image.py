@@ -113,8 +113,9 @@ class MFluxImageToImage(BaseMFluxNode):
 
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}_flux"
 
-        model = ModelManager.get_model(self.model.repo_id, "flux")
+        model = ModelManager.get_model(cache_key)
         if model is not None:
             self._flux_model = model
             return
@@ -133,7 +134,7 @@ class MFluxImageToImage(BaseMFluxNode):
                 model_name=self.model.repo_id,
                 quantize=quantize_value,
             )
-            ModelManager.set_model(self.id, self.model.repo_id, "flux", model)
+            ModelManager.set_model(self.id, cache_key, model)
             return model
 
         self._flux_model = await loop.run_in_executor(None, _load_model)
@@ -297,8 +298,9 @@ class MFluxControlNet(BaseMFluxNode):
 
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}:{self.controlnet_model.repo_id}_flux-controlnet"
 
-        model = ModelManager.get_model(self.model.repo_id, "flux")
+        model = ModelManager.get_model(cache_key)
         if model is not None:
             self._flux_model = model
             return
@@ -323,12 +325,7 @@ class MFluxControlNet(BaseMFluxNode):
                 model_config=model_config,
                 quantize=quantize_value,
             )
-            ModelManager.set_model(
-                self.id,
-                f"{self.model.repo_id}:{self.controlnet_model.repo_id}",
-                "flux-controlnet",
-                model,
-            )
+            ModelManager.set_model(self.id, cache_key, model)
             return model
 
         self._flux_model = await loop.run_in_executor(None, _load_model)
@@ -470,8 +467,9 @@ class MFluxInpaint(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}_flux-fill"
 
-        model = ModelManager.get_model(self.model.repo_id, "flux-fill")
+        model = ModelManager.get_model(cache_key)
         if model is not None:
             self._flux_model = model
             return
@@ -489,7 +487,7 @@ class MFluxInpaint(BaseMFluxNode):
             model = Flux1Fill(
                 quantize=quantize_value,
             )
-            ModelManager.set_model(self.id, self.model.repo_id, "flux-fill", model)
+            ModelManager.set_model(self.id, cache_key, model)
             return model
 
         self._flux_model = await loop.run_in_executor(None, _load_model)
@@ -651,8 +649,9 @@ class MFluxOutpaint(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}_flux-fill"
 
-        model = ModelManager.get_model(self.model.repo_id, "flux-fill")
+        model = ModelManager.get_model(cache_key)
         if model is not None:
             self._flux_model = model
             return
@@ -670,7 +669,7 @@ class MFluxOutpaint(BaseMFluxNode):
             model = Flux1Fill(
                 quantize=quantize_value,
             )
-            ModelManager.set_model(self.id, self.model.repo_id, "flux-fill", model)
+            ModelManager.set_model(self.id, cache_key, model)
             return model
 
         self._flux_model = await loop.run_in_executor(None, _load_model)
@@ -868,8 +867,9 @@ class MFluxDepth(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}_flux-depth"
 
-        model = ModelManager.get_model(self.model.repo_id, "flux-depth")
+        model = ModelManager.get_model(cache_key)
         if model is not None:
             self._flux_model = model
             return
@@ -887,7 +887,7 @@ class MFluxDepth(BaseMFluxNode):
             model = Flux1Depth(
                 quantize=quantize_value,
             )
-            ModelManager.set_model(self.id, self.model.repo_id, "flux-depth", model)
+            ModelManager.set_model(self.id, cache_key, model)
             return model
 
         self._flux_model = await loop.run_in_executor(None, _load_model)
@@ -1068,8 +1068,9 @@ class MFluxRedux(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}_flux-redux"
 
-        model = ModelManager.get_model(self.model.repo_id, "flux-redux")
+        model = ModelManager.get_model(cache_key)
         if model is not None:
             self._flux_model = model
             return
@@ -1091,7 +1092,7 @@ class MFluxRedux(BaseMFluxNode):
                 model_config=model_config,
                 quantize=quantize_value,
             )
-            ModelManager.set_model(self.id, self.model.repo_id, "flux-redux", model)
+            ModelManager.set_model(self.id, cache_key, model)
             return model
 
         self._flux_model = await loop.run_in_executor(None, _load_model)
@@ -1242,8 +1243,9 @@ class MFluxKontext(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}_flux-kontext"
 
-        model = ModelManager.get_model(self.model.repo_id, "flux-kontext")
+        model = ModelManager.get_model(cache_key)
         if model is not None:
             self._flux_model = model
             return
@@ -1261,7 +1263,7 @@ class MFluxKontext(BaseMFluxNode):
             model = Flux1Kontext(
                 quantize=quantize_value,
             )
-            ModelManager.set_model(self.id, self.model.repo_id, "flux-kontext", model)
+            ModelManager.set_model(self.id, cache_key, model)
             return model
 
         self._flux_model = await loop.run_in_executor(None, _load_model)

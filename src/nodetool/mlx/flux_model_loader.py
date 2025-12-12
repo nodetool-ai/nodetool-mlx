@@ -142,9 +142,12 @@ async def load_flux_model(
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
+    # Construct cache key
+    cache_key = f"{model_id}_{task}"
+
     # Check ModelManager cache (unless forcing reload)
     if not force_reload:
-        cached_model = ModelManager.get_model(model_id, task)
+        cached_model = ModelManager.get_model(cache_key)
         if cached_model is not None:
             log.info(f"Using cached Flux model: {model_id}")
             return cached_model
@@ -170,7 +173,7 @@ async def load_flux_model(
 
     # Cache in ModelManager if node_id provided
     if node_id:
-        ModelManager.set_model(node_id, model_id, task, model)
+        ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -205,10 +208,12 @@ async def load_flux_controlnet_model(
     if not is_flux_model_available(controlnet_model_id):
         raise FluxModelNotAvailableError(controlnet_model_id)
 
+    # Construct cache key
+    cache_key = f"{base_model_id}:{controlnet_model_id}_flux-controlnet"
+
     # Check ModelManager cache
-    cache_key = f"{base_model_id}:{controlnet_model_id}"
     if not force_reload:
-        cached_model = ModelManager.get_model(cache_key, "flux-controlnet")
+        cached_model = ModelManager.get_model(cache_key)
         if cached_model is not None:
             log.info(f"Using cached Flux ControlNet model: {cache_key}")
             return cached_model
@@ -236,7 +241,7 @@ async def load_flux_controlnet_model(
 
     # Cache in ModelManager
     if node_id:
-        ModelManager.set_model(node_id, cache_key, "flux-controlnet", model)
+        ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -262,8 +267,11 @@ async def load_flux_fill_model(
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
+    # Construct cache key
+    cache_key = f"{model_id}_flux-fill"
+
     if not force_reload:
-        cached_model = ModelManager.get_model(model_id, "flux-fill")
+        cached_model = ModelManager.get_model(cache_key)
         if cached_model is not None:
             log.info(f"Using cached Flux Fill model: {model_id}")
             return cached_model
@@ -284,7 +292,7 @@ async def load_flux_fill_model(
     model = await loop.run_in_executor(None, _load)
 
     if node_id:
-        ModelManager.set_model(node_id, model_id, "flux-fill", model)
+        ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -299,12 +307,15 @@ async def load_flux_depth_model(
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
+    # Construct cache key
+    cache_key = f"{model_id}_flux-depth"
+
     if not force_reload:
-        cached_model = ModelManager.get_model(model_id, "flux-depth")
+        cached_model = ModelManager.get_model(cache_key)
         if cached_model is not None:
             log.info(f"Using cached Flux Depth model: {model_id}")
             return cached_model
-    
+
     required_mem = estimate_required_memory(quantize)
     check_memory_availability(required_mem)
 
@@ -321,7 +332,7 @@ async def load_flux_depth_model(
     model = await loop.run_in_executor(None, _load)
 
     if node_id:
-        ModelManager.set_model(node_id, model_id, "flux-depth", model)
+        ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -336,8 +347,11 @@ async def load_flux_redux_model(
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
+    # Construct cache key
+    cache_key = f"{model_id}_flux-redux"
+
     if not force_reload:
-        cached_model = ModelManager.get_model(model_id, "flux-redux")
+        cached_model = ModelManager.get_model(cache_key)
         if cached_model is not None:
             log.info(f"Using cached Flux Redux model: {model_id}")
             return cached_model
@@ -362,7 +376,7 @@ async def load_flux_redux_model(
     model = await loop.run_in_executor(None, _load)
 
     if node_id:
-        ModelManager.set_model(node_id, model_id, "flux-redux", model)
+        ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -377,8 +391,11 @@ async def load_flux_kontext_model(
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
+    # Construct cache key
+    cache_key = f"{model_id}_flux-kontext"
+
     if not force_reload:
-        cached_model = ModelManager.get_model(model_id, "flux-kontext")
+        cached_model = ModelManager.get_model(cache_key)
         if cached_model is not None:
             log.info(f"Using cached Flux Kontext model: {model_id}")
             return cached_model
@@ -399,6 +416,6 @@ async def load_flux_kontext_model(
     model = await loop.run_in_executor(None, _load)
 
     if node_id:
-        ModelManager.set_model(node_id, model_id, "flux-kontext", model)
+        ModelManager.set_model(node_id, cache_key, model)
 
     return model

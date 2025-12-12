@@ -1141,11 +1141,14 @@ class MLXProvider(BaseProvider):
             log.debug("MLX _stream_chat end | model=%s", model)
 
     async def _load_model(self, model: str) -> tuple[nn.Module, TokenizerWrapper]:
+        # Construct cache key for ModelManager
+        cache_key = f"{model}_language_model_{self.adapter_path}"
+
         # Use ModelManager lock for thread-safe model loading
-        async with ModelManager.lock_model(model, "language_model", self.adapter_path):
+        async with ModelManager.lock_model(cache_key):
             async with self._load_lock:
                 # Try to get cached model from ModelManager
-                cached = ModelManager.get_model(model, "language_model", self.adapter_path)
+                cached = ModelManager.get_model(cache_key)
                 if cached is not None:
                     return cached
 
@@ -1159,7 +1162,7 @@ class MLXProvider(BaseProvider):
 
                 # Cache in ModelManager (requires a node_id, use a synthetic one for provider-level caching)
                 node_id = f"mlx_provider_{model}_{self.adapter_path or 'default'}"
-                ModelManager.set_model(node_id, model, "language_model", (mdl, tokenizer), self.adapter_path)
+                ModelManager.set_model(node_id, cache_key, (mdl, tokenizer))
 
                 log.info("Loaded MLX model %s", model)
                 return mdl, tokenizer
@@ -1191,11 +1194,14 @@ class MLXProvider(BaseProvider):
             _VLM_MODEL_CACHE[key] = (mdl, proc, cfg, expires_at)
 
     async def _load_vlm_model(self, model: str) -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any]:
+        # Construct cache key for ModelManager
+        cache_key = f"{model}_vision_model_{self.adapter_path}"
+
         # Use ModelManager lock for thread-safe model loading
-        async with ModelManager.lock_model(model, "vision_model", self.adapter_path):
+        async with ModelManager.lock_model(cache_key):
             async with self._vlm_load_lock:
                 # Try to get cached model from ModelManager
-                cached = ModelManager.get_model(model, "vision_model", self.adapter_path)
+                cached = ModelManager.get_model(cache_key)
                 if cached is not None:
                     return cached
 
@@ -1210,7 +1216,7 @@ class MLXProvider(BaseProvider):
 
                 # Cache in ModelManager
                 node_id = f"mlx_vlm_provider_{model}_{self.adapter_path or 'default'}"
-                ModelManager.set_model(node_id, model, "vision_model", (mdl, proc, cfg), self.adapter_path)
+                ModelManager.set_model(node_id, cache_key, (mdl, proc, cfg))
 
                 log.info("Loaded MLX-VLM model %s", model)
                 return mdl, proc, cfg
@@ -1539,10 +1545,13 @@ class MLXProvider(BaseProvider):
         Raises:
             ValueError: If model is not found in HuggingFace cache
         """
+        # Construct cache key for ModelManager
+        cache_key = f"{model}_tts_model"
+
         # Use ModelManager lock for thread-safe model loading
-        async with ModelManager.lock_model(model, "tts_model", None):
+        async with ModelManager.lock_model(cache_key):
             # Try to get cached model from ModelManager
-            tts_model = ModelManager.get_model(model, "tts_model", None)
+            tts_model = ModelManager.get_model(cache_key)
 
             if tts_model is None:
                 # Model not in cache, load it
@@ -1563,7 +1572,7 @@ class MLXProvider(BaseProvider):
 
                 # Cache in ModelManager
                 node_id = f"mlx_tts_provider_{model}"
-                ModelManager.set_model(node_id, model, "tts_model", tts_model, None)
+                ModelManager.set_model(node_id, cache_key, tts_model)
                 log.debug(f"Cached TTS model {model}")
             else:
                 log.debug(f"Using cached TTS model {model}")
