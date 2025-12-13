@@ -1,7 +1,7 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.6.2-rc.9",
+  "version": "0.6.2-rc.10",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
@@ -3399,12 +3399,7 @@
       ],
       "basic_fields": [
         "model",
-        "audio",
-        "compression_ratio_threshold",
-        "logprob_threshold",
-        "no_speech_threshold",
-        "condition_on_previous_text",
-        "word_timestamps"
+        "audio"
       ]
     }
   ]
