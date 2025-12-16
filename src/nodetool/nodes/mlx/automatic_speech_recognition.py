@@ -71,6 +71,10 @@ class Whisper(BaseNode):
     )
 
     @classmethod
+    def get_basic_fields(cls):
+        return ["model", "audio"]
+
+    @classmethod
     def get_title(cls):
         return "MLX Whisper"
 

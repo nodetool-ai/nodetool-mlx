@@ -1920,7 +1920,8 @@ class MLXProvider(BaseProvider):
 
         try:
             # Use ModelManager lock for thread-safe model loading
-            async with ModelManager.lock_model(params.model.id, "flux_model", None):
+            cache_key = f"{params.model.id}_flux"
+            async with ModelManager.lock_model(cache_key):
                 # Load model using centralized loader
                 model = await load_flux_model(
                     model_id=params.model.id,
