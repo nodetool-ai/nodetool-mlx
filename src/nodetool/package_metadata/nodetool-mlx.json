@@ -1,7 +1,7 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.6.2-rc.11",
+  "version": "0.6.2-rc.12",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
@@ -136,7 +136,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10,
+          "downloads": 25,
           "likes": 1
         },
         {
@@ -425,8 +425,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 3778,
-          "likes": 191
+          "downloads": 2703,
+          "likes": 192
         },
         {
           "id": "jasperai/Flux.1-dev-Controlnet-Upscaler",
@@ -821,7 +821,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10,
+          "downloads": 25,
           "likes": 1
         },
         {
@@ -1543,8 +1543,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 18474,
-          "likes": 573
+          "downloads": 24677,
+          "likes": 580
         }
       ],
       "basic_fields": [
@@ -1741,7 +1741,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 161,
+          "downloads": 519,
           "likes": 4
         },
         {
@@ -1749,7 +1749,7 @@
           "type": "hf.model",
           "name": "mlx-community/Kokoro-82M-bf16",
           "repo_id": "mlx-community/Kokoro-82M-bf16",
-          "size_on_disk": 361205527,
+          "size_on_disk": 389410807,
           "pipeline_tag": "text-to-speech",
           "tags": [
             "mlx",
@@ -1761,8 +1761,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5089,
-          "likes": 26
+          "downloads": 5235,
+          "likes": 29
         },
         {
           "id": "mlx-community/Kokoro-82M-4bit",
@@ -1883,7 +1883,8 @@
           },
           "default": null,
           "title": "Reference Audio",
-          "description": "Reference audio clip used for voice cloning."
+          "description": "Reference audio clip used for voice cloning.",
+          "required": true
         }
       ],
       "outputs": [
@@ -2099,7 +2100,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 29,
+          "downloads": 31,
           "likes": 3
         }
       ],
@@ -2265,15 +2266,14 @@
             "base_model:mlx-community/Llama-3.2-3B-Instruct",
             "base_model:quantized:mlx-community/Llama-3.2-3B-Instruct",
             "license:llama3.2",
-            "autotrain_compatible",
             "text-generation-inference",
             "endpoints_compatible",
             "4-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 12904,
-          "likes": 32
+          "downloads": 15914,
+          "likes": 37
         },
         {
           "id": "mlx-community/gemma-3-1b-it-8bit",
@@ -3272,7 +3272,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 204,
+          "downloads": 207,
           "likes": 2
         },
         {
@@ -3287,7 +3287,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 265,
+          "downloads": 360,
           "likes": 0
         },
         {
@@ -3302,7 +3302,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1196,
+          "downloads": 1277,
           "likes": 0
         },
         {
@@ -3317,7 +3317,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 31,
+          "downloads": 36,
           "likes": 0
         },
         {
