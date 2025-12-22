@@ -217,6 +217,26 @@ class BaseMFluxNode(BaseNode):
         except Exception as e:
             log.warning(f"Failed to configure VAE tiling: {e}")
 
+    def _prepare_config_kwargs(
+        self,
+        config_kwargs: dict[str, Any],
+    ) -> dict[str, Any]:
+        """
+        Prepare config kwargs by adding model_config if available.
+
+        This helper reduces code duplication across different MFlux node types.
+
+        Args:
+            config_kwargs: Base configuration kwargs
+
+        Returns:
+            Updated config kwargs with model_config if available
+        """
+        # Get model_config from the flux model if available
+        if self._flux_model is not None and hasattr(self._flux_model, "model_config"):
+            config_kwargs["model_config"] = self._flux_model.model_config
+        return config_kwargs
+
 
 class MFlux(BaseMFluxNode):
     """
@@ -369,10 +389,8 @@ class MFlux(BaseMFluxNode):
             if self.guidance is not None:
                 config_kwargs["guidance"] = self.guidance
 
-            # Get model_config from the flux model
-            model_config = self._flux_model.model_config if hasattr(self._flux_model, "model_config") else None
-            if model_config is not None:
-                config_kwargs["model_config"] = model_config
+            # Add model_config if available
+            config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
             config = Config(**config_kwargs)
 

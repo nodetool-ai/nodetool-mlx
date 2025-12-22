@@ -211,10 +211,8 @@ class MFluxImageToImage(BaseMFluxNode):
                 if self.guidance is not None:
                     config_kwargs["guidance"] = self.guidance
 
-                # Get model_config from the flux model
-                model_config = self._flux_model.model_config if hasattr(self._flux_model, "model_config") else None
-                if model_config is not None:
-                    config_kwargs["model_config"] = model_config
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -409,10 +407,8 @@ class MFluxControlNet(BaseMFluxNode):
             if self.guidance is not None:
                 config_kwargs["guidance"] = self.guidance
 
-            # Get model_config from the flux model
-            model_config = self._flux_model.model_config if hasattr(self._flux_model, "model_config") else None
-            if model_config is not None:
-                config_kwargs["model_config"] = model_config
+            # Add model_config if available
+            config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
             config = Config(**config_kwargs)
 
@@ -625,10 +621,8 @@ class MFluxInpaint(BaseMFluxNode):
                     "masked_image_path": mask_path,
                 }
 
-                # Get model_config from the flux model
-                model_config = self._flux_model.model_config if hasattr(self._flux_model, "model_config") else None
-                if model_config is not None:
-                    config_kwargs["model_config"] = model_config
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -877,10 +871,8 @@ class MFluxOutpaint(BaseMFluxNode):
                     "masked_image_path": mask_path,
                 }
 
-                # Get model_config from the flux model
-                model_config = self._flux_model.model_config if hasattr(self._flux_model, "model_config") else None
-                if model_config is not None:
-                    config_kwargs["model_config"] = model_config
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -1105,10 +1097,8 @@ class MFluxDepth(BaseMFluxNode):
                         working_depth.save(working_depth_path)
                     config_kwargs["depth_image_path"] = working_depth_path
 
-                # Get model_config from the flux model
-                model_config = self._flux_model.model_config if hasattr(self._flux_model, "model_config") else None
-                if model_config is not None:
-                    config_kwargs["model_config"] = model_config
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -1322,10 +1312,8 @@ class MFluxRedux(BaseMFluxNode):
                     "redux_image_strengths": strength,
                 }
 
-                # Get model_config from the flux model
-                model_config = self._flux_model.model_config if hasattr(self._flux_model, "model_config") else None
-                if model_config is not None:
-                    config_kwargs["model_config"] = model_config
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -1514,10 +1502,8 @@ class MFluxKontext(BaseMFluxNode):
                     "image_path": image_path,
                 }
 
-                # Get model_config from the flux model
-                model_config = self._flux_model.model_config if hasattr(self._flux_model, "model_config") else None
-                if model_config is not None:
-                    config_kwargs["model_config"] = model_config
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 

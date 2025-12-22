@@ -10,6 +10,18 @@ from typing import Optional
 
 log = logging.getLogger(__name__)
 
+# Base model memory estimates (in GB) for different FLUX variants
+# These are conservative estimates based on unquantized fp16 weights
+MODEL_MEMORY_ESTIMATES = {
+    "flux-dev": 23.0,      # FLUX.1 dev model
+    "flux-schnell": 13.0,  # FLUX.1 schnell model (faster, smaller)
+    "flux-fill": 23.0,     # Fill/inpaint variant
+    "flux-depth": 23.0,    # Depth conditioning variant
+    "flux-redux": 26.0,    # Redux with additional encoder
+    "flux-controlnet": 25.0,  # With ControlNet weights
+    "flux": 23.0,          # Default/unknown variant
+}
+
 
 def estimate_mflux_memory_bytes(
     width: int,
@@ -40,9 +52,10 @@ def estimate_mflux_memory_bytes(
     Returns:
         Estimated memory usage in bytes (conservative overestimate)
     """
-    # Base model memory (unquantized FLUX is ~23GB for dev, ~13GB for schnell)
-    # We assume dev model as conservative estimate
-    base_model_memory_gb = 23.0
+    # Get base model memory for this model type
+    base_model_memory_gb = MODEL_MEMORY_ESTIMATES.get(
+        model_type.lower(), MODEL_MEMORY_ESTIMATES["flux"]
+    )
 
     # Quantization reduces model weight memory
     if quantize_bits is not None:

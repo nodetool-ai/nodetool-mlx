@@ -14,6 +14,10 @@ from typing import Optional
 
 log = logging.getLogger(__name__)
 
+# Conservative factor for estimating reclaimable inactive memory
+# We use 50% of inactive memory as available since not all of it can be reclaimed
+INACTIVE_MEMORY_AVAILABLE_FACTOR = 0.5
+
 
 @dataclass
 class SystemMemorySnapshot:
@@ -115,8 +119,8 @@ def get_system_memory_snapshot() -> SystemMemorySnapshot:
 
         # Conservative estimate of available memory:
         # Free + some portion of inactive (since it can be reclaimed)
-        # We use 50% of inactive to be conservative
-        available_bytes = free_bytes + (inactive_bytes // 2)
+        # We use INACTIVE_MEMORY_AVAILABLE_FACTOR of inactive to be conservative
+        available_bytes = free_bytes + int(inactive_bytes * INACTIVE_MEMORY_AVAILABLE_FACTOR)
 
         # Get swap usage
         swap_used_bytes = _get_swap_used_bytes(vm_stat)
