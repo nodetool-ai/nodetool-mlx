@@ -24,10 +24,12 @@ from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import NodeProgress
 
 if TYPE_CHECKING:
+    # Type-only imports - actual imports happen at runtime in method bodies
+    # This allows compatibility with multiple mflux versions
     import numpy as np
     import PIL.Image
     from mflux.callbacks.callback import InLoopCallback
-    from mflux.models.common.config.config import Config
+    from mflux.models.common.config.config import Config  # mflux >= 0.11
     from mflux.models.common.config.model_config import ModelConfig
     from mflux.generate import Flux1
     from mflux.post_processing.image_util import ImageUtil

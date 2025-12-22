@@ -193,7 +193,14 @@ def _get_vm_stat() -> dict[str, int]:
 
 
 def _get_swap_used_bytes(vm_stat: dict[str, int]) -> int:
-    """Calculate swap usage from vm_stat."""
+    """
+    Calculate swap usage from vm_stat.
+    
+    Note: This is a rough estimate using cumulative swapouts as a proxy
+    for swap pressure. It does not represent actual current swap usage,
+    which is difficult to measure precisely on macOS. This heuristic
+    is conservative and errs on the side of overestimating memory pressure.
+    """
     page_size = vm_stat.get("page_size", 4096)
     swapins = vm_stat.get("Swapins", 0)
     swapouts = vm_stat.get("Swapouts", 0)

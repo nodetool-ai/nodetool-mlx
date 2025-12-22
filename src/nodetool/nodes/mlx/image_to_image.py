@@ -27,9 +27,11 @@ from nodetool.nodes.mlx.text_to_image import BaseMFluxNode, QuantizationLevel
 from nodetool.workflows.processing_context import ProcessingContext
 
 if TYPE_CHECKING:
+    # Type-only imports - actual imports happen at runtime in method bodies
+    # This allows compatibility with multiple mflux versions
     import numpy as np
     import PIL.Image
-    from mflux.models.common.config.model_config import ModelConfig
+    from mflux.models.common.config.model_config import ModelConfig  # mflux >= 0.11
     from mflux.generate import Flux1
     from mflux.generate_controlnet import Flux1Controlnet
     from mflux.generate_depth import Flux1Depth

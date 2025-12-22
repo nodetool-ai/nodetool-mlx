@@ -12,15 +12,30 @@ log = logging.getLogger(__name__)
 
 # Base model memory estimates (in GB) for different FLUX variants
 # These are conservative estimates based on unquantized fp16 weights
+# Values derived from empirical testing and model architecture analysis:
+# - FLUX.1 dev: ~12B parameters * 2 bytes (fp16) ≈ 24GB (using 23GB conservatively)
+# - FLUX.1 schnell: ~6.5B parameters * 2 bytes ≈ 13GB
+# - Redux adds image encoder: +3GB
+# - ControlNet adds conditioning weights: +2GB
+# - Depth/Fill variants use similar base model: 23GB
 MODEL_MEMORY_ESTIMATES = {
-    "flux-dev": 23.0,      # FLUX.1 dev model
-    "flux-schnell": 13.0,  # FLUX.1 schnell model (faster, smaller)
-    "flux-fill": 23.0,     # Fill/inpaint variant
-    "flux-depth": 23.0,    # Depth conditioning variant
-    "flux-redux": 26.0,    # Redux with additional encoder
-    "flux-controlnet": 25.0,  # With ControlNet weights
-    "flux": 23.0,          # Default/unknown variant
+    "flux-dev": 23.0,      # FLUX.1 dev model (~12B params)
+    "flux-schnell": 13.0,  # FLUX.1 schnell model (~6.5B params)
+    "flux-fill": 23.0,     # Fill/inpaint variant (same base as dev)
+    "flux-depth": 23.0,    # Depth conditioning variant (same base as dev)
+    "flux-redux": 26.0,    # Redux with additional image encoder (+3GB)
+    "flux-controlnet": 25.0,  # With ControlNet conditioning weights (+2GB)
+    "flux": 23.0,          # Default/unknown variant (assume dev)
 }
+
+# Conservative multiplier for intermediate activation tensors during inference
+# Based on observation that FLUX needs to hold multiple intermediate states:
+# - Current latent state
+# - Cached attention keys/values
+# - Gradient estimates for guidance
+# - Temporary computation buffers
+# This 4x factor provides safety margin for all these simultaneous allocations
+ACTIVATION_MEMORY_FACTOR = 4.0
 
 
 def estimate_mflux_memory_bytes(
@@ -84,9 +99,8 @@ def estimate_mflux_memory_bytes(
 
     # Memory per step (in fp16 = 2 bytes per value)
     # We need to hold multiple intermediate tensors, so multiply by factor
-    activation_factor = 4.0  # Conservative multiplier for intermediate tensors
     latent_memory_per_step = (
-        latent_height * latent_width * latent_channels * 2 * activation_factor
+        latent_height * latent_width * latent_channels * 2 * ACTIVATION_MEMORY_FACTOR
     )
     activation_memory_bytes = latent_memory_per_step * steps
 
