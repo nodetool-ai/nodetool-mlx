@@ -6,7 +6,7 @@ import random
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, ClassVar, TYPE_CHECKING
+from typing import Any, ClassVar, Literal, TYPE_CHECKING
 
 from pydantic import Field
 
@@ -27,9 +27,11 @@ from nodetool.nodes.mlx.text_to_image import BaseMFluxNode, QuantizationLevel
 from nodetool.workflows.processing_context import ProcessingContext
 
 if TYPE_CHECKING:
+    # Type-only imports - actual imports happen at runtime in method bodies
+    # This allows compatibility with multiple mflux versions
     import numpy as np
     import PIL.Image
-    from mflux.config.model_config import ModelConfig
+    from mflux.models.common.config.model_config import ModelConfig  # mflux >= 0.11
     from mflux.generate import Flux1
     from mflux.generate_controlnet import Flux1Controlnet
     from mflux.generate_depth import Flux1Depth
@@ -104,6 +106,14 @@ class MFluxImageToImage(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave as 0 for random.",
     )
+    low_memory: bool = Field(
+        default=False,
+        description="Enable low-memory mode using VAE tiling. Slower, but safer on low-RAM Macs.",
+    )
+    vae_tiling_split: Literal["horizontal", "vertical"] = Field(
+        default="horizontal",
+        description="VAE tiling direction used during decode (if low-memory is enabled).",
+    )
 
     _flux_model: Any | None = None
 
@@ -151,7 +161,25 @@ class MFluxImageToImage(BaseMFluxNode):
 
         self._ensure_seed()
 
+        # Perform memory safety check
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        self._check_memory_safety(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
+            quantize_bits=quantize_value,
+            low_memory=self.low_memory,
+            model_type="flux",
+        )
+
         assert self._flux_model is not None
+
+        # Configure VAE tiling if low-memory mode is enabled
+        self._configure_vae_tiling(
+            flux_model=self._flux_model,
+            low_memory=self.low_memory,
+            vae_tiling_split=self.vae_tiling_split,
+        )
 
         loop = asyncio.get_running_loop()
         total_steps = self.steps
@@ -159,7 +187,7 @@ class MFluxImageToImage(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
+            from mflux.models.common.config.config import Config
 
             working_image = base_image.convert("RGB")
             target_width = 16 * (self.width // 16)
@@ -185,14 +213,8 @@ class MFluxImageToImage(BaseMFluxNode):
                 if self.guidance is not None:
                     config_kwargs["guidance"] = self.guidance
 
-                dataclass_fields = getattr(Config, "__dataclass_fields__", None)
-                if isinstance(dataclass_fields, dict):
-                    allowed = set(dataclass_fields.keys())
-                    config_kwargs = {
-                        key: value
-                        for key, value in config_kwargs.items()
-                        if key in allowed
-                    }
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -289,6 +311,14 @@ class MFluxControlNet(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave 0 for random.",
     )
+    low_memory: bool = Field(
+        default=False,
+        description="Enable low-memory mode using VAE tiling. Slower, but safer on low-RAM Macs.",
+    )
+    vae_tiling_split: Literal["horizontal", "vertical"] = Field(
+        default="horizontal",
+        description="VAE tiling direction used during decode (if low-memory is enabled).",
+    )
 
     _flux_model: Any | None = None
 
@@ -308,7 +338,7 @@ class MFluxControlNet(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Controlnet":
-            from mflux.config.model_config import ModelConfig
+            from mflux.models.common.config.model_config import ModelConfig
             from mflux.generate_controlnet import Flux1Controlnet
 
             log.info(
@@ -342,7 +372,25 @@ class MFluxControlNet(BaseMFluxNode):
 
         self._ensure_seed()
 
+        # Perform memory safety check
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        self._check_memory_safety(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
+            quantize_bits=quantize_value,
+            low_memory=self.low_memory,
+            model_type="flux-controlnet",
+        )
+
         assert self._flux_model is not None
+
+        # Configure VAE tiling if low-memory mode is enabled
+        self._configure_vae_tiling(
+            flux_model=self._flux_model,
+            low_memory=self.low_memory,
+            vae_tiling_split=self.vae_tiling_split,
+        )
 
         loop = asyncio.get_running_loop()
         total_steps = self.steps
@@ -350,7 +398,7 @@ class MFluxControlNet(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
+            from mflux.models.common.config.config import Config
 
             config_kwargs: dict[str, Any] = {
                 "num_inference_steps": self.steps,
@@ -360,6 +408,9 @@ class MFluxControlNet(BaseMFluxNode):
             }
             if self.guidance is not None:
                 config_kwargs["guidance"] = self.guidance
+
+            # Add model_config if available
+            config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
             config = Config(**config_kwargs)
 
@@ -454,6 +505,14 @@ class MFluxInpaint(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
+    low_memory: bool = Field(
+        default=False,
+        description="Enable low-memory mode using VAE tiling. Slower, but safer on low-RAM Macs.",
+    )
+    vae_tiling_split: Literal["horizontal", "vertical"] = Field(
+        default="horizontal",
+        description="VAE tiling direction used during decode (if low-memory is enabled).",
+    )
 
     _flux_model: Any | None = None
 
@@ -503,7 +562,25 @@ class MFluxInpaint(BaseMFluxNode):
 
         self._ensure_seed()
 
+        # Perform memory safety check
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        self._check_memory_safety(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
+            quantize_bits=quantize_value,
+            low_memory=self.low_memory,
+            model_type="flux-fill",
+        )
+
         assert self._flux_model is not None
+
+        # Configure VAE tiling if low-memory mode is enabled
+        self._configure_vae_tiling(
+            flux_model=self._flux_model,
+            low_memory=self.low_memory,
+            vae_tiling_split=self.vae_tiling_split,
+        )
 
         loop = asyncio.get_running_loop()
         total_steps = self.steps
@@ -511,7 +588,7 @@ class MFluxInpaint(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
+            from mflux.models.common.config.config import Config
 
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
@@ -545,6 +622,9 @@ class MFluxInpaint(BaseMFluxNode):
                     "image_path": image_path,
                     "masked_image_path": mask_path,
                 }
+
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -636,6 +716,14 @@ class MFluxOutpaint(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
+    low_memory: bool = Field(
+        default=False,
+        description="Enable low-memory mode using VAE tiling. Slower, but safer on low-RAM Macs.",
+    )
+    vae_tiling_split: Literal["horizontal", "vertical"] = Field(
+        default="horizontal",
+        description="VAE tiling direction used during decode (if low-memory is enabled).",
+    )
 
     _flux_model: Any | None = None
 
@@ -685,7 +773,25 @@ class MFluxOutpaint(BaseMFluxNode):
 
         self._ensure_seed()
 
+        # Perform memory safety check
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        self._check_memory_safety(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
+            quantize_bits=quantize_value,
+            low_memory=self.low_memory,
+            model_type="flux-fill",
+        )
+
         assert self._flux_model is not None
+
+        # Configure VAE tiling if low-memory mode is enabled
+        self._configure_vae_tiling(
+            flux_model=self._flux_model,
+            low_memory=self.low_memory,
+            vae_tiling_split=self.vae_tiling_split,
+        )
 
         loop = asyncio.get_running_loop()
         total_steps = self.steps
@@ -694,7 +800,7 @@ class MFluxOutpaint(BaseMFluxNode):
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
             import numpy as np
-            from mflux.config.config import Config
+            from mflux.models.common.config.config import Config
             from mflux.post_processing.image_util import ImageUtil
             from mflux.ui.box_values import BoxValues, parse_box_value
 
@@ -766,6 +872,9 @@ class MFluxOutpaint(BaseMFluxNode):
                     "image_path": image_path,
                     "masked_image_path": mask_path,
                 }
+
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -854,6 +963,14 @@ class MFluxDepth(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
+    low_memory: bool = Field(
+        default=False,
+        description="Enable low-memory mode using VAE tiling. Slower, but safer on low-RAM Macs.",
+    )
+    vae_tiling_split: Literal["horizontal", "vertical"] = Field(
+        default="horizontal",
+        description="VAE tiling direction used during decode (if low-memory is enabled).",
+    )
 
     _flux_model: Any | None = None
 
@@ -911,7 +1028,25 @@ class MFluxDepth(BaseMFluxNode):
 
         self._ensure_seed()
 
+        # Perform memory safety check
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        self._check_memory_safety(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
+            quantize_bits=quantize_value,
+            low_memory=self.low_memory,
+            model_type="flux-depth",
+        )
+
         assert self._flux_model is not None
+
+        # Configure VAE tiling if low-memory mode is enabled
+        self._configure_vae_tiling(
+            flux_model=self._flux_model,
+            low_memory=self.low_memory,
+            vae_tiling_split=self.vae_tiling_split,
+        )
 
         loop = asyncio.get_running_loop()
 
@@ -920,7 +1055,7 @@ class MFluxDepth(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
+            from mflux.models.common.config.config import Config
 
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
@@ -963,6 +1098,9 @@ class MFluxDepth(BaseMFluxNode):
                         working_depth_path = Path(tmp.name)
                         working_depth.save(working_depth_path)
                     config_kwargs["depth_image_path"] = working_depth_path
+
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -1055,6 +1193,14 @@ class MFluxRedux(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
+    low_memory: bool = Field(
+        default=False,
+        description="Enable low-memory mode using VAE tiling. Slower, but safer on low-RAM Macs.",
+    )
+    vae_tiling_split: Literal["horizontal", "vertical"] = Field(
+        default="horizontal",
+        description="VAE tiling direction used during decode (if low-memory is enabled).",
+    )
 
     _flux_model: Any | None = None
 
@@ -1078,7 +1224,7 @@ class MFluxRedux(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Redux":
-            from mflux.config.model_config import ModelConfig
+            from mflux.models.common.config.model_config import ModelConfig
             from mflux.generate_redux import Flux1Redux
 
             log.info(
@@ -1109,7 +1255,25 @@ class MFluxRedux(BaseMFluxNode):
 
         self._ensure_seed()
 
+        # Perform memory safety check
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        self._check_memory_safety(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
+            quantize_bits=quantize_value,
+            low_memory=self.low_memory,
+            model_type="flux-redux",
+        )
+
         assert self._flux_model is not None
+
+        # Configure VAE tiling if low-memory mode is enabled
+        self._configure_vae_tiling(
+            flux_model=self._flux_model,
+            low_memory=self.low_memory,
+            vae_tiling_split=self.vae_tiling_split,
+        )
 
         loop = asyncio.get_running_loop()
 
@@ -1117,7 +1281,7 @@ class MFluxRedux(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
         try:
             import PIL.Image
-            from mflux.config.config import Config
+            from mflux.models.common.config.config import Config
 
             temp_paths: list[Path] = []
             target_width = 16 * (self.width // 16)
@@ -1149,6 +1313,9 @@ class MFluxRedux(BaseMFluxNode):
                     "redux_image_paths": [redux_path],
                     "redux_image_strengths": strength,
                 }
+
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 
@@ -1230,6 +1397,14 @@ class MFluxKontext(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave 0 for random seed.",
     )
+    low_memory: bool = Field(
+        default=False,
+        description="Enable low-memory mode using VAE tiling. Slower, but safer on low-RAM Macs.",
+    )
+    vae_tiling_split: Literal["horizontal", "vertical"] = Field(
+        default="horizontal",
+        description="VAE tiling direction used during decode (if low-memory is enabled).",
+    )
 
     _flux_model: Any | None = None
 
@@ -1280,7 +1455,25 @@ class MFluxKontext(BaseMFluxNode):
 
         self._ensure_seed()
 
+        # Perform memory safety check
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        self._check_memory_safety(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
+            quantize_bits=quantize_value,
+            low_memory=self.low_memory,
+            model_type="flux",
+        )
+
         assert self._flux_model is not None
+
+        # Configure VAE tiling if low-memory mode is enabled
+        self._configure_vae_tiling(
+            flux_model=self._flux_model,
+            low_memory=self.low_memory,
+            vae_tiling_split=self.vae_tiling_split,
+        )
 
         loop = asyncio.get_running_loop()
         total_steps = self.steps
@@ -1288,7 +1481,7 @@ class MFluxKontext(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
+            from mflux.models.common.config.config import Config
 
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
@@ -1310,6 +1503,9 @@ class MFluxKontext(BaseMFluxNode):
                     "guidance": self.guidance,
                     "image_path": image_path,
                 }
+
+                # Add model_config if available
+                config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
                 config = Config(**config_kwargs)
 

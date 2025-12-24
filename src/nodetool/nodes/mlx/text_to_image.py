@@ -7,23 +7,30 @@ import sys
 import tempfile
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, ClassVar, TYPE_CHECKING
+from typing import Any, ClassVar, Literal, TYPE_CHECKING
 
 from pydantic import Field
 
 from nodetool.config.logging_config import get_logger
 from nodetool.metadata.types import HFFlux, ImageRef
 from nodetool.ml.core.model_manager import ModelManager
+from nodetool.mlx.memory_estimator import (
+    estimate_mflux_memory_bytes,
+    format_memory_error,
+)
+from nodetool.mlx.system_memory import check_memory_headroom
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import NodeProgress
 
 if TYPE_CHECKING:
+    # Type-only imports - actual imports happen at runtime in method bodies
+    # This allows compatibility with multiple mflux versions
     import numpy as np
     import PIL.Image
     from mflux.callbacks.callback import InLoopCallback
-    from mflux.config.config import Config
-    from mflux.config.model_config import ModelConfig
+    from mflux.models.common.config.config import Config  # mflux >= 0.11
+    from mflux.models.common.config.model_config import ModelConfig
     from mflux.generate import Flux1
     from mflux.post_processing.image_util import ImageUtil
     from mflux.ui.box_values import BoxValues
@@ -99,6 +106,139 @@ class BaseMFluxNode(BaseNode):
         with contextlib.suppress(ValueError):
             CallbackRegistry.in_loop_callbacks().remove(callback)
 
+    def _check_memory_safety(
+        self,
+        width: int,
+        height: int,
+        steps: int,
+        quantize_bits: int | None,
+        low_memory: bool,
+        model_type: str = "flux",
+    ) -> None:
+        """
+        Perform preflight memory check to prevent system freezes.
+
+        This checks if there's sufficient system memory headroom before
+        running the MFlux generation. Fails fast if memory is insufficient.
+
+        Args:
+            width: Output image width
+            height: Output image height
+            steps: Number of inference steps
+            quantize_bits: Quantization level or None
+            low_memory: Whether VAE tiling is enabled
+            model_type: Model family for auxiliary memory estimation
+
+        Raises:
+            RuntimeError: If insufficient memory headroom is available
+        """
+        # Only perform check on macOS
+        if sys.platform != "darwin":
+            return
+
+        try:
+            # Estimate memory needed for this job
+            estimated_bytes = estimate_mflux_memory_bytes(
+                width=width,
+                height=height,
+                steps=steps,
+                quantize_bits=quantize_bits,
+                low_memory=low_memory,
+                model_type=model_type,
+            )
+
+            # Check if we have sufficient headroom (10% of total memory)
+            has_sufficient, snapshot, required_headroom = check_memory_headroom(
+                required_bytes=estimated_bytes,
+                min_headroom_fraction=0.10,
+            )
+
+            log.info(
+                f"Memory preflight check: estimated={estimated_bytes / (1024**3):.1f}GB, "
+                f"available={snapshot.available_gb:.1f}GB, "
+                f"headroom={required_headroom / (1024**3):.1f}GB, "
+                f"sufficient={has_sufficient}"
+            )
+
+            if not has_sufficient:
+                error_msg = format_memory_error(
+                    estimated_bytes=estimated_bytes,
+                    available_bytes=snapshot.available_bytes,
+                    required_headroom_bytes=required_headroom,
+                    width=width,
+                    height=height,
+                    steps=steps,
+                    low_memory=low_memory,
+                )
+                log.error(f"Memory preflight check failed:\n{error_msg}")
+                raise RuntimeError(error_msg)
+
+        except RuntimeError:
+            # Re-raise memory check failures
+            raise
+        except Exception as e:
+            # Log but don't fail on memory check errors (e.g., on non-macOS or permission issues)
+            log.warning(
+                f"Memory preflight check could not be performed (non-fatal): {e}"
+            )
+
+    def _configure_vae_tiling(
+        self,
+        flux_model: Any,
+        low_memory: bool,
+        vae_tiling_split: str = "horizontal",
+    ) -> None:
+        """
+        Configure VAE tiling on the model if low-memory mode is enabled.
+
+        This sets the VAE decoder to use tiling, which reduces peak memory
+        usage at the cost of potential seams in the output image.
+
+        Args:
+            flux_model: The loaded MFlux model
+            low_memory: Whether to enable VAE tiling
+            vae_tiling_split: Direction to split ("horizontal" or "vertical")
+        """
+        try:
+            if low_memory and hasattr(flux_model, "vae"):
+                if hasattr(flux_model.vae, "decoder"):
+                    flux_model.vae.decoder.enable_tiling = True
+                    flux_model.vae.decoder.split_direction = vae_tiling_split
+                    log.info(
+                        f"VAE tiling enabled (split={vae_tiling_split}). "
+                        "This reduces memory usage but may cause visible seams."
+                    )
+                else:
+                    log.warning(
+                        "Model does not have vae.decoder attribute; VAE tiling not configured"
+                    )
+            elif low_memory:
+                log.warning(
+                    "Model does not have vae attribute; VAE tiling not configured"
+                )
+        except Exception as e:
+            log.warning(f"Failed to configure VAE tiling: {e}")
+
+    def _prepare_config_kwargs(
+        self,
+        config_kwargs: dict[str, Any],
+    ) -> dict[str, Any]:
+        """
+        Prepare config kwargs by adding model_config if available.
+
+        This helper reduces code duplication across different MFlux node types.
+
+        Args:
+            config_kwargs: Base configuration kwargs
+
+        Returns:
+            Updated config kwargs with model_config if available
+        """
+        # Get model_config from the flux model if available
+        if self._flux_model is not None and hasattr(self._flux_model, "model_config"):
+            config_kwargs["model_config"] = self._flux_model.model_config
+        return config_kwargs
+
 
 class MFlux(BaseMFluxNode):
     """
@@ -158,6 +298,14 @@ class MFlux(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave as 0 for random.",
     )
+    low_memory: bool = Field(
+        default=False,
+        description="Enable low-memory mode using VAE tiling. Slower, but safer on low-RAM Macs.",
+    )
+    vae_tiling_split: Literal["horizontal", "vertical"] = Field(
+        default="horizontal",
+        description="VAE tiling direction used during decode (if low-memory is enabled).",
+    )
 
     _flux_model: Any | None = None
 
@@ -206,7 +354,25 @@ class MFlux(BaseMFluxNode):
         )
         self._ensure_seed()
 
+        # Perform memory safety check before generation
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        self._check_memory_safety(
+            width=self.width,
+            height=self.height,
+            steps=self.steps,
+            quantize_bits=quantize_value,
+            low_memory=self.low_memory,
+            model_type="flux",
+        )
+
         assert self._flux_model is not None
+
+        # Configure VAE tiling if low-memory mode is enabled
+        self._configure_vae_tiling(
+            flux_model=self._flux_model,
+            low_memory=self.low_memory,
+            vae_tiling_split=self.vae_tiling_split,
+        )
 
         loop = asyncio.get_running_loop()
         total_steps = self.steps
@@ -214,7 +380,7 @@ class MFlux(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
+            from mflux.models.common.config.config import Config
             from mflux.generate import Flux1
 
             config_kwargs: dict[str, Any] = {
@@ -225,12 +391,8 @@ class MFlux(BaseMFluxNode):
             if self.guidance is not None:
                 config_kwargs["guidance"] = self.guidance
 
-            dataclass_fields = getattr(Config, "__dataclass_fields__", None)
-            if isinstance(dataclass_fields, dict):
-                allowed = set(dataclass_fields.keys())
-                config_kwargs = {
-                    key: value for key, value in config_kwargs.items() if key in allowed
-                }
+            # Add model_config if available
+            config_kwargs = self._prepare_config_kwargs(config_kwargs)
 
             config = Config(**config_kwargs)
 

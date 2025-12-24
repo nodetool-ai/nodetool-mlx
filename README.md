@@ -70,6 +70,49 @@ from nodetool.dsl.mlx import ImageGeneration
 node = ImageGeneration(prompt="A retrofuturistic skyline at dusk", steps=6)
 ```
 
+### Memory Safety and Low-Memory Mode
+
+All MFlux image generation nodes include built-in memory safety features to prevent macOS system freezes from unified memory exhaustion:
+
+#### Low-Memory Mode (VAE Tiling)
+
+Enable VAE tiling to reduce peak memory usage by approximately 4x at the cost of potential seams in the output:
+
+```python
+node = ImageGeneration(
+    prompt="A vivid concept art piece",
+    width=2048,
+    height=2048,
+    low_memory=True,           # Enable VAE tiling
+    vae_tiling_split="horizontal"  # or "vertical"
+)
+```
+
+**When to use low-memory mode:**
+- Generating high-resolution images (>1536x1536) on 8-16GB RAM Macs
+- Running multiple models simultaneously
+- When you encounter memory warnings or system slowdowns
+
+#### Automatic Memory Preflight Checks
+
+Before each generation, the nodes perform a conservative memory check:
+- Estimates memory needed based on resolution, steps, and quantization
+- Requires at least 10% system memory headroom
+- Fails fast with detailed error messages if insufficient memory
+
+**Error messages include:**
+- Current memory availability
+- Estimated job memory usage
+- Specific suggestions (enable low-memory mode, reduce resolution, etc.)
+
+#### Memory Best Practices
+
+1. **Start with quantized 4-bit models** – they use ~70% less memory than fp16
+2. **Enable low-memory mode for large resolutions** – 2048x2048 or higher
+3. **Monitor system memory** – keep Activity Monitor open during first runs
+4. **Close other applications** – especially browsers and IDEs during generation
+5. **Prefer schnell models** – they require fewer steps and less memory than dev models
+
 ## Development
 
 Run tests and lint checks before submitting PRs:
