@@ -1,7 +1,7 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.6.2-rc.14",
+  "version": "0.6.2-rc.15",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
@@ -255,7 +255,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Control Image",
           "description": "Reference image used by ControlNet for conditioning."
@@ -491,7 +492,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Image",
           "description": "Optional reference image used for depth extraction or as a content guide."
@@ -505,7 +507,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Depth Image",
           "description": "Optional depth map to guide geometry. If omitted, depth is inferred from the image when provided."
@@ -668,7 +671,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Image",
           "description": "Base image that will be transformed."
@@ -884,7 +888,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Image",
           "description": "Base image that will stay fixed outside the masked regions."
@@ -898,7 +903,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Mask",
           "description": "Mask image: white areas will be regenerated, black areas remain untouched."
@@ -1060,7 +1066,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Reference Image",
           "description": "Reference image that will guide the Kontext generation."
@@ -1224,7 +1231,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Image",
           "description": "Base image that will remain visible inside the padded region."
@@ -1238,7 +1246,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Mask",
           "description": "Mask defining areas to regenerate (white) after padding. If blank, generated automatically."
@@ -1411,7 +1420,8 @@
             "type": "image",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Redux Image",
           "description": "Reference image that will guide the generation."
@@ -3191,7 +3201,8 @@
             "type": "audio",
             "uri": "",
             "asset_id": null,
-            "data": null
+            "data": null,
+            "metadata": null
           },
           "title": "Audio Input",
           "description": "The input audio to transcribe."
