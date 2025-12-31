@@ -2063,6 +2063,7 @@ class MFluxInContext(BaseMFluxNode):
         working_image = pil_img.convert("RGB")
 
         # Resize to match output dimensions if needed
+        # Dimensions must be aligned to 16 pixels for the latent space operations
         target_width = 16 * (self.width // 16)
         target_height = 16 * (self.height // 16)
         if working_image.size != (target_width, target_height):
@@ -2090,8 +2091,10 @@ class MFluxInContext(BaseMFluxNode):
                 guidance=self.guidance,
                 image_path=str(temp_path),
             )
-            # The In-Context model generates side-by-side images
-            # We need to crop to get only the right half (generated image)
+            # The In-Context model generates a side-by-side diptych image:
+            # - Left half: Reference image with noise applied (preserved context)
+            # - Right half: Generated image following the style of the reference
+            # We crop to return only the right half (the newly generated image)
             full_image = generated_image.image
             output_width = full_image.width // 2
             cropped = full_image.crop((output_width, 0, full_image.width, full_image.height))
