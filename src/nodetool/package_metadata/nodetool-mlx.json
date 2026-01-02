@@ -1,7 +1,7 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.6.2-rc.17",
+  "version": "0.6.2-rc.18",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
@@ -158,7 +158,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 52,
+          "downloads": 87,
           "likes": 2
         },
         {
@@ -180,7 +180,7 @@
           ],
           "has_model_index": false,
           "downloads": 0,
-          "likes": 5
+          "likes": 6
         },
         {
           "id": "akx/FLUX.1-Kontext-dev-mflux-4bit",
@@ -197,14 +197,14 @@
           ],
           "has_model_index": false,
           "downloads": 0,
-          "likes": 2
+          "likes": 3
         },
         {
           "id": "filipstrand/Qwen-Image-mflux-6bit",
           "type": "hf.flux",
           "name": "filipstrand/Qwen-Image-mflux-6bit",
           "repo_id": "filipstrand/Qwen-Image-mflux-6bit",
-          "size_on_disk": 23053343916,
+          "size_on_disk": 23053344386,
           "pipeline_tag": "text-to-image",
           "tags": [
             "text-to-image",
@@ -216,7 +216,7 @@
           ],
           "has_model_index": false,
           "downloads": 0,
-          "likes": 3
+          "likes": 4
         }
       ],
       "basic_fields": [
@@ -404,7 +404,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 52,
+          "downloads": 87,
           "likes": 2
         },
         {
@@ -449,8 +449,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 13456,
-          "likes": 852
+          "downloads": 4473,
+          "likes": 853
         }
       ],
       "basic_fields": [
@@ -629,8 +629,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 5283,
-          "likes": 229
+          "downloads": 3411,
+          "likes": 230
         }
       ],
       "basic_fields": [
@@ -804,7 +804,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 52,
+          "downloads": 87,
           "likes": 2
         },
         {
@@ -847,7 +847,7 @@
           ],
           "has_model_index": false,
           "downloads": 0,
-          "likes": 5
+          "likes": 6
         }
       ],
       "basic_fields": [
@@ -858,6 +858,215 @@
         "steps",
         "guidance",
         "image_strength",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux In-Context",
+      "description": "Generate style-consistent images using In-Context LoRA via MFLUX.\n    mlx, flux, in-context, style-transfer, apple-silicon\n\n    Use cases:\n    - Generate images following a specific style from a reference image\n    - Apply various pre-defined style LoRAs (illustration, portrait, storyboard, etc.)\n    - Create consistent visual identity across multiple generations",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxInContext",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A portrait in the same style",
+          "title": "Prompt",
+          "description": "Text prompt describing the image to generate. Should describe both reference and target."
+        },
+        {
+          "name": "reference_image",
+          "type": {
+            "type": "image"
+          },
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Reference Image",
+          "description": "Reference image that provides the style context."
+        },
+        {
+          "name": "style",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              "couple",
+              "storyboard",
+              "font",
+              "home",
+              "illustration",
+              "portrait",
+              "ppt",
+              "sandstorm",
+              "sparklers",
+              "identity"
+            ],
+            "type_name": "nodetool.nodes.mlx.image_to_image.InContextLoRAStyle"
+          },
+          "default": null,
+          "title": "Style",
+          "description": "Optional pre-defined style LoRA to apply."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.flux"
+          },
+          "default": {
+            "type": "hf.flux",
+            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Base Flux dev model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Quantization level for model weights."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "float"
+          },
+          "default": 4.0,
+          "title": "Guidance",
+          "description": "Guidance scale for the generation.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "type": "hf.flux",
+          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "size_on_disk": 9621508754,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "flux-rectified-flow",
+            "text-to-image",
+            "diffusion",
+            "mflux",
+            "development",
+            "en",
+            "dataset:custom",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 87,
+          "likes": 2
+        },
+        {
+          "id": "black-forest-labs/FLUX.1-dev",
+          "type": "hf.flux",
+          "name": "black-forest-labs/FLUX.1-dev",
+          "repo_id": "black-forest-labs/FLUX.1-dev",
+          "size_on_disk": 57885946690,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "image-generation",
+            "flux",
+            "en",
+            "license:other",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 970417,
+          "likes": 11997
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "reference_image",
+        "style",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
         "height",
         "width",
         "seed"
@@ -1024,8 +1233,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 178454,
-          "likes": 962
+          "downloads": 136475,
+          "likes": 976
         }
       ],
       "basic_fields": [
@@ -1190,8 +1399,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 328544,
-          "likes": 2448
+          "downloads": 276234,
+          "likes": 2492
         }
       ],
       "basic_fields": [
@@ -1377,8 +1586,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 178454,
-          "likes": 962
+          "downloads": 136475,
+          "likes": 976
         }
       ],
       "basic_fields": [
@@ -1390,6 +1599,356 @@
         "steps",
         "guidance",
         "padding",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Qwen Image",
+      "description": "Generate images using the Qwen Image model via MFLUX on Apple Silicon.\n    mlx, qwen, text-to-image, apple-silicon\n\n    Use cases:\n    - Generate high-quality images with multilingual prompt support including Chinese\n    - Create images with rendered Chinese text content (signs, calligraphy, menus)\n    - Leverage Qwen's 20B parameter vision-language model for detailed generation",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxQwenImage",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A beautiful landscape with mountains",
+          "title": "Prompt",
+          "description": "Text prompt describing the image to generate. Supports multilingual prompts including Chinese."
+        },
+        {
+          "name": "negative_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Negative Prompt",
+          "description": "Negative prompt describing what to avoid in the generation."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "filipstrand/Qwen-Image-mflux-6bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Qwen Image model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 6,
+          "title": "Quantize",
+          "description": "Quantization level for model weights. 6-bit recommended for Qwen."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps for the generation.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "float"
+          },
+          "default": 3.5,
+          "title": "Guidance",
+          "description": "Guidance scale for the generation.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "filipstrand/Qwen-Image-mflux-6bit",
+          "type": "hf.model",
+          "name": "filipstrand/Qwen-Image-mflux-6bit",
+          "repo_id": "filipstrand/Qwen-Image-mflux-6bit",
+          "size_on_disk": 23053344386,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "text-to-image",
+            "mflux",
+            "qwen",
+            "quantized",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 4
+        },
+        {
+          "id": "Qwen/Qwen-Image",
+          "type": "hf.model",
+          "name": "Qwen/Qwen-Image",
+          "repo_id": "Qwen/Qwen-Image",
+          "size_on_disk": 57704594653,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "en",
+            "zh",
+            "arxiv:2508.02324",
+            "license:apache-2.0",
+            "diffusers:QwenImagePipeline",
+            "deploy:azure",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 295834,
+          "likes": 2275
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "negative_prompt",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Qwen Image Edit",
+      "description": "Edit images using natural language instructions with the Qwen Image Edit model.\n    mlx, qwen, image-editing, apple-silicon\n\n    Use cases:\n    - Modify images using natural language descriptions\n    - Combine elements from multiple reference images\n    - Apply transformations while maintaining original poses and positions",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxQwenImageEdit",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Make the sky more dramatic",
+          "title": "Prompt",
+          "description": "Text instruction describing the desired edit."
+        },
+        {
+          "name": "negative_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Negative Prompt",
+          "description": "Negative prompt describing what to avoid."
+        },
+        {
+          "name": "images",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "image"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Images",
+          "description": "Reference images for the edit. The last image dimensions determine output size.",
+          "required": true
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "Qwen/Qwen-Image-Edit-2509",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Qwen Image Edit model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 8,
+          "title": "Quantize",
+          "description": "Quantization level. 8-bit recommended for editing quality."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 30,
+          "title": "Steps",
+          "description": "Number of denoising steps.",
+          "min": 1.0,
+          "max": 50.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "float"
+          },
+          "default": 2.5,
+          "title": "Guidance",
+          "description": "Guidance scale. 2.5 works well for Qwen Edit.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int",
+            "optional": true
+          },
+          "default": null,
+          "title": "Height",
+          "description": "Optional output height. If not set, computed from input images.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int",
+            "optional": true
+          },
+          "default": null,
+          "title": "Width",
+          "description": "Optional output width. If not set, computed from input images.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "Qwen/Qwen-Image-Edit-2509",
+          "type": "hf.model",
+          "name": "Qwen/Qwen-Image-Edit-2509",
+          "repo_id": "Qwen/Qwen-Image-Edit-2509",
+          "size_on_disk": 57720466551,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-to-image",
+            "en",
+            "zh",
+            "arxiv:2508.02324",
+            "license:apache-2.0",
+            "diffusers:QwenImageEditPlusPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 554536,
+          "likes": 1027
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "negative_prompt",
+        "images",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
         "height",
         "width",
         "seed"
@@ -1568,6 +2127,288 @@
         "height",
         "width",
         "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux SeedVR2 Upscale",
+      "description": "Upscale images using the SeedVR2 super-resolution model via MFLUX.\n    mlx, seedvr2, upscaling, super-resolution, apple-silicon\n\n    Use cases:\n    - Fast and faithful image upscaling (typically 1 step)\n    - High-fidelity super-resolution without text prompts\n    - Upscale by target resolution or scale factor",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxSeedVR2Upscale",
+      "properties": [
+        {
+          "name": "image",
+          "type": {
+            "type": "image"
+          },
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Image",
+          "description": "Image to upscale."
+        },
+        {
+          "name": "resolution",
+          "type": {
+            "type": "int"
+          },
+          "default": 1800,
+          "title": "Resolution",
+          "description": "Target resolution for the shortest edge in pixels.",
+          "min": 256.0,
+          "max": 4096.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "numz/SeedVR2-3B",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "SeedVR2 model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 8,
+          "title": "Quantize",
+          "description": "Quantization level (4 or 8 bit supported)."
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "numz/SeedVR2-3B",
+          "type": "hf.model",
+          "name": "numz/SeedVR2-3B",
+          "repo_id": "numz/SeedVR2-3B"
+        }
+      ],
+      "basic_fields": [
+        "image",
+        "resolution",
+        "model",
+        "quantize",
+        "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Z-Image Turbo",
+      "description": "Generate images quickly using the Z-Image Turbo model via MFLUX.\n    mlx, z-image, text-to-image, fast-generation, apple-silicon\n\n    Use cases:\n    - Fast image generation (typically 9 steps)\n    - Efficient 6B parameter model for quick iterations\n    - Support for LoRA adapters for style customization",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxZImageTurbo",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A beautiful sunset over mountains",
+          "title": "Prompt",
+          "description": "Text prompt describing the image to generate."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "filipstrand/Z-Image-Turbo-mflux-4bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Z-Image Turbo model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Quantization level for model weights."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 9,
+          "title": "Steps",
+          "description": "Number of denoising steps. Z-Image Turbo works best with 9 steps.",
+          "min": 1.0,
+          "max": 20.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "lora_path",
+          "type": {
+            "type": "str",
+            "optional": true
+          },
+          "default": null,
+          "title": "Lora Path",
+          "description": "Optional path or HuggingFace repo ID for a LoRA adapter."
+        },
+        {
+          "name": "lora_scale",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Lora Scale",
+          "description": "Scale factor for the LoRA adapter.",
+          "min": 0.0,
+          "max": 2.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "filipstrand/Z-Image-Turbo-mflux-4bit",
+          "type": "hf.model",
+          "name": "filipstrand/Z-Image-Turbo-mflux-4bit",
+          "repo_id": "filipstrand/Z-Image-Turbo-mflux-4bit",
+          "size_on_disk": 5911138787,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "safetensors",
+            "text-to-image",
+            "mflux",
+            "z-image",
+            "z-image-turbo",
+            "quantized",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 13
+        },
+        {
+          "id": "Tongyi-MAI/Z-Image-Turbo",
+          "type": "hf.model",
+          "name": "Tongyi-MAI/Z-Image-Turbo",
+          "repo_id": "Tongyi-MAI/Z-Image-Turbo",
+          "size_on_disk": 32899667995,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "en",
+            "arxiv:2511.22699",
+            "arxiv:2511.22677",
+            "arxiv:2511.13649",
+            "license:apache-2.0",
+            "diffusers:ZImagePipeline",
+            "deploy:azure",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 371214,
+          "likes": 3574
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "model",
+        "quantize",
+        "steps",
+        "height",
+        "width",
+        "seed",
+        "lora_path",
+        "lora_scale"
       ],
       "expose_as_tool": true
     },
@@ -1791,7 +2632,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 213,
+          "downloads": 214,
           "likes": 5
         },
         {
@@ -1811,7 +2652,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 31,
+          "downloads": 32,
           "likes": 2
         },
         {
@@ -1831,7 +2672,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 64,
+          "downloads": 86,
           "likes": 6
         }
       ],
@@ -1931,8 +2772,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 146,
-          "likes": 21
+          "downloads": 202,
+          "likes": 24
         },
         {
           "id": "mlx-community/csm-1b-8bit",
@@ -2088,7 +2929,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 78,
+          "downloads": 93,
           "likes": 4
         },
         {
@@ -2302,14 +3143,13 @@
             "base_model:google/gemma-3-1b-it",
             "base_model:quantized:google/gemma-3-1b-it",
             "license:gemma",
-            "autotrain_compatible",
             "text-generation-inference",
             "endpoints_compatible",
             "8-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 484,
+          "downloads": 468,
           "likes": 3
         },
         {
@@ -2335,7 +3175,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1000,
+          "downloads": 864,
           "likes": 7
         },
         {
@@ -2361,7 +3201,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 589,
+          "downloads": 8402,
           "likes": 6
         },
         {
@@ -2387,7 +3227,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 205,
+          "downloads": 439,
           "likes": 6
         },
         {
@@ -2413,7 +3253,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 245,
+          "downloads": 230,
           "likes": 2
         },
         {
@@ -2439,8 +3279,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 499,
-          "likes": 10
+          "downloads": 397,
+          "likes": 11
         },
         {
           "id": "mlx-community/gemma-3-27b-it-8bit",
@@ -2465,7 +3305,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 208,
+          "downloads": 372,
           "likes": 7
         },
         {
@@ -2490,7 +3330,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 169,
+          "downloads": 83,
           "likes": 2
         },
         {
@@ -2515,7 +3355,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 214,
+          "downloads": 57,
           "likes": 2
         },
         {
@@ -2540,7 +3380,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10,
+          "downloads": 8,
           "likes": 0
         },
         {
@@ -2565,7 +3405,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 309,
+          "downloads": 26,
           "likes": 0
         },
         {
@@ -2590,7 +3430,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 46,
+          "downloads": 15,
           "likes": 0
         },
         {
@@ -2626,7 +3466,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 33,
+          "downloads": 10,
           "likes": 0
         },
         {
@@ -2651,7 +3491,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 51,
+          "downloads": 18,
           "likes": 0
         },
         {
@@ -2676,7 +3516,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 46,
+          "downloads": 13,
           "likes": 0
         },
         {
@@ -2699,8 +3539,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5181,
-          "likes": 6
+          "downloads": 13816,
+          "likes": 8
         },
         {
           "id": "mlx-community/Qwen3-0.6B-8bit",
@@ -2722,8 +3562,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 485,
-          "likes": 5
+          "downloads": 5618,
+          "likes": 6
         },
         {
           "id": "mlx-community/Qwen3-1.7B-4bit",
@@ -2745,7 +3585,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 7764,
+          "downloads": 10972,
           "likes": 4
         },
         {
@@ -2768,8 +3608,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 66,
-          "likes": 0
+          "downloads": 998,
+          "likes": 1
         },
         {
           "id": "mlx-community/Qwen3-4B-4bit",
@@ -2791,8 +3631,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 7053,
-          "likes": 9
+          "downloads": 8653,
+          "likes": 10
         },
         {
           "id": "mlx-community/Qwen3-4B-8bit",
@@ -2814,7 +3654,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 511,
+          "downloads": 418,
           "likes": 1
         },
         {
@@ -2837,7 +3677,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1805,
+          "downloads": 2793,
           "likes": 6
         },
         {
@@ -2860,7 +3700,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 473,
+          "downloads": 385,
           "likes": 4
         },
         {
@@ -2883,8 +3723,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 608,
-          "likes": 12
+          "downloads": 5519,
+          "likes": 13
         },
         {
           "id": "mlx-community/Qwen3-30B-A3B-8bit",
@@ -2906,7 +3746,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 116,
+          "downloads": 5027,
           "likes": 8
         },
         {
@@ -2941,7 +3781,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 75,
+          "downloads": 95,
           "likes": 1
         },
         {
@@ -2977,8 +3817,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 725,
-          "likes": 3
+          "downloads": 720,
+          "likes": 4
         },
         {
           "id": "mlx-community/LFM2-8B-A1B-5bit",
@@ -3013,7 +3853,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 31,
+          "downloads": 7,
           "likes": 0
         },
         {
@@ -3048,7 +3888,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 26,
+          "downloads": 57,
           "likes": 0
         },
         {
@@ -3084,8 +3924,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 171,
-          "likes": 4
+          "downloads": 169,
+          "likes": 5
         },
         {
           "id": "mlx-community/LFM2-8B-A1B-fp16",
@@ -3119,7 +3959,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 47,
+          "downloads": 35,
           "likes": 2
         },
         {
@@ -3155,7 +3995,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 39,
+          "downloads": 19,
           "likes": 1
         }
       ],
@@ -3343,7 +4183,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 126692,
+          "downloads": 2027,
           "likes": 3
         },
         {
@@ -3358,7 +4198,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 57,
+          "downloads": 59,
           "likes": 0
         },
         {
@@ -3373,7 +4213,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1700,
+          "downloads": 1150,
           "likes": 3
         },
         {
@@ -3388,7 +4228,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 54,
+          "downloads": 79,
           "likes": 1
         },
         {
@@ -3404,8 +4244,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2309,
-          "likes": 64
+          "downloads": 474657,
+          "likes": 66
         }
       ],
       "basic_fields": [
