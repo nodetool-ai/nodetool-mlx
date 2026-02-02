@@ -44,8 +44,6 @@ jobs:
       - name: Run integration tests
         run: |
           pytest tests/integration/ -v --tb=short --junit-xml=pytest-report.xml
-        env:
-          PYTHONPATH: ${{ github.workspace }}/src
       
       - name: Generate test summary
         if: always()

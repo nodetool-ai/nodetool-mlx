@@ -11,7 +11,7 @@ import sys
 
 def test_python_version():
     """Verify Python version meets requirements."""
-    assert sys.version_info >= (3, 10), "Python 3.10+ is required"
+    assert sys.version_info >= (3, 10, 13), "Python 3.10.13+ is required"
 
 
 def test_mlx_available():
