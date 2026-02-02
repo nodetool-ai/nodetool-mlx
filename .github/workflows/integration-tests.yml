@@ -43,9 +43,23 @@ jobs:
       
       - name: Run integration tests
         run: |
-          pytest tests/integration/ -v --tb=short
+          pytest tests/integration/ -v --tb=short --junit-xml=pytest-report.xml
         env:
           PYTHONPATH: ${{ github.workspace }}/src
+      
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## Integration Test Results :test_tube:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f pytest-report.xml ]; then
+            echo "Tests completed. Check artifacts for detailed results." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Test report not generated." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Platform: macOS 14 (Apple Silicon)" >> $GITHUB_STEP_SUMMARY
+          echo "Python: 3.11" >> $GITHUB_STEP_SUMMARY
       
       - name: Upload test results
         if: always()
@@ -54,5 +68,4 @@ jobs:
           name: test-results-macos
           path: |
             pytest-report.xml
-            .coverage
           retention-days: 30
