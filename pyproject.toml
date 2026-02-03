@@ -37,8 +37,7 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nodetool"]
-artifacts = [
-    "src/nodetool/package_metadata/nodetool-mlx.json",
-    "package_metadata/nodetool-mlx.json",
-    "assets/nodetool-mlx/Movie Posters MLX.jpg",
+include = [
+    "src/nodetool/package_metadata/*.json",
+    "src/nodetool/assets/**/*.jpg",
 ]
