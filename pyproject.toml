@@ -18,6 +18,8 @@ dependencies = [
     "numpy>=1.26",
     "mlx-lm>=0.17.0",
     "mlx-vlm>=0.1.0",
+    # Pin numba to Python 3.11+ compatible version to override mlx-whisper's old dependency
+    "numba>=0.62.1",
 ]
 
 [project.optional-dependencies]
