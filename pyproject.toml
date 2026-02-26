@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nodetool-mlx"
-version = "0.6.3-rc.28"
+version = "0.6.3-rc.29"
 description = "Apple Silicon MLX nodes for Nodetool"
 readme = "README.md"
 authors = [{ name = "Matthias Georgi", email = "matti.georgi@gmail.com" }]
 requires-python = ">=3.11"
 dependencies = [
-    "nodetool-core==0.6.3-rc.28",
+    "nodetool-core==0.6.3-rc.29",
     "mlx-whisper>=0.4.3",
     "mlx-audio>=0.2.5",
     "mflux>=0.11.1",
@@ -24,7 +24,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # For exact version pinning in production
-stable = ["nodetool-core==0.6.3-rc.28"]
+stable = ["nodetool-core==0.6.3-rc.29"]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.5",
