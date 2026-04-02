@@ -60,7 +60,7 @@ import mlx_audio.tts.generate
 # This allows the MLX provider to be registered even if mflux isn't installed
 
 from nodetool.providers.base import BaseProvider, register_provider
-from nodetool.agents.tools.base import Tool
+from nodetool.metadata.tool_types import Tool
 from nodetool.config.environment import Environment
 from nodetool.config.logging_config import get_logger
 from nodetool.ml.core.model_manager import ModelManager
@@ -314,8 +314,9 @@ class MLXProvider(BaseProvider):
         temperature: float = 0.0,
         timeout_s: int | None = None,
         context: Any = None,
+        word_timestamps: bool = False,
         **kwargs: Any,
-    ) -> str:
+    ) -> str | dict:
         """Transcribe audio to text using MLX Whisper checkpoints."""
         _ = context  # Context not currently used but kept for interface compatibility.
         if sys.platform != "darwin":
@@ -362,7 +363,7 @@ class MLXProvider(BaseProvider):
                 "condition_on_previous_text": kwargs.get(
                     "condition_on_previous_text", True
                 ),
-                "word_timestamps": kwargs.get("word_timestamps", False),
+                "word_timestamps": kwargs.get("word_timestamps", word_timestamps),
                 "temperature": kwargs.get("temperature", temperature),
             }
 
@@ -408,7 +409,29 @@ class MLXProvider(BaseProvider):
             text = "" if result is None else str(result)
 
         log.debug("MLX Whisper transcription complete", extra={"length": len(text)})
-        return text
+
+        if not word_timestamps:
+            return text
+
+        # Extract chunks from mlx_whisper segments
+        chunks = []
+        if isinstance(result, dict):
+            for segment in result.get("segments", []):
+                # If word_timestamps was set, segments contain a "words" list
+                words = segment.get("words", [])
+                if words:
+                    for w in words:
+                        chunks.append({
+                            "timestamp": [w.get("start", 0), w.get("end", 0)],
+                            "text": w.get("word", ""),
+                        })
+                else:
+                    chunks.append({
+                        "timestamp": [segment.get("start", 0), segment.get("end", 0)],
+                        "text": segment.get("text", ""),
+                    })
+
+        return {"text": text, "chunks": chunks}
 
     async def get_available_tts_models(self) -> List[TTSModel]:
         """
