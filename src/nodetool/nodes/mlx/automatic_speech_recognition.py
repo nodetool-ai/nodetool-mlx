@@ -95,10 +95,11 @@ class Whisper(BaseNode):
         segments: list
 
     async def preload_model(self, context: ProcessingContext):
-        from huggingface_hub import try_to_load_from_cache
+        from huggingface_hub import scan_cache_dir
 
-        local_path = try_to_load_from_cache(self.model.value, "config.json")
-        if not local_path:
+        cache = scan_cache_dir()
+        found = any(r.repo_id == self.model.value for r in cache.repos)
+        if not found:
             raise ValueError(
                 f"Model {self.model.value} must be downloaded first, check recommended models"
             )
