@@ -1,7 +1,7 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.6.2-rc.19",
+  "version": "0.6.3-rc.47",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
@@ -29,7 +29,7 @@
           },
           "default": {
             "type": "hf.flux",
-            "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+            "repo_id": "black-forest-labs/FLUX.1-schnell",
             "path": null,
             "variant": null,
             "allow_patterns": null,
@@ -119,104 +119,76 @@
       ],
       "recommended_models": [
         {
-          "id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+          "id": "black-forest-labs/FLUX.1-schnell",
           "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "size_on_disk": 9615583654,
+          "name": "black-forest-labs/FLUX.1-schnell",
+          "repo_id": "black-forest-labs/FLUX.1-schnell",
+          "size_on_disk": 57845410538,
           "pipeline_tag": "text-to-image",
           "tags": [
-            "flux-rectified-flow",
+            "diffusers",
+            "safetensors",
             "text-to-image",
-            "diffusion",
-            "mflux",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 25,
-          "likes": 1
-        },
-        {
-          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "size_on_disk": 9621508754,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "flux-rectified-flow",
-            "text-to-image",
-            "diffusion",
-            "mflux",
-            "development",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 87,
-          "likes": 2
-        },
-        {
-          "id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "repo_id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "size_on_disk": 9614920957,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "mflux",
+            "image-generation",
             "flux",
-            "krea-dev",
-            "text-to-image",
-            "base_model:black-forest-labs/FLUX.1-Krea-dev",
-            "base_model:finetune:black-forest-labs/FLUX.1-Krea-dev",
-            "license:other",
+            "en",
+            "license:apache-2.0",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
+            "deploy:azure",
             "region:us"
           ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 6
+          "has_model_index": true,
+          "downloads": 721321,
+          "likes": 4801
         },
         {
-          "id": "akx/FLUX.1-Kontext-dev-mflux-4bit",
+          "id": "black-forest-labs/FLUX.1-dev",
           "type": "hf.flux",
-          "name": "akx/FLUX.1-Kontext-dev-mflux-4bit",
-          "repo_id": "akx/FLUX.1-Kontext-dev-mflux-4bit",
-          "size_on_disk": 9614920180,
-          "tags": [
-            "mflux",
-            "base_model:black-forest-labs/FLUX.1-Kontext-dev",
-            "base_model:quantized:black-forest-labs/FLUX.1-Kontext-dev",
-            "license:other",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 3
-        },
-        {
-          "id": "filipstrand/Qwen-Image-mflux-6bit",
-          "type": "hf.flux",
-          "name": "filipstrand/Qwen-Image-mflux-6bit",
-          "repo_id": "filipstrand/Qwen-Image-mflux-6bit",
-          "size_on_disk": 23053344386,
+          "name": "black-forest-labs/FLUX.1-dev",
+          "repo_id": "black-forest-labs/FLUX.1-dev",
+          "size_on_disk": 57885946690,
           "pipeline_tag": "text-to-image",
           "tags": [
+            "diffusers",
+            "safetensors",
             "text-to-image",
-            "mflux",
-            "qwen",
-            "quantized",
+            "image-generation",
+            "flux",
+            "en",
             "license:other",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
             "region:us"
           ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 4
+          "has_model_index": true,
+          "downloads": 684555,
+          "likes": 12686
+        },
+        {
+          "id": "black-forest-labs/FLUX.1-Krea-dev",
+          "type": "hf.flux",
+          "name": "black-forest-labs/FLUX.1-Krea-dev",
+          "repo_id": "black-forest-labs/FLUX.1-Krea-dev",
+          "size_on_disk": 57897316067,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "image-generation",
+            "flux",
+            "en",
+            "base_model:black-forest-labs/FLUX.1-dev",
+            "base_model:finetune:black-forest-labs/FLUX.1-dev",
+            "license:other",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 15720,
+          "likes": 857
         }
       ],
       "basic_fields": [
@@ -268,7 +240,7 @@
           },
           "default": {
             "type": "hf.flux",
-            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+            "repo_id": "black-forest-labs/FLUX.1-dev",
             "path": null,
             "variant": null,
             "allow_patterns": null,
@@ -386,26 +358,27 @@
       ],
       "recommended_models": [
         {
-          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "id": "black-forest-labs/FLUX.1-dev",
           "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "size_on_disk": 9621508754,
+          "name": "black-forest-labs/FLUX.1-dev",
+          "repo_id": "black-forest-labs/FLUX.1-dev",
+          "size_on_disk": 57885946690,
           "pipeline_tag": "text-to-image",
           "tags": [
-            "flux-rectified-flow",
+            "diffusers",
+            "safetensors",
             "text-to-image",
-            "diffusion",
-            "mflux",
-            "development",
+            "image-generation",
+            "flux",
             "en",
-            "dataset:custom",
-            "license:apache-2.0",
+            "license:other",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
             "region:us"
           ],
-          "has_model_index": false,
-          "downloads": 87,
-          "likes": 2
+          "has_model_index": true,
+          "downloads": 684555,
+          "likes": 12686
         },
         {
           "id": "InstantX/FLUX.1-dev-Controlnet-Canny",
@@ -426,8 +399,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2703,
-          "likes": 192
+          "downloads": 2363,
+          "likes": 193
         },
         {
           "id": "jasperai/Flux.1-dev-Controlnet-Upscaler",
@@ -449,8 +422,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 4473,
-          "likes": 853
+          "downloads": 2840,
+          "likes": 865
         }
       ],
       "basic_fields": [
@@ -629,8 +602,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 3411,
-          "likes": 230
+          "downloads": 2102,
+          "likes": 233
         }
       ],
       "basic_fields": [
@@ -644,6 +617,915 @@
         "height",
         "width",
         "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux FIBO",
+      "description": "Generate images using Bria FIBO via MFLUX.\n    mlx, fibo, text-to-image, apple-silicon\n\n    Use cases:\n    - High-control image generation from structured JSON prompts\n    - Plain-text generation via FIBO's VLM prompt expansion\n    - Fast few-step generation with FIBO Lite",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxFIBO",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A tiny watercolor robot in a garden",
+          "title": "Prompt",
+          "description": "Prompt text or a structured JSON prompt string for FIBO."
+        },
+        {
+          "name": "negative_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Negative Prompt",
+          "description": "Negative prompt. Typically unnecessary for FIBO Lite."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "briaai/FIBO",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "FIBO model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Quantization level for model weights."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps. FIBO Lite typically uses 8; base FIBO uses more.",
+          "min": 1.0,
+          "max": 100.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "float"
+          },
+          "default": 4.0,
+          "title": "Guidance",
+          "description": "Guidance scale. FIBO Lite typically uses 1.0.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "lora_paths",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "str"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Lora Paths",
+          "description": "Optional LoRA adapter paths or HuggingFace repo IDs.",
+          "required": true
+        },
+        {
+          "name": "lora_scales",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "float"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Lora Scales",
+          "description": "Scale values for the LoRA adapters. Must align with lora_paths when provided.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "briaai/FIBO",
+          "type": "hf.model",
+          "name": "briaai/FIBO",
+          "repo_id": "briaai/FIBO",
+          "size_on_disk": 25614147549,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "art",
+            "text-to-image",
+            "en",
+            "arxiv:2511.06876",
+            "base_model:briaai/FIBO",
+            "base_model:finetune:briaai/FIBO",
+            "license:other",
+            "diffusers:BriaFiboPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 7439,
+          "likes": 311
+        },
+        {
+          "id": "briaai/Fibo-lite",
+          "type": "hf.model",
+          "name": "briaai/Fibo-lite",
+          "repo_id": "briaai/Fibo-lite",
+          "size_on_disk": 24163989797,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "lora",
+            "guidance-distillation",
+            "scfm",
+            "shortcutting-flow-matching",
+            "text-to-image",
+            "fast-inference",
+            "few-step",
+            "bria",
+            "fibo",
+            "en",
+            "arxiv:2511.06876",
+            "base_model:briaai/FIBO",
+            "base_model:adapter:briaai/FIBO",
+            "license:cc-by-nc-4.0",
+            "diffusers:BriaFiboPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 727,
+          "likes": 7
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "negative_prompt",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed",
+        "lora_paths",
+        "lora_scales"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux FIBO Edit",
+      "description": "Edit images using Bria FIBO Edit via MFLUX.\n    mlx, fibo, image-editing, apple-silicon\n\n    Use cases:\n    - Instruction-based image editing from plain text or structured JSON\n    - Mask-free and maskless localized edit workflows through FIBO Edit\n    - Background matting via the FIBO Edit RMBG variant",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxFIBOEdit",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "{\"edit_instruction\":\"Make the owl white instead of brown and add round glasses.\"}",
+          "title": "Prompt",
+          "description": "Edit instruction text or a structured JSON edit prompt string."
+        },
+        {
+          "name": "negative_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Negative Prompt",
+          "description": "Negative prompt describing what to avoid."
+        },
+        {
+          "name": "image",
+          "type": {
+            "type": "image"
+          },
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Image",
+          "description": "Image to edit."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "briaai/Fibo-Edit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "FIBO Edit model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Quantization level for model weights."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 20,
+          "title": "Steps",
+          "description": "Number of denoising steps.",
+          "min": 1.0,
+          "max": 100.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "float"
+          },
+          "default": 4.0,
+          "title": "Guidance",
+          "description": "Guidance scale. RMBG often uses 1.0.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "lora_paths",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "str"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Lora Paths",
+          "description": "Optional LoRA adapter paths or HuggingFace repo IDs.",
+          "required": true
+        },
+        {
+          "name": "lora_scales",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "float"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Lora Scales",
+          "description": "Scale values for the LoRA adapters. Must align with lora_paths when provided.",
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "briaai/Fibo-Edit",
+          "type": "hf.model",
+          "name": "briaai/Fibo-Edit",
+          "repo_id": "briaai/Fibo-Edit",
+          "size_on_disk": 24148809586,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "art",
+            "image-to-image",
+            "image-editing",
+            "inpainting",
+            "en",
+            "arxiv:2511.06876",
+            "base_model:briaai/Fibo-Edit",
+            "base_model:finetune:briaai/Fibo-Edit",
+            "license:other",
+            "diffusers:BriaFiboEditPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 2058,
+          "likes": 64
+        },
+        {
+          "id": "briaai/Fibo-Edit-RMBG",
+          "type": "hf.model",
+          "name": "briaai/Fibo-Edit-RMBG",
+          "repo_id": "briaai/Fibo-Edit-RMBG",
+          "size_on_disk": 90538294891,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "art",
+            "image-to-image",
+            "background-removal",
+            "image-segmentation",
+            "en",
+            "arxiv:2511.06876",
+            "base_model:briaai/Fibo-Edit",
+            "base_model:finetune:briaai/Fibo-Edit",
+            "license:other",
+            "diffusers:BriaFiboEditPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 151,
+          "likes": 42
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "negative_prompt",
+        "image",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed",
+        "lora_paths",
+        "lora_scales"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux FLUX.2",
+      "description": "Generate images using the FLUX.2 Klein models via MFLUX.\n    mlx, flux2, text-to-image, apple-silicon\n\n    Use cases:\n    - Fast FLUX.2 generation with distilled 4B/9B variants\n    - Higher-quality base FLUX.2 generation with more steps\n    - LoRA-enabled FLUX.2 generation on Apple Silicon",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxFlux2",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Photorealistic close-up of a hummingbird hovering near red flowers",
+          "title": "Prompt",
+          "description": "Text prompt describing the image to generate."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "black-forest-labs/FLUX.2-klein-4B",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "FLUX.2 Klein model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Quantization level for model weights."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 4,
+          "title": "Steps",
+          "description": "Number of denoising steps. Distilled FLUX.2 typically uses 4 steps; base variants use more.",
+          "min": 1.0,
+          "max": 100.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Guidance",
+          "description": "Guidance scale. Distilled FLUX.2 variants typically use 1.0.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "lora_path",
+          "type": {
+            "type": "str",
+            "optional": true
+          },
+          "default": null,
+          "title": "Lora Path",
+          "description": "Optional path or HuggingFace repo ID for a LoRA adapter."
+        },
+        {
+          "name": "lora_scale",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Lora Scale",
+          "description": "Scale factor for the LoRA adapter.",
+          "min": 0.0,
+          "max": 2.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "black-forest-labs/FLUX.2-klein-4B",
+          "type": "hf.model",
+          "name": "black-forest-labs/FLUX.2-klein-4B",
+          "repo_id": "black-forest-labs/FLUX.2-klein-4B",
+          "size_on_disk": 23740007447,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "image-editing",
+            "flux",
+            "diffusion-single-file",
+            "image-to-image",
+            "en",
+            "license:apache-2.0",
+            "diffusers:Flux2KleinPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 253413,
+          "likes": 629
+        },
+        {
+          "id": "black-forest-labs/FLUX.2-klein-9B",
+          "type": "hf.model",
+          "name": "black-forest-labs/FLUX.2-klein-9B",
+          "repo_id": "black-forest-labs/FLUX.2-klein-9B",
+          "size_on_disk": 52888736795,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-generation",
+            "image-editing",
+            "flux",
+            "diffusion-single-file",
+            "image-to-image",
+            "en",
+            "license:other",
+            "diffusers:Flux2KleinPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 131854,
+          "likes": 660
+        },
+        {
+          "id": "black-forest-labs/FLUX.2-klein-base-4B",
+          "type": "hf.model",
+          "name": "black-forest-labs/FLUX.2-klein-base-4B",
+          "repo_id": "black-forest-labs/FLUX.2-klein-base-4B",
+          "size_on_disk": 23740007506,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "image-editing",
+            "flux",
+            "diffusion-single-file",
+            "image-to-image",
+            "en",
+            "license:apache-2.0",
+            "diffusers:Flux2KleinPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 1478302,
+          "likes": 126
+        },
+        {
+          "id": "black-forest-labs/FLUX.2-klein-base-9B",
+          "type": "hf.model",
+          "name": "black-forest-labs/FLUX.2-klein-base-9B",
+          "repo_id": "black-forest-labs/FLUX.2-klein-base-9B",
+          "size_on_disk": 52888736752,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-generation",
+            "image-editing",
+            "flux",
+            "diffusion-single-file",
+            "image-to-image",
+            "en",
+            "license:other",
+            "diffusers:Flux2KleinPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 74921,
+          "likes": 210
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed",
+        "lora_path",
+        "lora_scale"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux FLUX.2 Edit",
+      "description": "Edit images using FLUX.2 Klein image-conditioned editing.\n    mlx, flux2, image-editing, apple-silicon\n\n    Use cases:\n    - Edit images with one or more reference images using FLUX.2\n    - Fast distilled FLUX.2 editing on Apple Silicon\n    - LoRA-enabled FLUX.2 edit workflows",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxFlux2Edit",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Make the subject wear eyeglasses",
+          "title": "Prompt",
+          "description": "Text instruction describing the desired edit."
+        },
+        {
+          "name": "images",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "image"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Images",
+          "description": "Reference images for the edit. One or more images may be provided.",
+          "required": true
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "black-forest-labs/FLUX.2-klein-4B",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "FLUX.2 Klein model to load for editing."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Quantization level for model weights."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 4,
+          "title": "Steps",
+          "description": "Number of denoising steps.",
+          "min": 1.0,
+          "max": 100.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Guidance",
+          "description": "Guidance scale for the edit generation.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "lora_path",
+          "type": {
+            "type": "str",
+            "optional": true
+          },
+          "default": null,
+          "title": "Lora Path",
+          "description": "Optional path or HuggingFace repo ID for a LoRA adapter."
+        },
+        {
+          "name": "lora_scale",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Lora Scale",
+          "description": "Scale factor for the LoRA adapter.",
+          "min": 0.0,
+          "max": 2.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "black-forest-labs/FLUX.2-klein-4B",
+          "type": "hf.model",
+          "name": "black-forest-labs/FLUX.2-klein-4B",
+          "repo_id": "black-forest-labs/FLUX.2-klein-4B",
+          "size_on_disk": 23740007447,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "image-editing",
+            "flux",
+            "diffusion-single-file",
+            "image-to-image",
+            "en",
+            "license:apache-2.0",
+            "diffusers:Flux2KleinPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 253413,
+          "likes": 629
+        },
+        {
+          "id": "black-forest-labs/FLUX.2-klein-9B",
+          "type": "hf.model",
+          "name": "black-forest-labs/FLUX.2-klein-9B",
+          "repo_id": "black-forest-labs/FLUX.2-klein-9B",
+          "size_on_disk": 52888736795,
+          "pipeline_tag": "image-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "image-generation",
+            "image-editing",
+            "flux",
+            "diffusion-single-file",
+            "image-to-image",
+            "en",
+            "license:other",
+            "diffusers:Flux2KleinPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 131854,
+          "likes": 660
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "images",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed",
+        "lora_path",
+        "lora_scale"
       ],
       "expose_as_tool": true
     },
@@ -684,7 +1566,7 @@
           },
           "default": {
             "type": "hf.flux",
-            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+            "repo_id": "black-forest-labs/FLUX.1-dev",
             "path": null,
             "variant": null,
             "allow_patterns": null,
@@ -786,68 +1668,76 @@
       ],
       "recommended_models": [
         {
-          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+          "id": "black-forest-labs/FLUX.1-dev",
           "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "size_on_disk": 9621508754,
+          "name": "black-forest-labs/FLUX.1-dev",
+          "repo_id": "black-forest-labs/FLUX.1-dev",
+          "size_on_disk": 57885946690,
           "pipeline_tag": "text-to-image",
           "tags": [
-            "flux-rectified-flow",
+            "diffusers",
+            "safetensors",
             "text-to-image",
-            "diffusion",
-            "mflux",
-            "development",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 87,
-          "likes": 2
-        },
-        {
-          "id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "repo_id": "dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
-          "size_on_disk": 9615583654,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "flux-rectified-flow",
-            "text-to-image",
-            "diffusion",
-            "mflux",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 25,
-          "likes": 1
-        },
-        {
-          "id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "repo_id": "filipstrand/FLUX.1-Krea-dev-mflux-4bit",
-          "size_on_disk": 9614920957,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "mflux",
+            "image-generation",
             "flux",
-            "krea-dev",
-            "text-to-image",
-            "base_model:black-forest-labs/FLUX.1-Krea-dev",
-            "base_model:finetune:black-forest-labs/FLUX.1-Krea-dev",
+            "en",
             "license:other",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
             "region:us"
           ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 6
+          "has_model_index": true,
+          "downloads": 684555,
+          "likes": 12686
+        },
+        {
+          "id": "black-forest-labs/FLUX.1-schnell",
+          "type": "hf.flux",
+          "name": "black-forest-labs/FLUX.1-schnell",
+          "repo_id": "black-forest-labs/FLUX.1-schnell",
+          "size_on_disk": 57845410538,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "image-generation",
+            "flux",
+            "en",
+            "license:apache-2.0",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
+            "deploy:azure",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 721321,
+          "likes": 4801
+        },
+        {
+          "id": "black-forest-labs/FLUX.1-Krea-dev",
+          "type": "hf.flux",
+          "name": "black-forest-labs/FLUX.1-Krea-dev",
+          "repo_id": "black-forest-labs/FLUX.1-Krea-dev",
+          "size_on_disk": 57897316067,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "image-generation",
+            "flux",
+            "en",
+            "base_model:black-forest-labs/FLUX.1-dev",
+            "base_model:finetune:black-forest-labs/FLUX.1-dev",
+            "license:other",
+            "endpoints_compatible",
+            "diffusers:FluxPipeline",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 15720,
+          "likes": 857
         }
       ],
       "basic_fields": [
@@ -924,7 +1814,7 @@
           },
           "default": {
             "type": "hf.flux",
-            "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
+            "repo_id": "black-forest-labs/FLUX.1-dev",
             "path": null,
             "variant": null,
             "allow_patterns": null,
@@ -1014,28 +1904,6 @@
       ],
       "recommended_models": [
         {
-          "id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "type": "hf.flux",
-          "name": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "repo_id": "dhairyashil/FLUX.1-dev-mflux-4bit",
-          "size_on_disk": 9621508754,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "flux-rectified-flow",
-            "text-to-image",
-            "diffusion",
-            "mflux",
-            "development",
-            "en",
-            "dataset:custom",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 87,
-          "likes": 2
-        },
-        {
           "id": "black-forest-labs/FLUX.1-dev",
           "type": "hf.flux",
           "name": "black-forest-labs/FLUX.1-dev",
@@ -1055,8 +1923,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 970417,
-          "likes": 11997
+          "downloads": 684555,
+          "likes": 12686
         }
       ],
       "basic_fields": [
@@ -1233,8 +2101,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 136475,
-          "likes": 976
+          "downloads": 239001,
+          "likes": 1022
         }
       ],
       "basic_fields": [
@@ -1399,8 +2267,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 276234,
-          "likes": 2492
+          "downloads": 58937,
+          "likes": 2598
         }
       ],
       "basic_fields": [
@@ -1586,8 +2454,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 136475,
-          "likes": 976
+          "downloads": 239001,
+          "likes": 1022
         }
       ],
       "basic_fields": [
@@ -1636,7 +2504,7 @@
           },
           "default": {
             "type": "hf.model",
-            "repo_id": "filipstrand/Qwen-Image-mflux-6bit",
+            "repo_id": "Qwen/Qwen-Image",
             "path": null,
             "variant": null,
             "allow_patterns": null,
@@ -1659,16 +2527,16 @@
             ],
             "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
           },
-          "default": 6,
+          "default": 8,
           "title": "Quantize",
-          "description": "Quantization level for model weights. 6-bit recommended for Qwen."
+          "description": "Quantization level for model weights. 8-bit is recommended for Qwen quality."
         },
         {
           "name": "steps",
           "type": {
             "type": "int"
           },
-          "default": 20,
+          "default": 30,
           "title": "Steps",
           "description": "Number of denoising steps for the generation.",
           "min": 1.0,
@@ -1679,7 +2547,7 @@
           "type": {
             "type": "float"
           },
-          "default": 3.5,
+          "default": 4.0,
           "title": "Guidance",
           "description": "Guidance scale for the generation.",
           "min": 0.0
@@ -1714,6 +2582,36 @@
           "default": 0,
           "title": "Seed",
           "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "lora_paths",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "str"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Lora Paths",
+          "description": "Optional LoRA adapter paths or HuggingFace repo IDs.",
+          "required": true
+        },
+        {
+          "name": "lora_scales",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "float"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Lora Scales",
+          "description": "Scale values for the LoRA adapters. Must align with lora_paths when provided.",
+          "required": true
         }
       ],
       "outputs": [
@@ -1725,25 +2623,6 @@
         }
       ],
       "recommended_models": [
-        {
-          "id": "filipstrand/Qwen-Image-mflux-6bit",
-          "type": "hf.model",
-          "name": "filipstrand/Qwen-Image-mflux-6bit",
-          "repo_id": "filipstrand/Qwen-Image-mflux-6bit",
-          "size_on_disk": 23053344386,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "text-to-image",
-            "mflux",
-            "qwen",
-            "quantized",
-            "license:other",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 4
-        },
         {
           "id": "Qwen/Qwen-Image",
           "type": "hf.model",
@@ -1764,8 +2643,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 295834,
-          "likes": 2275
+          "downloads": 205638,
+          "likes": 2470
         }
       ],
       "basic_fields": [
@@ -1777,7 +2656,9 @@
         "guidance",
         "height",
         "width",
-        "seed"
+        "seed",
+        "lora_paths",
+        "lora_scales"
       ],
       "expose_as_tool": true
     },
@@ -1907,6 +2788,36 @@
           "default": 0,
           "title": "Seed",
           "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "lora_paths",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "str"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Lora Paths",
+          "description": "Optional LoRA adapter paths or HuggingFace repo IDs.",
+          "required": true
+        },
+        {
+          "name": "lora_scales",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "float"
+              }
+            ]
+          },
+          "default": null,
+          "title": "Lora Scales",
+          "description": "Scale values for the LoRA adapters. Must align with lora_paths when provided.",
+          "required": true
         }
       ],
       "outputs": [
@@ -1937,8 +2848,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 554536,
-          "likes": 1027
+          "downloads": 184774,
+          "likes": 1107
         }
       ],
       "basic_fields": [
@@ -1951,7 +2862,9 @@
         "guidance",
         "height",
         "width",
-        "seed"
+        "seed",
+        "lora_paths",
+        "lora_scales"
       ],
       "expose_as_tool": true
     },
@@ -2112,8 +3025,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 24677,
-          "likes": 580
+          "downloads": 9894,
+          "likes": 604
         }
       ],
       "basic_fields": [
@@ -2154,13 +3067,11 @@
         {
           "name": "resolution",
           "type": {
-            "type": "int"
+            "type": "str"
           },
-          "default": 1800,
+          "default": "1800",
           "title": "Resolution",
-          "description": "Target resolution for the shortest edge in pixels.",
-          "min": 256.0,
-          "max": 4096.0
+          "description": "Target resolution for the shortest edge in pixels, or a scale factor like '2x' or '3x'."
         },
         {
           "name": "model",
@@ -2169,7 +3080,7 @@
           },
           "default": {
             "type": "hf.model",
-            "repo_id": "numz/SeedVR2-3B",
+            "repo_id": "numz/SeedVR2_comfyUI",
             "path": null,
             "variant": null,
             "allow_patterns": null,
@@ -2197,6 +3108,17 @@
           "description": "Quantization level (4 or 8 bit supported)."
         },
         {
+          "name": "softness",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.0,
+          "title": "Softness",
+          "description": "Optional pre-downsampling softness. 0 disables it; higher values can produce smoother upscale results.",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
           "name": "seed",
           "type": {
             "type": "int"
@@ -2216,10 +3138,30 @@
       ],
       "recommended_models": [
         {
-          "id": "numz/SeedVR2-3B",
+          "id": "numz/SeedVR2_comfyUI",
           "type": "hf.model",
-          "name": "numz/SeedVR2-3B",
-          "repo_id": "numz/SeedVR2-3B"
+          "name": "numz/SeedVR2_comfyUI",
+          "repo_id": "numz/SeedVR2_comfyUI",
+          "size_on_disk": 60114059916,
+          "pipeline_tag": "video-to-video",
+          "tags": [
+            "diffusers",
+            "art",
+            "video-to-video",
+            "base_model:ByteDance-Seed/SeedVR2-3B",
+            "base_model:finetune:ByteDance-Seed/SeedVR2-3B",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 208634,
+          "likes": 248
+        },
+        {
+          "id": "numz/SeedVR2-7B",
+          "type": "hf.model",
+          "name": "numz/SeedVR2-7B",
+          "repo_id": "numz/SeedVR2-7B"
         }
       ],
       "basic_fields": [
@@ -2227,7 +3169,187 @@
         "resolution",
         "model",
         "quantize",
+        "softness",
         "seed"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MFlux Z-Image",
+      "description": "Generate images using the base Z-Image model via MFLUX.\n    mlx, z-image, text-to-image, apple-silicon\n\n    Use cases:\n    - Higher-quality base Z-Image generation for detailed prompts\n    - Training-oriented or non-turbo Z-Image workflows\n    - LoRA-enabled Z-Image generation on Apple Silicon",
+      "namespace": "mlx.image_to_image",
+      "node_type": "mlx.image_to_image.MFluxZImage",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A detailed portrait in soft natural light",
+          "title": "Prompt",
+          "description": "Text prompt describing the image to generate."
+        },
+        {
+          "name": "negative_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Negative Prompt",
+          "description": "Negative prompt describing what to avoid in the generation."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "Tongyi-MAI/Z-Image",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Base Z-Image model to load."
+        },
+        {
+          "name": "quantize",
+          "type": {
+            "type": "enum",
+            "optional": true,
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel"
+          },
+          "default": 4,
+          "title": "Quantize",
+          "description": "Quantization level for model weights."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 50,
+          "title": "Steps",
+          "description": "Number of denoising steps. Base Z-Image typically uses more steps than Turbo.",
+          "min": 1.0,
+          "max": 100.0
+        },
+        {
+          "name": "guidance",
+          "type": {
+            "type": "float"
+          },
+          "default": 4.0,
+          "title": "Guidance",
+          "description": "Guidance scale for base Z-Image generation.",
+          "min": 0.0
+        },
+        {
+          "name": "height",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Height",
+          "description": "Height of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "width",
+          "type": {
+            "type": "int"
+          },
+          "default": 1024,
+          "title": "Width",
+          "description": "Width of the generated image in pixels.",
+          "min": 256.0,
+          "max": 2048.0
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "lora_path",
+          "type": {
+            "type": "str",
+            "optional": true
+          },
+          "default": null,
+          "title": "Lora Path",
+          "description": "Optional path or HuggingFace repo ID for a LoRA adapter."
+        },
+        {
+          "name": "lora_scale",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Lora Scale",
+          "description": "Scale factor for the LoRA adapter.",
+          "min": 0.0,
+          "max": 2.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "image"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "Tongyi-MAI/Z-Image",
+          "type": "hf.model",
+          "name": "Tongyi-MAI/Z-Image",
+          "repo_id": "Tongyi-MAI/Z-Image",
+          "size_on_disk": 20547479575,
+          "pipeline_tag": "text-to-image",
+          "tags": [
+            "diffusers",
+            "safetensors",
+            "text-to-image",
+            "en",
+            "arxiv:2511.22699",
+            "license:apache-2.0",
+            "diffusers:ZImagePipeline",
+            "deploy:azure",
+            "region:us"
+          ],
+          "has_model_index": true,
+          "downloads": 43838,
+          "likes": 1051
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "negative_prompt",
+        "model",
+        "quantize",
+        "steps",
+        "guidance",
+        "height",
+        "width",
+        "seed",
+        "lora_path",
+        "lora_scale"
       ],
       "expose_as_tool": true
     },
@@ -2253,7 +3375,7 @@
           },
           "default": {
             "type": "hf.model",
-            "repo_id": "filipstrand/Z-Image-Turbo-mflux-4bit",
+            "repo_id": "Tongyi-MAI/Z-Image-Turbo",
             "path": null,
             "variant": null,
             "allow_patterns": null,
@@ -2354,32 +3476,11 @@
       ],
       "recommended_models": [
         {
-          "id": "filipstrand/Z-Image-Turbo-mflux-4bit",
-          "type": "hf.model",
-          "name": "filipstrand/Z-Image-Turbo-mflux-4bit",
-          "repo_id": "filipstrand/Z-Image-Turbo-mflux-4bit",
-          "size_on_disk": 5911138787,
-          "pipeline_tag": "text-to-image",
-          "tags": [
-            "safetensors",
-            "text-to-image",
-            "mflux",
-            "z-image",
-            "z-image-turbo",
-            "quantized",
-            "license:other",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 0,
-          "likes": 13
-        },
-        {
           "id": "Tongyi-MAI/Z-Image-Turbo",
           "type": "hf.model",
           "name": "Tongyi-MAI/Z-Image-Turbo",
           "repo_id": "Tongyi-MAI/Z-Image-Turbo",
-          "size_on_disk": 32899667995,
+          "size_on_disk": 32899667397,
           "pipeline_tag": "text-to-image",
           "tags": [
             "diffusers",
@@ -2395,8 +3496,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 371214,
-          "likes": 3574
+          "downloads": 1179840,
+          "likes": 4491
         }
       ],
       "basic_fields": [
@@ -2579,7 +3680,7 @@
           "type": "hf.model",
           "name": "prince-canuma/Kokoro-82M",
           "repo_id": "prince-canuma/Kokoro-82M",
-          "size_on_disk": 361213864,
+          "size_on_disk": 389420170,
           "pipeline_tag": "text-to-speech",
           "tags": [
             "text-to-speech",
@@ -2592,8 +3693,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 519,
-          "likes": 4
+          "downloads": 746,
+          "likes": 5
         },
         {
           "id": "mlx-community/Kokoro-82M-bf16",
@@ -2612,15 +3713,15 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5235,
-          "likes": 29
+          "downloads": 861737,
+          "likes": 47
         },
         {
           "id": "mlx-community/Kokoro-82M-4bit",
           "type": "hf.model",
           "name": "mlx-community/Kokoro-82M-4bit",
           "repo_id": "mlx-community/Kokoro-82M-4bit",
-          "size_on_disk": 644051686,
+          "size_on_disk": 672257992,
           "pipeline_tag": "text-to-speech",
           "tags": [
             "mlx",
@@ -2632,15 +3733,15 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 214,
-          "likes": 5
+          "downloads": 528,
+          "likes": 7
         },
         {
           "id": "mlx-community/Kokoro-82M-6bit",
           "type": "hf.model",
           "name": "mlx-community/Kokoro-82M-6bit",
           "repo_id": "mlx-community/Kokoro-82M-6bit",
-          "size_on_disk": 320126961,
+          "size_on_disk": 348333267,
           "pipeline_tag": "text-to-speech",
           "tags": [
             "mlx",
@@ -2652,7 +3753,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 32,
+          "downloads": 97,
           "likes": 2
         },
         {
@@ -2660,7 +3761,7 @@
           "type": "hf.model",
           "name": "mlx-community/Kokoro-82M-8bit",
           "repo_id": "mlx-community/Kokoro-82M-8bit",
-          "size_on_disk": 323414762,
+          "size_on_disk": 351621068,
           "pipeline_tag": "text-to-speech",
           "tags": [
             "mlx",
@@ -2672,8 +3773,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 86,
-          "likes": 6
+          "downloads": 323,
+          "likes": 7
         }
       ],
       "basic_fields": [
@@ -2772,8 +3873,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 202,
-          "likes": 24
+          "downloads": 267,
+          "likes": 26
         },
         {
           "id": "mlx-community/csm-1b-8bit",
@@ -2795,8 +3896,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 16,
-          "likes": 0
+          "downloads": 41,
+          "likes": 1
         }
       ],
       "basic_fields": [
@@ -2929,7 +4030,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 93,
+          "downloads": 240,
           "likes": 4
         },
         {
@@ -2951,7 +4052,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 31,
+          "downloads": 42,
           "likes": 3
         }
       ],
@@ -2980,8 +4081,8 @@
           "default": {
             "type": "language_model",
             "provider": "mlx",
-            "id": "mlx-community/Llama-3.2-3B-Instruct-4bit",
-            "name": "Llama-3.2-3B Instruct (4-bit)",
+            "id": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
+            "name": "Qwen3.5 0.8B OptiQ (4-bit)",
             "path": null,
             "supported_tasks": []
           },
@@ -3089,913 +4190,269 @@
       ],
       "recommended_models": [
         {
-          "id": "mlx-community/Llama-3.2-3B-Instruct-4bit",
+          "id": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
           "type": "hf.text_generation",
-          "name": "mlx-community/Llama-3.2-3B-Instruct-4bit",
-          "repo_id": "mlx-community/Llama-3.2-3B-Instruct-4bit",
-          "size_on_disk": 1824825759,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "transformers",
-            "safetensors",
-            "llama",
-            "text-generation",
-            "facebook",
-            "meta",
-            "pytorch",
-            "llama-3",
-            "mlx",
-            "conversational",
-            "en",
-            "de",
-            "fr",
-            "it",
-            "pt",
-            "hi",
-            "es",
-            "th",
-            "base_model:mlx-community/Llama-3.2-3B-Instruct",
-            "base_model:quantized:mlx-community/Llama-3.2-3B-Instruct",
-            "license:llama3.2",
-            "text-generation-inference",
-            "endpoints_compatible",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 15914,
-          "likes": 37
-        },
-        {
-          "id": "mlx-community/gemma-3-1b-it-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/gemma-3-1b-it-8bit",
-          "repo_id": "mlx-community/gemma-3-1b-it-8bit",
-          "size_on_disk": 1422735116,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "transformers",
-            "safetensors",
-            "gemma3_text",
-            "text-generation",
-            "mlx",
-            "conversational",
-            "base_model:google/gemma-3-1b-it",
-            "base_model:quantized:google/gemma-3-1b-it",
-            "license:gemma",
-            "text-generation-inference",
-            "endpoints_compatible",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 468,
-          "likes": 3
-        },
-        {
-          "id": "mlx-community/gemma-3-4b-it-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/gemma-3-4b-it-4bit",
-          "repo_id": "mlx-community/gemma-3-4b-it-4bit",
-          "size_on_disk": 3439897526,
-          "pipeline_tag": "image-text-to-text",
-          "tags": [
-            "transformers",
-            "safetensors",
-            "gemma3",
-            "any-to-any",
-            "mlx",
-            "image-text-to-text",
-            "conversational",
-            "base_model:google/gemma-3-4b-pt",
-            "base_model:quantized:google/gemma-3-4b-pt",
-            "license:gemma",
-            "text-generation-inference",
-            "endpoints_compatible",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 864,
-          "likes": 7
-        },
-        {
-          "id": "mlx-community/gemma-3-4b-it-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/gemma-3-4b-it-8bit",
-          "repo_id": "mlx-community/gemma-3-4b-it-8bit",
-          "size_on_disk": 5715471228,
-          "pipeline_tag": "image-text-to-text",
-          "tags": [
-            "transformers",
-            "safetensors",
-            "gemma3",
-            "any-to-any",
-            "mlx",
-            "image-text-to-text",
-            "conversational",
-            "base_model:google/gemma-3-4b-pt",
-            "base_model:finetune:google/gemma-3-4b-pt",
-            "license:gemma",
-            "text-generation-inference",
-            "endpoints_compatible",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 8402,
-          "likes": 6
-        },
-        {
-          "id": "mlx-community/gemma-3-12b-it-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/gemma-3-12b-it-4bit",
-          "repo_id": "mlx-community/gemma-3-12b-it-4bit",
-          "size_on_disk": 8068021302,
-          "pipeline_tag": "image-text-to-text",
-          "tags": [
-            "transformers",
-            "safetensors",
-            "gemma3",
-            "any-to-any",
-            "mlx",
-            "image-text-to-text",
-            "conversational",
-            "base_model:google/gemma-3-12b-pt",
-            "base_model:finetune:google/gemma-3-12b-pt",
-            "license:gemma",
-            "text-generation-inference",
-            "endpoints_compatible",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 439,
-          "likes": 6
-        },
-        {
-          "id": "mlx-community/gemma-3-12b-it-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/gemma-3-12b-it-8bit",
-          "repo_id": "mlx-community/gemma-3-12b-it-8bit",
-          "size_on_disk": 14454094872,
-          "pipeline_tag": "image-text-to-text",
-          "tags": [
-            "transformers",
-            "safetensors",
-            "gemma3",
-            "any-to-any",
-            "mlx",
-            "image-text-to-text",
-            "conversational",
-            "base_model:google/gemma-3-12b-pt",
-            "base_model:finetune:google/gemma-3-12b-pt",
-            "license:gemma",
-            "text-generation-inference",
-            "endpoints_compatible",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 230,
-          "likes": 2
-        },
-        {
-          "id": "mlx-community/gemma-3-27b-it-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/gemma-3-27b-it-4bit",
-          "repo_id": "mlx-community/gemma-3-27b-it-4bit",
-          "size_on_disk": 16873384701,
-          "pipeline_tag": "image-text-to-text",
-          "tags": [
-            "transformers",
-            "safetensors",
-            "gemma3",
-            "any-to-any",
-            "mlx",
-            "image-text-to-text",
-            "conversational",
-            "base_model:google/gemma-3-27b-pt",
-            "base_model:finetune:google/gemma-3-27b-pt",
-            "license:gemma",
-            "text-generation-inference",
-            "endpoints_compatible",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 397,
-          "likes": 11
-        },
-        {
-          "id": "mlx-community/gemma-3-27b-it-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/gemma-3-27b-it-8bit",
-          "repo_id": "mlx-community/gemma-3-27b-it-8bit",
-          "size_on_disk": 31082196389,
-          "pipeline_tag": "image-text-to-text",
-          "tags": [
-            "transformers",
-            "safetensors",
-            "gemma3",
-            "any-to-any",
-            "mlx",
-            "image-text-to-text",
-            "conversational",
-            "base_model:google/gemma-3-27b-pt",
-            "base_model:finetune:google/gemma-3-27b-pt",
-            "license:gemma",
-            "text-generation-inference",
-            "endpoints_compatible",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 372,
-          "likes": 7
-        },
-        {
-          "id": "mlx-community/Granite-4.0-H-Tiny-4bit-DWQ",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Granite-4.0-H-Tiny-4bit-DWQ",
-          "repo_id": "mlx-community/Granite-4.0-H-Tiny-4bit-DWQ",
-          "size_on_disk": 3916359131,
+          "name": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
+          "repo_id": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
+          "size_on_disk": 618250443,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
             "safetensors",
-            "granitemoehybrid",
-            "language",
-            "granite-4.0",
-            "text-generation",
-            "conversational",
-            "base_model:ibm-granite/granite-4.0-h-tiny",
-            "base_model:quantized:ibm-granite/granite-4.0-h-tiny",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 83,
-          "likes": 2
-        },
-        {
-          "id": "mlx-community/granite-4.0-h-micro-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/granite-4.0-h-micro-8bit",
-          "repo_id": "mlx-community/granite-4.0-h-micro-8bit",
-          "size_on_disk": 3401769754,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "granitemoehybrid",
-            "language",
-            "granite-4.0",
-            "text-generation",
-            "conversational",
-            "base_model:ibm-granite/granite-4.0-h-micro",
-            "base_model:quantized:ibm-granite/granite-4.0-h-micro",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 57,
-          "likes": 2
-        },
-        {
-          "id": "mlx-community/granite-4.0-tiny-preview-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/granite-4.0-tiny-preview-4bit",
-          "repo_id": "mlx-community/granite-4.0-tiny-preview-4bit",
-          "size_on_disk": 3760829901,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "granitemoehybrid",
-            "language",
-            "granite-4.0",
-            "text-generation",
-            "conversational",
-            "base_model:ibm-granite/granite-4.0-tiny-preview",
-            "base_model:quantized:ibm-granite/granite-4.0-tiny-preview",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 8,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/granite-4.0-micro-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/granite-4.0-micro-8bit",
-          "repo_id": "mlx-community/granite-4.0-micro-8bit",
-          "size_on_disk": 3625590539,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "granitemoehybrid",
-            "language",
-            "granite-4.0",
-            "text-generation",
-            "conversational",
-            "base_model:ibm-granite/granite-4.0-micro",
-            "base_model:quantized:ibm-granite/granite-4.0-micro",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 26,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/granite-4.0-h-tiny-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/granite-4.0-h-tiny-8bit",
-          "repo_id": "mlx-community/granite-4.0-h-tiny-8bit",
-          "size_on_disk": 7383511451,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "granitemoehybrid",
-            "language",
-            "granite-4.0",
-            "text-generation",
-            "conversational",
-            "base_model:ibm-granite/granite-4.0-h-tiny",
-            "base_model:quantized:ibm-granite/granite-4.0-h-tiny",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 15,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/granite-4.0-h-tiny-6bit-MLX",
-          "type": "hf.text_generation",
-          "name": "mlx-community/granite-4.0-h-tiny-6bit-MLX",
-          "repo_id": "mlx-community/granite-4.0-h-tiny-6bit-MLX",
-          "size_on_disk": 5649947761,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "granitemoehybrid",
-            "ibm",
-            "granite",
-            "apple-silicon",
-            "mamba2",
-            "transformer",
-            "hybrid",
-            "moe",
-            "long-context",
-            "instruct",
+            "qwen3_5",
             "quantized",
-            "6bit",
-            "MoE",
-            "text-generation",
-            "conversational",
-            "en",
-            "base_model:ibm-granite/granite-4.0-h-tiny",
-            "base_model:quantized:ibm-granite/granite-4.0-h-tiny",
-            "license:apache-2.0",
-            "6-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 10,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/granite-4.0-h-small-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/granite-4.0-h-small-4bit",
-          "repo_id": "mlx-community/granite-4.0-h-small-4bit",
-          "size_on_disk": 18135630587,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "granitemoehybrid",
-            "language",
-            "granite-4.0",
-            "text-generation",
-            "conversational",
-            "base_model:ibm-granite/granite-4.0-h-small",
-            "base_model:quantized:ibm-granite/granite-4.0-h-small",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 18,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/granite-4.0-h-small-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/granite-4.0-h-small-8bit",
-          "repo_id": "mlx-community/granite-4.0-h-small-8bit",
-          "size_on_disk": 34232320950,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "granitemoehybrid",
-            "language",
-            "granite-4.0",
-            "text-generation",
-            "conversational",
-            "base_model:ibm-granite/granite-4.0-h-small",
-            "base_model:quantized:ibm-granite/granite-4.0-h-small",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 13,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/Qwen3-0.6B-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-0.6B-4bit",
-          "repo_id": "mlx-community/Qwen3-0.6B-4bit",
-          "size_on_disk": 351386061,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-0.6B",
-            "base_model:quantized:Qwen/Qwen3-0.6B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 13816,
-          "likes": 8
-        },
-        {
-          "id": "mlx-community/Qwen3-0.6B-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-0.6B-8bit",
-          "repo_id": "mlx-community/Qwen3-0.6B-8bit",
-          "size_on_disk": 649378984,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-0.6B",
-            "base_model:quantized:Qwen/Qwen3-0.6B",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 5618,
-          "likes": 6
-        },
-        {
-          "id": "mlx-community/Qwen3-1.7B-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-1.7B-4bit",
-          "repo_id": "mlx-community/Qwen3-1.7B-4bit",
-          "size_on_disk": 984015687,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-1.7B",
-            "base_model:quantized:Qwen/Qwen3-1.7B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 10972,
-          "likes": 4
-        },
-        {
-          "id": "mlx-community/Qwen3-1.7B-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-1.7B-8bit",
-          "repo_id": "mlx-community/Qwen3-1.7B-8bit",
-          "size_on_disk": 1844242019,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-1.7B",
-            "base_model:quantized:Qwen/Qwen3-1.7B",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 998,
-          "likes": 1
-        },
-        {
-          "id": "mlx-community/Qwen3-4B-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-4B-4bit",
-          "repo_id": "mlx-community/Qwen3-4B-4bit",
-          "size_on_disk": 2278972183,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-4B",
-            "base_model:quantized:Qwen/Qwen3-4B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 8653,
-          "likes": 10
-        },
-        {
-          "id": "mlx-community/Qwen3-4B-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-4B-8bit",
-          "repo_id": "mlx-community/Qwen3-4B-8bit",
-          "size_on_disk": 4290108641,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-4B",
-            "base_model:quantized:Qwen/Qwen3-4B",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 418,
-          "likes": 1
-        },
-        {
-          "id": "mlx-community/Qwen3-8B-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-8B-4bit",
-          "repo_id": "mlx-community/Qwen3-8B-4bit",
-          "size_on_disk": 4623784971,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-8B",
-            "base_model:quantized:Qwen/Qwen3-8B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 2793,
-          "likes": 6
-        },
-        {
-          "id": "mlx-community/Qwen3-8B-6bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-8B-6bit",
-          "repo_id": "mlx-community/Qwen3-8B-6bit",
-          "size_on_disk": 6671405080,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-8B",
-            "base_model:quantized:Qwen/Qwen3-8B",
-            "license:apache-2.0",
-            "6-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 385,
-          "likes": 4
-        },
-        {
-          "id": "mlx-community/Qwen3-30B-A3B-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-30B-A3B-4bit",
-          "repo_id": "mlx-community/Qwen3-30B-A3B-4bit",
-          "size_on_disk": 17190786248,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_moe",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-30B-A3B",
-            "base_model:quantized:Qwen/Qwen3-30B-A3B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 5519,
-          "likes": 13
-        },
-        {
-          "id": "mlx-community/Qwen3-30B-A3B-8bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3-30B-A3B-8bit",
-          "repo_id": "mlx-community/Qwen3-30B-A3B-8bit",
-          "size_on_disk": 32456742179,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_moe",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3-30B-A3B",
-            "base_model:quantized:Qwen/Qwen3-30B-A3B",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 5027,
-          "likes": 8
-        },
-        {
-          "id": "mlx-community/LFM2-8B-A1B-3bit-MLX",
-          "type": "hf.text_generation",
-          "name": "mlx-community/LFM2-8B-A1B-3bit-MLX",
-          "repo_id": "mlx-community/LFM2-8B-A1B-3bit-MLX",
-          "size_on_disk": 4176559875,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "lfm2_moe",
-            "apple-silicon",
-            "liquidai",
-            "lfm2",
-            "moe",
-            "transformer",
-            "long-context",
-            "instruct",
-            "quantized",
-            "3bit",
-            "coding",
-            "text-generation",
-            "conversational",
-            "custom_code",
-            "en",
-            "base_model:LiquidAI/LFM2-8B-A1B",
-            "base_model:quantized:LiquidAI/LFM2-8B-A1B",
-            "license:other",
-            "3-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 95,
-          "likes": 1
-        },
-        {
-          "id": "mlx-community/LFM2-8B-A1B-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/LFM2-8B-A1B-4bit",
-          "repo_id": "mlx-community/LFM2-8B-A1B-4bit",
-          "size_on_disk": 5218841060,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "lfm2_moe",
-            "liquid",
-            "lfm2",
-            "edge",
-            "moe",
-            "text-generation",
-            "conversational",
-            "custom_code",
-            "en",
-            "ar",
-            "zh",
-            "fr",
-            "de",
-            "ja",
-            "ko",
-            "es",
-            "base_model:LiquidAI/LFM2-8B-A1B",
-            "base_model:quantized:LiquidAI/LFM2-8B-A1B",
-            "license:other",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 720,
-          "likes": 4
-        },
-        {
-          "id": "mlx-community/LFM2-8B-A1B-5bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/LFM2-8B-A1B-5bit",
-          "repo_id": "mlx-community/LFM2-8B-A1B-5bit",
-          "size_on_disk": 6261133981,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "lfm2_moe",
-            "liquid",
-            "lfm2",
-            "edge",
-            "moe",
-            "text-generation",
-            "conversational",
-            "custom_code",
-            "en",
-            "ar",
-            "zh",
-            "fr",
-            "de",
-            "ja",
-            "ko",
-            "es",
-            "base_model:LiquidAI/LFM2-8B-A1B",
-            "base_model:quantized:LiquidAI/LFM2-8B-A1B",
-            "license:other",
-            "5-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 7,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/LFM2-8B-A1B-6bit-MLX",
-          "type": "hf.text_generation",
-          "name": "mlx-community/LFM2-8B-A1B-6bit-MLX",
-          "repo_id": "mlx-community/LFM2-8B-A1B-6bit-MLX",
-          "size_on_disk": 7303420322,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "lfm2_moe",
-            "apple-silicon",
-            "liquidai",
-            "lfm2",
-            "Mixture of Expert",
-            "transformer",
-            "long-context",
-            "instruct",
-            "quantized",
-            "6bit",
-            "coding",
-            "text-generation",
-            "conversational",
-            "custom_code",
-            "en",
-            "base_model:LiquidAI/LFM2-8B-A1B",
-            "base_model:quantized:LiquidAI/LFM2-8B-A1B",
-            "license:other",
-            "6-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 57,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/LFM2-8B-A1B-8bit-MLX",
-          "type": "hf.text_generation",
-          "name": "mlx-community/LFM2-8B-A1B-8bit-MLX",
-          "repo_id": "mlx-community/LFM2-8B-A1B-8bit-MLX",
-          "size_on_disk": 9387991446,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "lfm2_moe",
-            "apple-silicon",
-            "liquidai",
-            "lfm2",
-            "moe",
-            "transformer",
-            "long-context",
-            "instruct",
-            "quantized",
+            "mixed-precision",
+            "4bit",
             "8bit",
-            "Mixture of Experts",
-            "coding",
+            "optiq",
+            "apple-silicon",
             "text-generation",
+            "qwen3.5",
             "conversational",
-            "custom_code",
-            "en",
-            "base_model:LiquidAI/LFM2-8B-A1B",
-            "base_model:quantized:LiquidAI/LFM2-8B-A1B",
-            "license:other",
-            "8-bit",
+            "base_model:Qwen/Qwen3.5-0.8B",
+            "base_model:quantized:Qwen/Qwen3.5-0.8B",
+            "license:apache-2.0",
+            "4-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 169,
+          "downloads": 6546,
+          "likes": 14
+        },
+        {
+          "id": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
+          "repo_id": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
+          "size_on_disk": 1451301609,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5",
+            "quantized",
+            "mixed-precision",
+            "4bit",
+            "8bit",
+            "optiq",
+            "apple-silicon",
+            "text-generation",
+            "qwen3.5",
+            "conversational",
+            "base_model:Qwen/Qwen3.5-2B",
+            "base_model:quantized:Qwen/Qwen3.5-2B",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 5651,
           "likes": 5
         },
         {
-          "id": "mlx-community/LFM2-8B-A1B-fp16",
+          "id": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
           "type": "hf.text_generation",
-          "name": "mlx-community/LFM2-8B-A1B-fp16",
-          "repo_id": "mlx-community/LFM2-8B-A1B-fp16",
-          "size_on_disk": 33364606069,
+          "name": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
+          "repo_id": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
+          "size_on_disk": 2968014472,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
             "safetensors",
-            "lfm2_moe",
-            "liquid",
-            "lfm2",
-            "edge",
-            "moe",
+            "qwen3_5",
+            "quantized",
+            "mixed-precision",
+            "4bit",
+            "8bit",
+            "optiq",
+            "apple-silicon",
             "text-generation",
+            "qwen3.5",
             "conversational",
-            "custom_code",
-            "en",
-            "ar",
-            "zh",
-            "fr",
-            "de",
-            "ja",
-            "ko",
-            "es",
-            "base_model:LiquidAI/LFM2-8B-A1B",
-            "base_model:finetune:LiquidAI/LFM2-8B-A1B",
-            "license:other",
+            "base_model:Qwen/Qwen3.5-4B",
+            "base_model:quantized:Qwen/Qwen3.5-4B",
+            "license:apache-2.0",
+            "4-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 35,
-          "likes": 2
+          "downloads": 4787,
+          "likes": 10
         },
         {
-          "id": "nightmedia/LFM2-8B-A1B-qx86-hi-mlx",
+          "id": "mlx-community/Qwen3.5-27B-4bit-DWQ",
           "type": "hf.text_generation",
-          "name": "nightmedia/LFM2-8B-A1B-qx86-hi-mlx",
-          "repo_id": "nightmedia/LFM2-8B-A1B-qx86-hi-mlx",
-          "size_on_disk": 8889883108,
+          "name": "mlx-community/Qwen3.5-27B-4bit-DWQ",
+          "repo_id": "mlx-community/Qwen3.5-27B-4bit-DWQ",
+          "size_on_disk": 15229956981,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
             "safetensors",
-            "lfm2_moe",
-            "liquid",
-            "lfm2",
-            "edge",
+            "qwen3_5",
+            "text-generation",
+            "conversational",
+            "en",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1645,
+          "likes": 5
+        },
+        {
+          "id": "mlx-community/Qwen3.5-REAP-97B-A10B-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.5-REAP-97B-A10B-4bit",
+          "repo_id": "mlx-community/Qwen3.5-REAP-97B-A10B-4bit",
+          "size_on_disk": 54452420315,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5_moe",
+            "4-bit",
+            "quantized",
             "moe",
             "text-generation",
             "conversational",
-            "custom_code",
-            "en",
-            "ar",
-            "zh",
-            "fr",
-            "de",
-            "ja",
-            "ko",
-            "es",
-            "base_model:LiquidAI/LFM2-8B-A1B",
-            "base_model:quantized:LiquidAI/LFM2-8B-A1B",
-            "license:other",
+            "base_model:OpenMOSE/Qwen3.5-REAP-97B-A10B",
+            "base_model:quantized:OpenMOSE/Qwen3.5-REAP-97B-A10B",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1551,
+          "likes": 3
+        },
+        {
+          "id": "mlx-community/Qwen3.5-397B-A17B-nvfp4",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.5-397B-A17B-nvfp4",
+          "repo_id": "mlx-community/Qwen3.5-397B-A17B-nvfp4",
+          "size_on_disk": 223032302630,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5_moe",
+            "4bit",
+            "nvfp4",
+            "quantized",
+            "moe",
+            "mixture-of-experts",
+            "text-generation",
+            "conversational",
+            "apple-silicon",
+            "multilingual",
+            "base_model:Qwen/Qwen3.5-397B-A17B",
+            "base_model:quantized:Qwen/Qwen3.5-397B-A17B",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 932,
+          "likes": 3
+        },
+        {
+          "id": "mlx-community/Qwen3.5-397B-A17B-8bit-gs32",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.5-397B-A17B-8bit-gs32",
+          "repo_id": "mlx-community/Qwen3.5-397B-A17B-8bit-gs32",
+          "size_on_disk": 445904828350,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5_moe",
+            "text-generation",
+            "conversational",
+            "base_model:Qwen/Qwen3.5-397B-A17B",
+            "base_model:quantized:Qwen/Qwen3.5-397B-A17B",
+            "license:apache-2.0",
             "8-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 19,
+          "downloads": 288,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+          "repo_id": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+          "size_on_disk": 6353536374,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4_text",
+            "quantized",
+            "mixed-precision",
+            "4bit",
+            "8bit",
+            "optiq",
+            "apple-silicon",
+            "text-generation",
+            "gemma4",
+            "conversational",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 2415,
+          "likes": 7
+        },
+        {
+          "id": "mlx-community/gemma-4-e2b-it-OptiQ-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-e2b-it-OptiQ-4bit",
+          "repo_id": "mlx-community/gemma-4-e2b-it-OptiQ-4bit",
+          "size_on_disk": 4203363809,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4_text",
+            "quantized",
+            "mixed-precision",
+            "4bit",
+            "8bit",
+            "optiq",
+            "apple-silicon",
+            "text-generation",
+            "gemma4",
+            "conversational",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 589,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/Gemma4-E2B-IT-Text-int4",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Gemma4-E2B-IT-Text-int4",
+          "repo_id": "mlx-community/Gemma4-E2B-IT-Text-int4",
+          "size_on_disk": 2671101837,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "safetensors",
+            "gemma4_text",
+            "text-generation",
+            "conversational",
+            "base_model:google/gemma-4-E2B-it",
+            "base_model:finetune:google/gemma-4-E2B-it",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 247,
           "likes": 1
         }
       ],
@@ -4123,7 +4580,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 207,
+          "downloads": 1003,
           "likes": 2
         },
         {
@@ -4138,7 +4595,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 360,
+          "downloads": 468,
           "likes": 0
         },
         {
@@ -4146,15 +4603,17 @@
           "type": "hf.model",
           "name": "mlx-community/whisper-base-mlx",
           "repo_id": "mlx-community/whisper-base-mlx",
-          "size_on_disk": 143726284,
+          "size_on_disk": 143726326,
+          "pipeline_tag": "automatic-speech-recognition",
           "tags": [
             "mlx",
             "whisper",
+            "automatic-speech-recognition",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1277,
-          "likes": 0
+          "downloads": 2885,
+          "likes": 1
         },
         {
           "id": "mlx-community/whisper-base.en-mlx",
@@ -4168,7 +4627,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 36,
+          "downloads": 303,
           "likes": 0
         },
         {
@@ -4176,15 +4635,17 @@
           "type": "hf.model",
           "name": "mlx-community/whisper-small-mlx",
           "repo_id": "mlx-community/whisper-small-mlx",
-          "size_on_disk": 481309678,
+          "size_on_disk": 481309720,
+          "pipeline_tag": "automatic-speech-recognition",
           "tags": [
             "mlx",
             "whisper",
+            "automatic-speech-recognition",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2027,
-          "likes": 3
+          "downloads": 6295,
+          "likes": 5
         },
         {
           "id": "mlx-community/whisper-small.en-mlx",
@@ -4198,7 +4659,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 59,
+          "downloads": 417,
           "likes": 0
         },
         {
@@ -4206,14 +4667,16 @@
           "type": "hf.model",
           "name": "mlx-community/whisper-medium-mlx",
           "repo_id": "mlx-community/whisper-medium-mlx",
-          "size_on_disk": 1524927002,
+          "size_on_disk": 1524927044,
+          "pipeline_tag": "automatic-speech-recognition",
           "tags": [
             "mlx",
             "whisper",
+            "automatic-speech-recognition",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1150,
+          "downloads": 5843,
           "likes": 3
         },
         {
@@ -4228,7 +4691,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 79,
+          "downloads": 212,
           "likes": 1
         },
         {
@@ -4236,16 +4699,18 @@
           "type": "hf.model",
           "name": "mlx-community/whisper-large-v3-mlx",
           "repo_id": "mlx-community/whisper-large-v3-mlx",
-          "size_on_disk": 3083522444,
+          "size_on_disk": 3083522487,
+          "pipeline_tag": "automatic-speech-recognition",
           "tags": [
             "mlx",
             "whisper",
+            "automatic-speech-recognition",
             "license:mit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 474657,
-          "likes": 66
+          "downloads": 21731,
+          "likes": 75
         }
       ],
       "basic_fields": [
