@@ -95,14 +95,13 @@ from nodetool.integrations.huggingface.huggingface_models import (
 from nodetool.mlx.flux_model_loader import (
     load_flux_model,
 )
-from mflux.config.config import Config
 
 
 log = get_logger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-DEFAULT_MLX_MODEL = "mlx-community/Llama-3.2-3B-Instruct-4bit"
+DEFAULT_MLX_MODEL = "mlx-community/Qwen3.5-0.8B-OptiQ-4bit"
 
 
 # Simple in-memory TTL cache for loaded MLX models: 5 minutes
@@ -111,7 +110,7 @@ _MODEL_CACHE: dict[str, tuple[nn.Module, TokenizerWrapper, float]] = {}
 _MODEL_CACHE_LOCK = threading.Lock()
 
 # Separate cache for VLM models (mlx-vlm)
-_VLM_MODEL_CACHE: dict[str, tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any, float]] = {}
+_VLM_MODEL_CACHE: dict[str, tuple[nn.Module, Any, Any, float]] = {}
 _VLM_MODEL_CACHE_LOCK = threading.Lock()
 
 # Separate cache for TTS models (mlx-audio)
@@ -154,6 +153,14 @@ class MLXProvider(BaseProvider):
 
         self._vlm_load_lock = asyncio.Lock()
         self._vlm_generation_lock = asyncio.Lock()  # Serialize VLM generation calls
+
+        self.usage = {
+            "prompt_tokens": 0,
+            "completion_tokens": 0,
+            "total_tokens": 0,
+            "total_requests": 0,
+            "total_images": 0,
+        }
 
     # ------------------------------------------------------------------
     # Public API
@@ -236,6 +243,18 @@ class MLXProvider(BaseProvider):
             List of LanguageModel instances for MLX
         """
         models = await get_mlx_language_models_from_hf_cache()
+        fibo_vlm_repo = "briaai/FIBO-vlm"
+        if await self._resolve_cached_repo_path(fibo_vlm_repo) is not None and not any(
+            model.id == fibo_vlm_repo for model in models
+        ):
+            models.append(
+                LanguageModel(
+                    provider=Provider.MLX,
+                    id=fibo_vlm_repo,
+                    name="FIBO VLM",
+                    supported_tasks=["text-generation", "vision"],
+                )
+            )
         log.debug(f"Found {len(models)} MLX models in HF cache")
         return models
 
@@ -930,9 +949,21 @@ class MLXProvider(BaseProvider):
         extraction of tool calls from the MLX runtime. Yields `Chunk` and
         `ToolCall` items to the caller.
         """
-        # Route to mlx-vlm if the model appears vision-capable and images are present
+        # Route FIBO VLM through its native runtime before generic mlx-vlm handling.
         image_parts = self._extract_image_parts(messages)
         audio_parts = self._extract_audio_parts(messages)
+        if self._is_fibo_vlm_model(model):
+            async for item in self._stream_fibo_vlm_chat(
+                messages,
+                model,
+                image_parts,
+                max_tokens=max_tokens,
+                **kwargs,
+            ):
+                yield item
+            return
+
+        # Route to mlx-vlm if the model appears vision-capable and images are present
         if (image_parts and self._is_vision_model(model)) or (
             audio_parts and self._is_audio_model(model)
         ):
@@ -1095,14 +1126,20 @@ class MLXProvider(BaseProvider):
                     if is_final:
                         self._update_usage(response)
 
+                    clean_text = self._strip_terminal_special_tokens(response.text)
+                    if not clean_text and not is_final:
+                        clean_text = self._decode_stream_token(
+                            tokenizer, getattr(response, "token", None)
+                        )
+
                     # Process native tool calls if supported
                     segments, parsed_calls = self._process_response_text(
-                        response.text, tool_state, tokenizer
+                        clean_text, tool_state, tokenizer
                     )
 
                     # Accumulate content for emulation
                     if use_tool_emulation:
-                        accumulated_content += response.text
+                        accumulated_content += clean_text
 
                     # Yield native tool calls
                     for tool_call in parsed_calls:
@@ -1173,6 +1210,11 @@ class MLXProvider(BaseProvider):
                 # Try to get cached model from ModelManager
                 cached = ModelManager.get_model(cache_key)
                 if cached is not None:
+                    try:
+                        _mdl, cached_tokenizer = cached
+                        self._configure_tokenizer(cached_tokenizer)
+                    except Exception:
+                        pass
                     return cached
 
                 def _load() -> tuple[nn.Module, TokenizerWrapper]:
@@ -1182,6 +1224,8 @@ class MLXProvider(BaseProvider):
                     )
 
                 mdl, tokenizer = await asyncio.to_thread(_load)
+
+                self._configure_tokenizer(tokenizer)
 
                 # Cache in ModelManager (requires a node_id, use a synthetic one for provider-level caching)
                 node_id = f"mlx_provider_{model}_{self.adapter_path or 'default'}"
@@ -1197,7 +1241,7 @@ class MLXProvider(BaseProvider):
         adapter = self.adapter_path or ""
         return f"vlm|{model}|{adapter}"
 
-    def _get_cached_vlm_model(self, model: str) -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any] | None:
+    def _get_cached_vlm_model(self, model: str) -> tuple[nn.Module, Any, Any] | None:
         key = self._cache_key_vlm(model)
         now = time.monotonic()
         with _VLM_MODEL_CACHE_LOCK:
@@ -1210,13 +1254,32 @@ class MLXProvider(BaseProvider):
                 return None
             return mdl, proc, cfg
 
-    def _set_cached_vlm_model(self, model: str, mdl: nn.Module, proc: mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, cfg: Any) -> None:
+    def _set_cached_vlm_model(self, model: str, mdl: nn.Module, proc: Any, cfg: Any) -> None:
         key = self._cache_key_vlm(model)
         expires_at = time.monotonic() + _CACHE_TTL_SECONDS
         with _VLM_MODEL_CACHE_LOCK:
             _VLM_MODEL_CACHE[key] = (mdl, proc, cfg, expires_at)
 
-    async def _load_vlm_model(self, model: str) -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any]:
+    async def _load_fibo_vlm_model(self, model: str) -> Any:
+        cache_key = f"{model}_fibo_vlm_model"
+
+        async with ModelManager.lock_model(cache_key):
+            cached = ModelManager.get_model(cache_key)
+            if cached is not None:
+                return cached
+
+            def _load() -> Any:
+                from mflux.models.fibo_vlm.model.fibo_vlm import FiboVLM
+
+                return FiboVLM(model_id=model, quantize=4)
+
+            fibo_vlm = await asyncio.to_thread(_load)
+            node_id = f"mlx_fibo_vlm_provider_{model}"
+            ModelManager.set_model(node_id, cache_key, fibo_vlm)
+            log.info("Loaded FIBO VLM model %s", model)
+            return fibo_vlm
+
+    async def _load_vlm_model(self, model: str) -> tuple[nn.Module, Any, Any]:
         # Construct cache key for ModelManager
         cache_key = f"{model}_vision_model_{self.adapter_path}"
 
@@ -1228,7 +1291,7 @@ class MLXProvider(BaseProvider):
                 if cached is not None:
                     return cached
 
-                def _load() -> tuple[nn.Module, mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, Any]:
+                def _load() -> tuple[nn.Module, Any, Any]:
                     mdl, proc = mlx_vlm.load(model)
                     cfg = getattr(mdl, "config", None)
                     if cfg is None and mlx_vlm.utils.load_config is not None:
@@ -1243,6 +1306,10 @@ class MLXProvider(BaseProvider):
 
                 log.info("Loaded MLX-VLM model %s", model)
                 return mdl, proc, cfg
+
+    def _is_fibo_vlm_model(self, model: str) -> bool:
+        name = (model or "").lower()
+        return "fibo-vlm" in name or name == "briaai/fibo-vlm"
 
     def _is_vision_model(self, model: str) -> bool:
         name = (model or "").lower()
@@ -1267,7 +1334,7 @@ class MLXProvider(BaseProvider):
         # be permissive if both image/audio present and model is vision
         return any(k in name for k in keywords) or self._is_vision_model(model)
 
-    def _ensure_vlm_processor_ready(self, proc: mlx_vlm.utils.PreTrainedTokenizer | mlx_vlm.utils.PreTrainedTokenizerFast, cfg: Any) -> None:
+    def _ensure_vlm_processor_ready(self, proc: Any, cfg: Any) -> None:
         """Ensure mlx-vlm processor has necessary attributes set.
 
         Some processors (e.g., LLaVA) expect a non-None patch_size. If missing,
@@ -1425,6 +1492,41 @@ class MLXProvider(BaseProvider):
             prepared_paths.append(tmp.name)
 
         return prepared_paths
+
+    async def _stream_fibo_vlm_chat(
+        self,
+        messages: Sequence[Message],
+        model: str,
+        image_parts: list[MessageImageContent],
+        max_tokens: int,
+        **kwargs: Any,
+    ) -> AsyncIterator[Chunk | ToolCall]:
+        _ = max_tokens, kwargs
+        fibo_vlm = await self._load_fibo_vlm_model(model)
+        prompt_text = self._extract_last_user_prompt(messages)
+        images = await self._prepare_vlm_images(image_parts)
+
+        def _run_generate() -> str:
+            import PIL.Image
+
+            if images:
+                image = PIL.Image.open(images[-1]).convert("RGB")
+                try:
+                    return fibo_vlm.inspire(image=image, prompt=prompt_text or None)
+                finally:
+                    image.close()
+            return fibo_vlm.generate(prompt=prompt_text)
+
+        try:
+            async with self._vlm_generation_lock:
+                output: str = await asyncio.to_thread(_run_generate)
+            yield Chunk(content=output, done=True)
+        finally:
+            for image_path in images:
+                try:
+                    os.remove(image_path)
+                except Exception:
+                    pass
 
     async def _stream_vlm_chat(
         self,
@@ -1630,6 +1732,63 @@ class MLXProvider(BaseProvider):
             stream_kwargs.pop(key, None)
         return stream_kwargs
 
+    def _configure_tokenizer(self, tokenizer: TokenizerWrapper) -> None:
+        for token in (
+            "<|im_end|>",
+            "<|eot_id|>",
+            "<|end|>",
+            "</s>",
+        ):
+            try:
+                tokenizer.add_eos_token(token)
+            except Exception:
+                pass
+
+    def _strip_terminal_special_tokens(self, text: str) -> str:
+        if not text:
+            return text
+        for token in (
+            "<|im_end|>",
+            "<|eot_id|>",
+            "<|end|>",
+        ):
+            text = text.replace(token, "")
+        return text
+
+    def _decode_stream_token(
+        self, tokenizer: TokenizerWrapper, token: Any | None
+    ) -> str:
+        if token is None:
+            return ""
+        try:
+            token_id = int(token)
+        except (TypeError, ValueError):
+            return ""
+
+        try:
+            text = tokenizer.decode([token_id], skip_special_tokens=False)
+        except TypeError:
+            try:
+                text = tokenizer.decode([token_id])
+            except Exception:
+                return ""
+        except Exception:
+            return ""
+
+        if not text:
+            return ""
+
+        text = self._strip_terminal_special_tokens(text)
+        special_tokens = {
+            getattr(tokenizer, "bos_token", None),
+            getattr(tokenizer, "eos_token", None),
+            "<s>",
+            "</s>",
+        }
+        if text in special_tokens:
+            return ""
+        return text
+
     def _build_sampler(self, kwargs: dict[str, Any]) -> Any | None:
         if mlx_lm.sample_utils.make_sampler is None:
             return None
@@ -1653,12 +1812,27 @@ class MLXProvider(BaseProvider):
 
         return mlx_lm.sample_utils.make_sampler(**sampler_params)
 
+    def _ensure_usage_counters(self) -> None:
+        if not isinstance(getattr(self, "usage", None), dict):
+            self.usage = {}
+        self.usage.setdefault("prompt_tokens", 0)
+        self.usage.setdefault("completion_tokens", 0)
+        self.usage.setdefault("total_tokens", 0)
+        self.usage.setdefault("total_requests", 0)
+        self.usage.setdefault("total_images", 0)
+
     def _update_usage(self, response: Any) -> None:
+        self._ensure_usage_counters()
         prompt_tokens = int(getattr(response, "prompt_tokens", 0))
         completion_tokens = int(getattr(response, "generation_tokens", 0))
         self.usage["prompt_tokens"] += prompt_tokens
         self.usage["completion_tokens"] += completion_tokens
         self.usage["total_tokens"] += prompt_tokens + completion_tokens
+        self.track_usage(
+            model=getattr(response, "model", ""),
+            input_tokens=prompt_tokens,
+            output_tokens=completion_tokens,
+        )
 
     def _convert_message(self, message: Message, index: int) -> dict[str, Any]:
         content = self._normalize_content(message.content)
@@ -1942,51 +2116,92 @@ class MLXProvider(BaseProvider):
             raise ValueError("Prompt cannot be empty for image generation.")
 
         try:
+            model_id = params.model.id or ""
+            model_id_lower = model_id.lower()
+            is_z_image = "z-image" in model_id_lower
+            is_flux2 = "flux.2" in model_id_lower or "flux2" in model_id_lower
+            is_qwen = "qwen-image" in model_id_lower
+            is_fibo = "fibo" in model_id_lower
+
             # Use ModelManager lock for thread-safe model loading
-            cache_key = f"{params.model.id}_flux"
+            cache_key = f"{model_id}_{'z-image' if is_z_image else 'flux2' if is_flux2 else 'qwen' if is_qwen else 'fibo' if is_fibo else 'flux'}"
             async with ModelManager.lock_model(cache_key):
-                # Load model using centralized loader
-                model = await load_flux_model(
-                    model_id=params.model.id,
-                    quantize=4,  # Default to 4-bit quantization
-                    task="flux",
-                )
+                if is_z_image:
+                    from mflux.models.common.config import ModelConfig
+                    from mflux.models.z_image.variants import ZImage
+
+                    model = ModelManager.get_model(cache_key)
+                    if model is None:
+                        quantize = 4
+                        model_config = (
+                            ModelConfig.z_image_turbo() if "turbo" in model_id_lower else ModelConfig.z_image()
+                        )
+                        model = ZImage(quantize=quantize, model_config=model_config)
+                        ModelManager.set_model(cache_key, cache_key, model)
+                elif is_flux2:
+                    from mflux.models.common.config import ModelConfig
+                    from mflux.models.flux2.variants import Flux2Klein
+
+                    model = ModelManager.get_model(cache_key)
+                    if model is None:
+                        model = Flux2Klein(quantize=4, model_config=ModelConfig.from_name(model_id))
+                        ModelManager.set_model(cache_key, cache_key, model)
+                elif is_qwen:
+                    from mflux.models.common.config import ModelConfig
+                    from mflux.models.qwen.variants.txt2img.qwen_image import QwenImage
+
+                    model = ModelManager.get_model(cache_key)
+                    if model is None:
+                        model = QwenImage(quantize=8, model_config=ModelConfig.from_name(model_id))
+                        ModelManager.set_model(cache_key, cache_key, model)
+                elif is_fibo:
+                    from mflux.models.common.config import ModelConfig
+                    from mflux.models.fibo.variants.txt2img.fibo import FIBO
+
+                    model = ModelManager.get_model(cache_key)
+                    if model is None:
+                        model = FIBO(quantize=4, model_config=ModelConfig.from_name(model_id))
+                        ModelManager.set_model(cache_key, cache_key, model)
+                else:
+                    model = await load_flux_model(
+                        model_id=model_id,
+                        quantize=4,
+                        task="flux",
+                    )
 
                 loop = asyncio.get_running_loop()
 
                 def _generate() -> PIL.Image.Image:
-                    # Default to 4 steps for text-to-image (FLUX-schnell models are optimized for 4 steps)
-                    default_steps = 4
-                    
-                    # Prepare config
-                    config_kwargs: dict[str, Any] = {
-                        "num_inference_steps": params.num_inference_steps or default_steps,
-                        "height": params.height or 1024,
-                        "width": params.width or 1024,
-                    }
+                    if is_fibo:
+                        import gc
+                        import mlx.core as mx
+                        from mflux.models.fibo_vlm.model.fibo_vlm import FiboVLM
 
-                    if params.guidance_scale is not None:
-                        config_kwargs["guidance"] = params.guidance_scale
+                        try:
+                            json.loads(params.prompt)
+                            prompt_value = params.prompt
+                        except json.JSONDecodeError:
+                            vlm = FiboVLM(quantize=4)
+                            try:
+                                prompt_value = vlm.generate(prompt=params.prompt, seed=params.seed if params.seed is not None else 42)
+                            finally:
+                                del vlm
+                                gc.collect()
+                                mx.clear_cache()
+                    else:
+                        prompt_value = params.prompt
 
-                    # Filter to only allowed config fields
-                    dataclass_fields = getattr(Config, "__dataclass_fields__", None)
-                    if isinstance(dataclass_fields, dict):
-                        allowed = set(dataclass_fields.keys())
-                        config_kwargs = {
-                            key: value
-                            for key, value in config_kwargs.items()
-                            if key in allowed
-                        }
-
-                    config = Config(**config_kwargs)
-
-                    # Generate image
+                    default_steps = 9 if "z-image-turbo" in model_id_lower else 50 if is_z_image else 4 if is_flux2 else 30 if is_qwen else 8 if "fibo-lite" in model_id_lower else 20 if is_fibo else 4
                     generated = model.generate_image(
                         seed=params.seed if params.seed is not None else 0,
-                        prompt=params.prompt,
-                        config=config,
+                        prompt=prompt_value,
+                        num_inference_steps=params.num_inference_steps or default_steps,
+                        height=params.height or 1024,
+                        width=params.width or 1024,
+                        guidance=params.guidance_scale,
+                        negative_prompt=(params.negative_prompt if (is_qwen or is_fibo) else None),
                     )
-                    return generated.image
+                    return generated.image if hasattr(generated, "image") else generated
 
                 # Run generation in executor
                 pil_image = await loop.run_in_executor(None, _generate)
@@ -2025,15 +2240,69 @@ class MLXProvider(BaseProvider):
             RuntimeError: If MLX is not available or generation fails
         """
 
-        if not params.prompt:
+        model_id = params.model.id or ""
+        model_id_lower = model_id.lower()
+        is_z_image = "z-image" in model_id_lower
+        is_flux2 = "flux.2" in model_id_lower or "flux2" in model_id_lower
+        is_seedvr2 = "seedvr2" in model_id_lower
+        is_qwen = "qwen-image" in model_id_lower
+        is_fibo = "fibo" in model_id_lower
+
+        if not params.prompt and not is_seedvr2:
             raise ValueError("Prompt cannot be empty for image-to-image generation.")
 
-        # Load model using centralized loader
-        model = await load_flux_model(
-            model_id=params.model.id,
-            quantize=4,  # Default to 4-bit quantization
-            task="flux",
-        )
+        if is_z_image:
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.z_image.variants import ZImage
+
+            cache_key = f"{model_id}_z-image"
+            model = ModelManager.get_model(cache_key)
+            if model is None:
+                model_config = ModelConfig.z_image_turbo() if "turbo" in model_id_lower else ModelConfig.z_image()
+                model = ZImage(quantize=4, model_config=model_config)
+                ModelManager.set_model(cache_key, cache_key, model)
+        elif is_flux2:
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.flux2.variants import Flux2Klein
+
+            cache_key = f"{model_id}_flux2"
+            model = ModelManager.get_model(cache_key)
+            if model is None:
+                model = Flux2Klein(quantize=4, model_config=ModelConfig.from_name(model_id))
+                ModelManager.set_model(cache_key, cache_key, model)
+        elif is_seedvr2:
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.seedvr2.variants.upscale.seedvr2 import SeedVR2
+
+            cache_key = f"{model_id}_seedvr2"
+            model = ModelManager.get_model(cache_key)
+            if model is None:
+                model = SeedVR2(quantize=4, model_config=ModelConfig.from_name(model_id))
+                ModelManager.set_model(cache_key, cache_key, model)
+        elif is_qwen:
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.qwen.variants.edit.qwen_image_edit import QwenImageEdit
+
+            cache_key = f"{model_id}_qwen-image-edit"
+            model = ModelManager.get_model(cache_key)
+            if model is None:
+                model = QwenImageEdit(quantize=8, model_config=ModelConfig.from_name(model_id))
+                ModelManager.set_model(cache_key, cache_key, model)
+        elif is_fibo:
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.fibo.variants.edit.fibo_edit import FIBOEdit
+
+            cache_key = f"{model_id}_fibo-edit"
+            model = ModelManager.get_model(cache_key)
+            if model is None:
+                model = FIBOEdit(quantize=4, model_config=ModelConfig.from_name(model_id))
+                ModelManager.set_model(cache_key, cache_key, model)
+        else:
+            model = await load_flux_model(
+                model_id=model_id,
+                quantize=4,
+                task="flux",
+            )
 
         # Load input image
         base_image = PIL.Image.open(BytesIO(image))
@@ -2046,7 +2315,7 @@ class MLXProvider(BaseProvider):
             target_width = 16 * ((params.target_width or 1024) // 16)
             target_height = 16 * ((params.target_height or 1024) // 16)
 
-            if working_image.size != (target_width, target_height):
+            if working_image.size != (target_width, target_height) and not is_seedvr2:
                 working_image = working_image.resize(
                     (target_width, target_height), PIL.Image.Resampling.LANCZOS
                 )
@@ -2056,42 +2325,100 @@ class MLXProvider(BaseProvider):
                 working_image.save(image_path)
 
             try:
-                # Auto-detect inference steps based on model name
-                # FLUX-schnell models are optimized for 4 steps
-                model_name_lower = params.model.id.lower()
-                default_steps = 4 if "schnell" in model_name_lower else 8
-                
-                # Prepare config
-                config_kwargs: dict[str, Any] = {
-                    "num_inference_steps": params.num_inference_steps or default_steps,
-                    "height": target_height,
-                    "width": target_width,
-                    "image_strength": params.strength or 0.4,
-                    "image_path": image_path,
-                }
+                if is_seedvr2:
+                    from mflux.utils.scale_factor import ScaleFactor
 
-                if params.guidance_scale is not None:
-                    config_kwargs["guidance"] = params.guidance_scale
+                    resolution_value = getattr(params, "resolution", None)
+                    softness = float(getattr(params, "softness", 0.0) or 0.0)
+                    if resolution_value is None:
+                        if params.target_width and params.target_height:
+                            resolution = min(params.target_width, params.target_height)
+                        elif params.target_width:
+                            resolution = params.target_width
+                        elif params.target_height:
+                            resolution = params.target_height
+                        else:
+                            resolution = 1800
+                    elif isinstance(resolution_value, str) and resolution_value.strip().lower().endswith("x"):
+                        resolution = ScaleFactor.parse(resolution_value)
+                    else:
+                        resolution = int(resolution_value)
 
-                # Filter to only allowed config fields
-                dataclass_fields = getattr(Config, "__dataclass_fields__", None)
-                if isinstance(dataclass_fields, dict):
-                    allowed = set(dataclass_fields.keys())
-                    config_kwargs = {
-                        key: value
-                        for key, value in config_kwargs.items()
-                        if key in allowed
-                    }
+                    generated = model.generate_image(
+                        seed=params.seed if params.seed is not None else 0,
+                        image_path=image_path,
+                        resolution=resolution,
+                        softness=softness,
+                    )
+                    return generated.image if hasattr(generated, "image") else generated
 
-                config = Config(**config_kwargs)
+                if is_qwen:
+                    generated = model.generate_image(
+                        seed=params.seed if params.seed is not None else 0,
+                        prompt=params.prompt,
+                        image_paths=[str(image_path)],
+                        num_inference_steps=params.num_inference_steps or 30,
+                        height=params.target_height,
+                        width=params.target_width,
+                        guidance=params.guidance_scale or 2.5,
+                        negative_prompt=params.negative_prompt,
+                    )
+                    return generated.image if hasattr(generated, "image") else generated
 
-                # Generate image
+                if is_fibo:
+                    import gc
+                    import mlx.core as mx
+                    from PIL import Image as PILImage
+                    from mflux.models.fibo.variants.edit.util import FiboEditUtil
+                    from mflux.models.fibo_vlm.model.fibo_vlm import FiboVLM
+
+                    try:
+                        prompt_value = FiboEditUtil.ensure_edit_instruction(params.prompt)
+                    except (TypeError, ValueError):
+                        vlm = FiboVLM(quantize=4)
+                        try:
+                            prompt_value = vlm.edit(
+                                image=PILImage.open(image_path).convert("RGB"),
+                                edit_instruction=params.prompt,
+                                use_mask=False,
+                                seed=params.seed if params.seed is not None else 42,
+                            )
+                        finally:
+                            del vlm
+                            gc.collect()
+                            mx.clear_cache()
+
+                    generated = model.generate_image(
+                        seed=params.seed if params.seed is not None else 0,
+                        prompt=prompt_value,
+                        image_path=image_path,
+                        num_inference_steps=params.num_inference_steps or 20,
+                        height=params.target_height or target_height,
+                        width=params.target_width or target_width,
+                        guidance=params.guidance_scale or (1.0 if "rmbg" in model_id_lower else 4.0),
+                        negative_prompt=params.negative_prompt,
+                    )
+                    return generated.image if hasattr(generated, "image") else generated
+
+                model_name_lower = model_id_lower
+                if is_z_image:
+                    default_steps = 9 if "turbo" in model_name_lower else 50
+                elif is_flux2:
+                    default_steps = 4 if "base" not in model_name_lower else 50
+                else:
+                    default_steps = 4 if "schnell" in model_name_lower else 8
+
                 generated = model.generate_image(
                     seed=params.seed if params.seed is not None else 0,
                     prompt=params.prompt,
-                    config=config,
+                    num_inference_steps=params.num_inference_steps or default_steps,
+                    height=target_height,
+                    width=target_width,
+                    guidance=params.guidance_scale,
+                    image_strength=params.strength or 0.4,
+                    image_path=image_path,
                 )
-                return generated.image
+                return generated.image if hasattr(generated, "image") else generated
             finally:
                 # Clean up temp file
                 try:
@@ -2107,8 +2434,10 @@ class MLXProvider(BaseProvider):
         pil_image.save(img_buffer, format="PNG")
         image_bytes = img_buffer.getvalue()
 
+        self._ensure_usage_counters()
         self.usage["total_requests"] += 1
         self.usage["total_images"] += 1
+        self.track_usage(model=model, image_count=1)
 
         return image_bytes
 

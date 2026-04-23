@@ -22,11 +22,9 @@ if TYPE_CHECKING:
     import numpy as np
     import PIL.Image
     from mflux.callbacks.callback import InLoopCallback
-    from mflux.config.config import Config
-    from mflux.config.model_config import ModelConfig
-    from mflux.generate import Flux1
-    from mflux.post_processing.image_util import ImageUtil
-    from mflux.ui.box_values import BoxValues
+    from mflux.models.common.config import Config, ModelConfig
+    from mflux.models.flux.variants.txt2img.flux import Flux1
+    from mflux.utils.image_util import ImageUtil
 
 log = get_logger(__name__)
 
@@ -123,7 +121,7 @@ class MFlux(BaseMFluxNode):
     )
     model: HFFlux = Field(
         default=HFFlux(
-            repo_id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit",
+            repo_id="black-forest-labs/FLUX.1-schnell",
         ),
         description="MFLUX model variant to load",
     )
@@ -181,7 +179,7 @@ class MFlux(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1":
-            from mflux.generate import Flux1
+            from mflux.models.flux.variants.txt2img.flux import Flux1
 
             log.info(
                 "Loading MFlux model %s (quantize=%s)",
@@ -214,25 +212,7 @@ class MFlux(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
-            from mflux.generate import Flux1
-
-            config_kwargs: dict[str, Any] = {
-                "num_inference_steps": self.steps,
-                "height": self.height,
-                "width": self.width,
-            }
-            if self.guidance is not None:
-                config_kwargs["guidance"] = self.guidance
-
-            dataclass_fields = getattr(Config, "__dataclass_fields__", None)
-            if isinstance(dataclass_fields, dict):
-                allowed = set(dataclass_fields.keys())
-                config_kwargs = {
-                    key: value for key, value in config_kwargs.items() if key in allowed
-                }
-
-            config = Config(**config_kwargs)
+            from mflux.models.flux.variants.txt2img.flux import Flux1
 
             assert self._flux_model is not None
             assert isinstance(self._flux_model, Flux1)
@@ -240,7 +220,10 @@ class MFlux(BaseMFluxNode):
             generated_image = self._flux_model.generate_image(
                 seed=self.seed,
                 prompt=self.prompt,
-                config=config,
+                num_inference_steps=self.steps,
+                height=self.height,
+                width=self.width,
+                guidance=self.guidance,
             )
             return generated_image.image
 
@@ -253,9 +236,7 @@ class MFlux(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HFFlux]:
         return [
-            HFFlux(repo_id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit"),
-            HFFlux(repo_id="dhairyashil/FLUX.1-dev-mflux-4bit"),
-            HFFlux(repo_id="filipstrand/FLUX.1-Krea-dev-mflux-4bit"),
-            HFFlux(repo_id="akx/FLUX.1-Kontext-dev-mflux-4bit"),
-            HFFlux(repo_id="filipstrand/Qwen-Image-mflux-6bit"),
+            HFFlux(repo_id="black-forest-labs/FLUX.1-schnell"),
+            HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
+            HFFlux(repo_id="black-forest-labs/FLUX.1-Krea-dev"),
         ]

@@ -4,13 +4,12 @@ from typing import AsyncGenerator, ClassVar, TypedDict
 from pydantic import Field
 
 from nodetool.metadata.types import HFTextGeneration, LanguageModel, Message, Provider, ToolCall
-from nodetool.providers import get_provider
-from nodetool.types.job import JobUpdate
+from nodetool.workflows.types import JobUpdate
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
 
-DEFAULT_MLX_MODEL_ID = "mlx-community/Llama-3.2-3B-Instruct-4bit"
+DEFAULT_MLX_MODEL_ID = "mlx-community/Qwen3.5-0.8B-OptiQ-4bit"
 
 
 class TextGeneration(BaseNode):
@@ -30,7 +29,7 @@ class TextGeneration(BaseNode):
         default=LanguageModel(
             provider=Provider.MLX,
             id=DEFAULT_MLX_MODEL_ID,
-            name="Llama-3.2-3B Instruct (4-bit)",
+            name="Qwen3.5 0.8B OptiQ (4-bit)",
         ),
         title="Model",
         description="MLX language model to use for generation. The model must be available in the local Hugging Face cache.",
@@ -146,121 +145,35 @@ class TextGeneration(BaseNode):
     @classmethod
     def get_recommended_models(cls):
         return [
-            # Existing Llama model
             HFTextGeneration(
-                repo_id="mlx-community/Llama-3.2-3B-Instruct-4bit",
-            ),
-            # Gemma 3 1B models - lightweight and fast
-            HFTextGeneration(
-                repo_id="mlx-community/gemma-3-1b-it-8bit",
-            ),
-            # Gemma 3 4B models - balanced size/performance
-            HFTextGeneration(
-                repo_id="mlx-community/gemma-3-4b-it-4bit",
+                repo_id="mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/gemma-3-4b-it-8bit",
-            ),
-            # Gemma 3 12B models - high quality
-            HFTextGeneration(
-                repo_id="mlx-community/gemma-3-12b-it-4bit",
+                repo_id="mlx-community/Qwen3.5-2B-OptiQ-4bit",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/gemma-3-12b-it-8bit",
-            ),
-            # Gemma 3 27B models - maximum quality
-            HFTextGeneration(
-                repo_id="mlx-community/gemma-3-27b-it-4bit",
+                repo_id="mlx-community/Qwen3.5-4B-OptiQ-4bit",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/gemma-3-27b-it-8bit",
-            ),
-            # Granite 4.0 models - IBM's high-quality multilingual models
-            # Tiny/Micro models (1B) - lightweight and fast
-            HFTextGeneration(
-                repo_id="mlx-community/Granite-4.0-H-Tiny-4bit-DWQ",
+                repo_id="mlx-community/Qwen3.5-27B-4bit-DWQ",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/granite-4.0-h-micro-8bit",
+                repo_id="mlx-community/Qwen3.5-REAP-97B-A10B-4bit",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/granite-4.0-tiny-preview-4bit",
+                repo_id="mlx-community/Qwen3.5-397B-A17B-nvfp4",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/granite-4.0-micro-8bit",
-            ),
-            # Medium models (7B) - balanced size/performance
-            HFTextGeneration(
-                repo_id="mlx-community/granite-4.0-h-tiny-8bit",
+                repo_id="mlx-community/Qwen3.5-397B-A17B-8bit-gs32",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/granite-4.0-h-tiny-6bit-MLX",
-            ),
-            # Large models (32B) - high quality
-            HFTextGeneration(
-                repo_id="mlx-community/granite-4.0-h-small-4bit",
+                repo_id="mlx-community/gemma-4-e4b-it-OptiQ-4bit",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/granite-4.0-h-small-8bit",
-            ),
-            # Qwen3 models - Alibaba's latest multilingual models
-            # Ultra-small models (0.6B) - extremely lightweight
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-0.6B-4bit",
+                repo_id="mlx-community/gemma-4-e2b-it-OptiQ-4bit",
             ),
             HFTextGeneration(
-                repo_id="mlx-community/Qwen3-0.6B-8bit",
-            ),
-            # Small models (1.7B) - good balance of speed and quality
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-1.7B-4bit",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-1.7B-8bit",
-            ),
-            # Medium-small models (4B) - versatile performance
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-4B-4bit",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-4B-8bit",
-            ),
-            # Medium models (8B) - high quality with good speed
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-8B-4bit",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-8B-6bit",
-            ),
-            # Large models (30B) - maximum quality and capability
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-30B-A3B-4bit",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/Qwen3-30B-A3B-8bit",
-            ),
-            # LFM2-8B-A1B-MoE models - Best-in-class Mixture of Experts, optimized for Apple Silicon
-            # Optimized for smaller devices (sub 16GB M1/M2/M3/M4)
-            HFTextGeneration(
-                repo_id="mlx-community/LFM2-8B-A1B-3bit-MLX",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/LFM2-8B-A1B-4bit",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/LFM2-8B-A1B-5bit",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/LFM2-8B-A1B-6bit-MLX",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/LFM2-8B-A1B-8bit-MLX",
-            ),
-            HFTextGeneration(
-                repo_id="mlx-community/LFM2-8B-A1B-fp16",
-            ),
-            HFTextGeneration(
-                repo_id="nightmedia/LFM2-8B-A1B-qx86-hi-mlx",
+                repo_id="mlx-community/Gemma4-E2B-IT-Text-int4",
             ),
         ]
 
@@ -274,7 +187,7 @@ class TextGeneration(BaseNode):
         self._ensure_supported_platform()
         model_id = self._model_id()
         messages = self._build_messages()
-        provider = get_provider(self._provider)
+        provider = await context.get_provider(self._provider)
 
         context.post_message(
             JobUpdate(
@@ -298,15 +211,7 @@ class TextGeneration(BaseNode):
             if isinstance(item, Chunk):
                 if item.content:
                     full_text += item.content
-                    yield {
-                        "text": None,
-                        "chunk": Chunk(
-                            content=item.content,
-                            done=False,
-                            content_type=item.content_type or "text",
-                            content_metadata=item.content_metadata or {},
-                        ),
-                    }
+                yield {"text": None, "chunk": item}
 
                 if item.done:
                     break

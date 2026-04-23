@@ -7,17 +7,17 @@ with proper caching and availability checks.
 
 import asyncio
 from typing import Any
-from mflux.generate import Flux1
-from mflux.generate_controlnet import Flux1Controlnet
-from nodetool.ml.core.model_manager import ModelManager
-from nodetool.integrations.huggingface.hf_cache import has_cached_files
-from nodetool.config.logging_config import get_logger
-from mflux.config.model_config import ModelConfig
-from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
-from mflux.models.flux.variants.depth.flux_depth import Flux1Depth
+
+from mflux.models.common.config import ModelConfig
 from mflux.models.flux.variants.controlnet.flux_controlnet import Flux1Controlnet
-from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
+from mflux.models.flux.variants.depth.flux_depth import Flux1Depth
+from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
 from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
+from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
+from mflux.models.flux.variants.txt2img.flux import Flux1
+from nodetool.config.logging_config import get_logger
+from nodetool.integrations.huggingface.hf_cache import has_cached_files
+from nodetool.ml.core.model_manager import ModelManager
 
 log = get_logger(__name__)
 

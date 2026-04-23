@@ -12,12 +12,12 @@ requires-python = ">=3.11"
 dependencies = [
     "nodetool-core==0.6.3-rc.47",
     "mlx-whisper>=0.4.3",
-    "mlx-audio>=0.2.5",
-    "mflux>=0.11.1",
+    "mlx-audio>=0.4.2",
+    "mflux>=0.17.5",
     "huggingface-hub>=0.24.6",
     "numpy>=1.26",
-    "mlx-lm>=0.17.0",
-    "mlx-vlm>=0.1.0",
+    "mlx-lm>=0.31.1",
+    "mlx-vlm>=0.4.4",
     # Pin numba to Python 3.11+ compatible version to override mlx-whisper's old dependency
     "numba>=0.62.1",
 ]
@@ -43,3 +43,4 @@ include = [
     "src/nodetool/package_metadata/*.json",
     "src/nodetool/assets/**/*.jpg",
 ]
+artifacts = ["package_metadata/nodetool-mlx.json"]

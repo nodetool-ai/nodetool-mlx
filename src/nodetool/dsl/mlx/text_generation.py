@@ -37,8 +37,8 @@ class TextGeneration(
         default=types.LanguageModel(
             type="language_model",
             provider=nodetool.metadata.types.Provider.MLX,
-            id="mlx-community/Llama-3.2-3B-Instruct-4bit",
-            name="Llama-3.2-3B Instruct (4-bit)",
+            id="mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
+            name="Qwen3.5 0.8B OptiQ (4-bit)",
         ),
         description="MLX language model to use for generation. The model must be available in the local Hugging Face cache.",
     )

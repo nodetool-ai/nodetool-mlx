@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import gc
+import json
 import random
 import sys
 import tempfile
@@ -38,9 +40,12 @@ if TYPE_CHECKING:
     from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
     from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
     from mflux.models.flux.variants.in_context.flux_in_context_dev import Flux1InContextDev
+    from mflux.models.flux2.variants import Flux2Klein, Flux2KleinEdit
+    from mflux.models.fibo.variants.txt2img.fibo import FIBO
+    from mflux.models.fibo.variants.edit.fibo_edit import FIBOEdit
     from mflux.models.qwen.variants.txt2img.qwen_image import QwenImage
     from mflux.models.qwen.variants.edit.qwen_image_edit import QwenImageEdit
-    from mflux.models.z_image.variants.turbo.z_image_turbo import ZImageTurbo
+    from mflux.models.z_image.variants import ZImageTurbo
     from mflux.models.seedvr2.variants.upscale.seedvr2 import SeedVR2
     from mflux.utils.image_util import ImageUtil
     from mflux.ui.box_values import BoxValues
@@ -82,7 +87,7 @@ class MFluxImageToImage(BaseMFluxNode):
     )
     model: HFFlux = Field(
         default=HFFlux(
-            repo_id="dhairyashil/FLUX.1-dev-mflux-4bit",
+            repo_id="black-forest-labs/FLUX.1-dev",
             path=None,
         ),
         description="MFLUX model variant to load for image-to-image generation.",
@@ -143,7 +148,7 @@ class MFluxImageToImage(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1":
-            from mflux.generate import Flux1
+            from mflux.models.flux.variants.txt2img.flux import Flux1
 
             log.info(
                 "Loading MFlux image-to-image model %s (quantize=%s)",
@@ -179,7 +184,6 @@ class MFluxImageToImage(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
 
             working_image = base_image.convert("RGB")
             target_width = 16 * (self.width // 16)
@@ -195,32 +199,16 @@ class MFluxImageToImage(BaseMFluxNode):
                 working_image.save(image_path)
 
             try:
-                config_kwargs: dict[str, Any] = {
-                    "num_inference_steps": self.steps,
-                    "height": target_height,
-                    "width": target_width,
-                    "image_strength": float(self.image_strength),
-                    "image_path": image_path,
-                }
-                if self.guidance is not None:
-                    config_kwargs["guidance"] = self.guidance
-
-                dataclass_fields = getattr(Config, "__dataclass_fields__", None)
-                if isinstance(dataclass_fields, dict):
-                    allowed = set(dataclass_fields.keys())
-                    config_kwargs = {
-                        key: value
-                        for key, value in config_kwargs.items()
-                        if key in allowed
-                    }
-
-                config = Config(**config_kwargs)
-
                 assert self._flux_model is not None
                 generated_image = self._flux_model.generate_image(
                     seed=self.seed,
                     prompt=self.prompt,
-                    config=config,
+                    num_inference_steps=self.steps,
+                    height=target_height,
+                    width=target_width,
+                    guidance=self.guidance,
+                    image_strength=float(self.image_strength),
+                    image_path=image_path,
                 )
                 return generated_image.image
             finally:
@@ -236,9 +224,9 @@ class MFluxImageToImage(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HFFlux]:
         return [
-            HFFlux(repo_id="dhairyashil/FLUX.1-dev-mflux-4bit"),
-            HFFlux(repo_id="dhairyashil/FLUX.1-schnell-mflux-v0.6.2-4bit"),
-            HFFlux(repo_id="filipstrand/FLUX.1-Krea-dev-mflux-4bit"),
+            HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
+            HFFlux(repo_id="black-forest-labs/FLUX.1-schnell"),
+            HFFlux(repo_id="black-forest-labs/FLUX.1-Krea-dev"),
         ]
 
 
@@ -263,7 +251,7 @@ class MFluxControlNet(BaseMFluxNode):
     )
     model: HFFlux = Field(
         default=HFFlux(
-            repo_id="dhairyashil/FLUX.1-dev-mflux-4bit",
+            repo_id="black-forest-labs/FLUX.1-dev",
             path=None,
         ),
         description="Base Flux model to load for conditioned generation.",
@@ -328,8 +316,8 @@ class MFluxControlNet(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Controlnet":
-            from mflux.config.model_config import ModelConfig
-            from mflux.generate_controlnet import Flux1Controlnet
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.flux.variants.controlnet.flux_controlnet import Flux1Controlnet
 
             log.info(
                 "Loading MFlux ControlNet model %s with controlnet %s (quantize=%s)",
@@ -370,18 +358,7 @@ class MFluxControlNet(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
-
-            config_kwargs: dict[str, Any] = {
-                "num_inference_steps": self.steps,
-                "height": self.height,
-                "width": self.width,
-                "controlnet_strength": float(self.controlnet_strength),
-            }
-            if self.guidance is not None:
-                config_kwargs["guidance"] = self.guidance
-
-            config = Config(**config_kwargs)
+            
 
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                 control_path = Path(tmp.name)
@@ -393,7 +370,11 @@ class MFluxControlNet(BaseMFluxNode):
                     seed=self.seed,
                     prompt=self.prompt,
                     controlnet_image_path=str(control_path),
-                    config=config,
+                    num_inference_steps=self.steps,
+                    height=self.height,
+                    width=self.width,
+                    guidance=self.guidance,
+                    controlnet_strength=float(self.controlnet_strength),
                 )
             finally:
                 with contextlib.suppress(FileNotFoundError):
@@ -411,7 +392,7 @@ class MFluxControlNet(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HFFlux(repo_id="dhairyashil/FLUX.1-dev-mflux-4bit"),
+            HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
             HFControlNetFlux(repo_id="InstantX/FLUX.1-dev-Controlnet-Canny"),
             HFControlNetFlux(repo_id="jasperai/Flux.1-dev-Controlnet-Upscaler"),
         ]
@@ -497,7 +478,7 @@ class MFluxInpaint(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Fill":
-            from mflux.generate_fill import Flux1Fill
+            from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
 
             log.info(
                 "Loading MFlux Fill model %s (quantize=%s)",
@@ -531,8 +512,7 @@ class MFluxInpaint(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
-
+            
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
@@ -557,22 +537,16 @@ class MFluxInpaint(BaseMFluxNode):
                 working_mask.save(mask_path)
 
             try:
-                config_kwargs: dict[str, Any] = {
-                    "num_inference_steps": self.steps,
-                    "height": target_height,
-                    "width": target_width,
-                    "guidance": self.guidance,
-                    "image_path": image_path,
-                    "masked_image_path": mask_path,
-                }
-
-                config = Config(**config_kwargs)
-
                 assert self._flux_model is not None
                 generated_image = self._flux_model.generate_image(
                     seed=self.seed,
                     prompt=self.prompt,
-                    config=config,
+                    num_inference_steps=self.steps,
+                    height=target_height,
+                    width=target_width,
+                    guidance=self.guidance,
+                    image_path=image_path,
+                    masked_image_path=mask_path,
                 )
                 return generated_image.image
             finally:
@@ -679,7 +653,7 @@ class MFluxOutpaint(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Fill":
-            from mflux.generate_fill import Flux1Fill
+            from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
 
             log.info(
                 "Loading MFlux Fill model %s (quantize=%s)",
@@ -714,8 +688,7 @@ class MFluxOutpaint(BaseMFluxNode):
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
             import numpy as np
-            from mflux.config.config import Config
-            from mflux.post_processing.image_util import ImageUtil
+            from mflux.utils.image_util import ImageUtil
             from mflux.ui.box_values import BoxValues, parse_box_value
 
             working_image = base_image.convert("RGB")
@@ -778,22 +751,16 @@ class MFluxOutpaint(BaseMFluxNode):
                 mask_candidate.save(mask_path)
 
             try:
-                config_kwargs: dict[str, Any] = {
-                    "num_inference_steps": self.steps,
-                    "height": target_height,
-                    "width": target_width,
-                    "guidance": self.guidance,
-                    "image_path": image_path,
-                    "masked_image_path": mask_path,
-                }
-
-                config = Config(**config_kwargs)
-
                 assert self._flux_model is not None
                 generated_image = self._flux_model.generate_image(
                     seed=self.seed,
                     prompt=self.prompt,
-                    config=config,
+                    num_inference_steps=self.steps,
+                    height=target_height,
+                    width=target_width,
+                    guidance=self.guidance,
+                    image_path=image_path,
+                    masked_image_path=mask_path,
                 )
                 return generated_image.image
             finally:
@@ -897,7 +864,7 @@ class MFluxDepth(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Depth":
-            from mflux.generate_depth import Flux1Depth
+            from mflux.models.flux.variants.depth.flux_depth import Flux1Depth
 
             log.info(
                 "Loading MFlux depth model %s (quantize=%s)",
@@ -940,8 +907,7 @@ class MFluxDepth(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
-
+            
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
@@ -949,14 +915,8 @@ class MFluxDepth(BaseMFluxNode):
             working_depth_path: Path | None = None
 
             try:
-                config_kwargs: dict[str, Any] = {
-                    "num_inference_steps": self.steps,
-                    "height": target_height,
-                    "width": target_width,
-                    "guidance": self.guidance,
-                    "image_path": None,
-                    "depth_image_path": None,
-                }
+                image_path_arg = None
+                depth_image_path_arg = None
 
                 if base_image is not None:
                     working_image = base_image.convert("RGB")
@@ -969,7 +929,7 @@ class MFluxDepth(BaseMFluxNode):
                     ) as tmp:
                         working_image_path = Path(tmp.name)
                         working_image.save(working_image_path)
-                    config_kwargs["image_path"] = working_image_path
+                    image_path_arg = working_image_path
 
                 if depth_image is not None:
                     working_depth = depth_image.convert("L")
@@ -982,15 +942,18 @@ class MFluxDepth(BaseMFluxNode):
                     ) as tmp:
                         working_depth_path = Path(tmp.name)
                         working_depth.save(working_depth_path)
-                    config_kwargs["depth_image_path"] = working_depth_path
-
-                config = Config(**config_kwargs)
+                    depth_image_path_arg = working_depth_path
 
                 assert self._flux_model is not None
                 generated = self._flux_model.generate_image(
                     seed=self.seed,
                     prompt=self.prompt,
-                    config=config,
+                    num_inference_steps=self.steps,
+                    height=target_height,
+                    width=target_width,
+                    guidance=self.guidance,
+                    image_path=image_path_arg,
+                    depth_image_path=depth_image_path_arg,
                 )
                 return generated.image
             finally:
@@ -1098,8 +1061,8 @@ class MFluxRedux(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Redux":
-            from mflux.config.model_config import ModelConfig
-            from mflux.generate_redux import Flux1Redux
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
 
             log.info(
                 "Loading MFlux Redux model %s (quantize=%s)",
@@ -1137,8 +1100,7 @@ class MFluxRedux(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
         try:
             import PIL.Image
-            from mflux.config.config import Config
-
+            
             temp_paths: list[Path] = []
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
@@ -1170,13 +1132,16 @@ class MFluxRedux(BaseMFluxNode):
                     "redux_image_strengths": strength,
                 }
 
-                config = Config(**config_kwargs)
-
                 assert self._flux_model is not None
                 generated = self._flux_model.generate_image(
                     seed=self.seed,
                     prompt=self.prompt,
-                    config=config,
+                    num_inference_steps=self.steps,
+                    height=target_height,
+                    width=target_width,
+                    guidance=self.guidance,
+                    image_path=image_path_arg,
+                    depth_image_path=depth_image_path_arg,
                 )
                 return generated.image
 
@@ -1273,7 +1238,7 @@ class MFluxKontext(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Kontext":
-            from mflux.generate_kontext import Flux1Kontext
+            from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
 
             log.info(
                 "Loading MFlux Kontext model %s (quantize=%s)",
@@ -1308,8 +1273,7 @@ class MFluxKontext(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            from mflux.config.config import Config
-
+            
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
@@ -1331,13 +1295,16 @@ class MFluxKontext(BaseMFluxNode):
                     "image_path": image_path,
                 }
 
-                config = Config(**config_kwargs)
-
                 assert self._flux_model is not None
                 generated = self._flux_model.generate_image(
                     seed=self.seed,
                     prompt=self.prompt,
-                    config=config,
+                    num_inference_steps=self.steps,
+                    height=target_height,
+                    width=target_width,
+                    guidance=self.guidance,
+                    image_path=image_path_arg,
+                    depth_image_path=depth_image_path_arg,
                 )
                 return generated.image
             finally:
@@ -1355,6 +1322,672 @@ class MFluxKontext(BaseMFluxNode):
     def get_recommended_models(cls) -> list[HFFluxKontext]:
         return [
             HFFluxKontext(repo_id="black-forest-labs/FLUX.1-Kontext-dev"),
+        ]
+
+
+class MFluxFlux2(BaseMFluxNode):
+    """
+    Generate images using the FLUX.2 Klein models via MFLUX.
+    mlx, flux2, text-to-image, apple-silicon
+
+    Use cases:
+    - Fast FLUX.2 generation with distilled 4B/9B variants
+    - Higher-quality base FLUX.2 generation with more steps
+    - LoRA-enabled FLUX.2 generation on Apple Silicon
+    """
+
+    prompt: str = Field(
+        default="Photorealistic close-up of a hummingbird hovering near red flowers",
+        description="Text prompt describing the image to generate.",
+    )
+    model: HuggingFaceModel = Field(
+        default=HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-4B"),
+        description="FLUX.2 Klein model to load.",
+    )
+    quantize: QuantizationLevel | None = Field(
+        default=QuantizationLevel.BITS_4,
+        description="Quantization level for model weights.",
+    )
+    steps: int = Field(
+        default=4,
+        ge=1,
+        le=100,
+        description="Number of denoising steps. Distilled FLUX.2 typically uses 4 steps; base variants use more.",
+    )
+    guidance: float = Field(
+        default=1.0,
+        ge=0.0,
+        description="Guidance scale. Distilled FLUX.2 variants typically use 1.0.",
+    )
+    height: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Height of the generated image in pixels.",
+    )
+    width: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Width of the generated image in pixels.",
+    )
+    seed: int = Field(
+        default=0,
+        description="Seed for deterministic generation. Leave as 0 for random.",
+    )
+    lora_path: str | None = Field(
+        default=None,
+        description="Optional path or HuggingFace repo ID for a LoRA adapter.",
+    )
+    lora_scale: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=2.0,
+        description="Scale factor for the LoRA adapter.",
+    )
+
+    _flux2_model: Any | None = None
+
+    @classmethod
+    def get_title(cls):
+        return "MFlux FLUX.2"
+
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux FLUX.2 generation requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        lora_key = self.lora_path or "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_flux2"
+
+        model = ModelManager.get_model(cache_key)
+        if model is not None:
+            self._flux2_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+
+        def _load_model() -> "Flux2Klein":
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.flux2.variants import Flux2Klein
+
+            log.info(
+                "Loading MFlux FLUX.2 model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            lora_paths = [self.lora_path] if self.lora_path else None
+            lora_scales = [self.lora_scale] if self.lora_path else None
+            model = Flux2Klein(
+                quantize=quantize_value,
+                lora_paths=lora_paths,
+                lora_scales=lora_scales,
+                model_config=ModelConfig.from_name(self.model.repo_id),
+            )
+            ModelManager.set_model(self.id, cache_key, model)
+            return model
+
+        self._flux2_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
+        self._ensure_supported_platform(
+            "MFlux FLUX.2 generation requires macOS (Apple Silicon / MLX)."
+        )
+        self._require_prompt(
+            self.prompt, "Prompt cannot be empty for FLUX.2 generation."
+        )
+        self._ensure_seed()
+
+        assert self._flux2_model is not None
+
+        loop = asyncio.get_running_loop()
+        total_steps = self.steps
+        progress_callback = self._register_progress_callback(context, total_steps)
+
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
+
+            assert self._flux2_model is not None
+            generated_image = self._flux2_model.generate_image(
+                seed=self.seed,
+                prompt=self.prompt,
+                num_inference_steps=self.steps,
+                height=self.height,
+                width=self.width,
+                guidance=self.guidance,
+            )
+            return generated_image.image
+
+        try:
+            pil_image = await loop.run_in_executor(None, _generate)
+        finally:
+            self._remove_progress_callback(progress_callback)
+
+        return await context.image_from_pil(pil_image)
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [
+            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-4B"),
+            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-9B"),
+            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-base-4B"),
+            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-base-9B"),
+        ]
+
+
+class MFluxFlux2Edit(BaseMFluxNode):
+    """
+    Edit images using FLUX.2 Klein image-conditioned editing.
+    mlx, flux2, image-editing, apple-silicon
+
+    Use cases:
+    - Edit images with one or more reference images using FLUX.2
+    - Fast distilled FLUX.2 editing on Apple Silicon
+    - LoRA-enabled FLUX.2 edit workflows
+    """
+
+    prompt: str = Field(
+        default="Make the subject wear eyeglasses",
+        description="Text instruction describing the desired edit.",
+    )
+    images: list[ImageRef] = Field(
+        default_factory=list,
+        description="Reference images for the edit. One or more images may be provided.",
+    )
+    model: HuggingFaceModel = Field(
+        default=HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-4B"),
+        description="FLUX.2 Klein model to load for editing.",
+    )
+    quantize: QuantizationLevel | None = Field(
+        default=QuantizationLevel.BITS_4,
+        description="Quantization level for model weights.",
+    )
+    steps: int = Field(
+        default=4,
+        ge=1,
+        le=100,
+        description="Number of denoising steps.",
+    )
+    guidance: float = Field(
+        default=1.0,
+        ge=0.0,
+        description="Guidance scale for the edit generation.",
+    )
+    height: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Height of the generated image in pixels.",
+    )
+    width: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Width of the generated image in pixels.",
+    )
+    seed: int = Field(
+        default=0,
+        description="Seed for deterministic generation. Leave as 0 for random.",
+    )
+    lora_path: str | None = Field(
+        default=None,
+        description="Optional path or HuggingFace repo ID for a LoRA adapter.",
+    )
+    lora_scale: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=2.0,
+        description="Scale factor for the LoRA adapter.",
+    )
+
+    _flux2_model: Any | None = None
+
+    @classmethod
+    def get_title(cls):
+        return "MFlux FLUX.2 Edit"
+
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux FLUX.2 edit requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        lora_key = self.lora_path or "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_flux2-edit"
+
+        model = ModelManager.get_model(cache_key)
+        if model is not None:
+            self._flux2_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+
+        def _load_model() -> "Flux2KleinEdit":
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.flux2.variants import Flux2KleinEdit
+
+            log.info(
+                "Loading MFlux FLUX.2 edit model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            lora_paths = [self.lora_path] if self.lora_path else None
+            lora_scales = [self.lora_scale] if self.lora_path else None
+            model = Flux2KleinEdit(
+                quantize=quantize_value,
+                lora_paths=lora_paths,
+                lora_scales=lora_scales,
+                model_config=ModelConfig.from_name(self.model.repo_id),
+            )
+            ModelManager.set_model(self.id, cache_key, model)
+            return model
+
+        self._flux2_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
+        self._ensure_supported_platform(
+            "MFlux FLUX.2 edit requires macOS (Apple Silicon / MLX)."
+        )
+        self._require_prompt(
+            self.prompt, "Prompt cannot be empty for FLUX.2 edit generation."
+        )
+        if not self.images:
+            raise ValueError("At least one reference image is required for FLUX.2 edit.")
+
+        self._ensure_seed()
+        assert self._flux2_model is not None
+
+        loop = asyncio.get_running_loop()
+        total_steps = self.steps
+        progress_callback = self._register_progress_callback(context, total_steps)
+
+        temp_paths: list[Path] = []
+        for img_ref in self.images:
+            pil_img = await context.image_to_pil(img_ref)
+            tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+            temp_path = Path(tmp.name)
+            tmp.close()
+            pil_img.convert("RGB").save(temp_path)
+            temp_paths.append(temp_path)
+
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
+
+            assert self._flux2_model is not None
+            image_paths = [str(p) for p in temp_paths]
+            generated_image = self._flux2_model.generate_image(
+                seed=self.seed,
+                prompt=self.prompt,
+                image_paths=image_paths,
+                num_inference_steps=self.steps,
+                height=self.height,
+                width=self.width,
+                guidance=self.guidance,
+            )
+            return generated_image.image
+
+        try:
+            pil_image = await loop.run_in_executor(None, _generate)
+        finally:
+            self._remove_progress_callback(progress_callback)
+            for path in temp_paths:
+                with contextlib.suppress(FileNotFoundError):
+                    path.unlink()
+
+        return await context.image_from_pil(pil_image)
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [
+            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-4B"),
+            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-9B"),
+        ]
+
+
+class MFluxFIBO(BaseMFluxNode):
+    """
+    Generate images using Bria FIBO via MFLUX.
+    mlx, fibo, text-to-image, apple-silicon
+
+    Use cases:
+    - High-control image generation from structured JSON prompts
+    - Plain-text generation via FIBO's VLM prompt expansion
+    - Fast few-step generation with FIBO Lite
+    """
+
+    prompt: str = Field(
+        default="A tiny watercolor robot in a garden",
+        description="Prompt text or a structured JSON prompt string for FIBO.",
+    )
+    negative_prompt: str = Field(
+        default="",
+        description="Negative prompt. Typically unnecessary for FIBO Lite.",
+    )
+    model: HuggingFaceModel = Field(
+        default=HuggingFaceModel(repo_id="briaai/FIBO"),
+        description="FIBO model to load.",
+    )
+    quantize: QuantizationLevel | None = Field(
+        default=QuantizationLevel.BITS_4,
+        description="Quantization level for model weights.",
+    )
+    steps: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Number of denoising steps. FIBO Lite typically uses 8; base FIBO uses more.",
+    )
+    guidance: float = Field(
+        default=4.0,
+        ge=0.0,
+        description="Guidance scale. FIBO Lite typically uses 1.0.",
+    )
+    height: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Height of the generated image in pixels.",
+    )
+    width: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Width of the generated image in pixels.",
+    )
+    seed: int = Field(
+        default=0,
+        description="Seed for deterministic generation. Leave as 0 for random.",
+    )
+    lora_paths: list[str] = Field(
+        default_factory=list,
+        description="Optional LoRA adapter paths or HuggingFace repo IDs.",
+    )
+    lora_scales: list[float] = Field(
+        default_factory=list,
+        description="Scale values for the LoRA adapters. Must align with lora_paths when provided.",
+    )
+
+    _fibo_model: Any | None = None
+
+    @classmethod
+    def get_title(cls):
+        return "MFlux FIBO"
+
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux FIBO generation requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        lora_key = ",".join(self.lora_paths) if self.lora_paths else "none"
+        lora_scale_key = ",".join(str(scale) for scale in self.lora_scales) if self.lora_scales else "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo"
+
+        model = ModelManager.get_model(cache_key)
+        if model is not None:
+            self._fibo_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+
+        def _load_model() -> "FIBO":
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.fibo.variants.txt2img.fibo import FIBO
+
+            log.info(
+                "Loading MFlux FIBO model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            model = FIBO(
+                quantize=quantize_value,
+                lora_paths=self.lora_paths or None,
+                lora_scales=self.lora_scales or None,
+                model_config=ModelConfig.from_name(self.model.repo_id),
+            )
+            ModelManager.set_model(self.id, cache_key, model)
+            return model
+
+        self._fibo_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
+        self._ensure_supported_platform(
+            "MFlux FIBO generation requires macOS (Apple Silicon / MLX)."
+        )
+        self._require_prompt(self.prompt, "Prompt cannot be empty for FIBO generation.")
+        self._ensure_seed()
+
+        assert self._fibo_model is not None
+
+        loop = asyncio.get_running_loop()
+        total_steps = self.steps
+        progress_callback = self._register_progress_callback(context, total_steps)
+
+        def _generate() -> "PIL.Image.Image":
+            import mlx.core as mx
+            import PIL.Image
+            from mflux.models.fibo_vlm.model.fibo_vlm import FiboVLM
+
+            assert self._fibo_model is not None
+            try:
+                json.loads(self.prompt)
+                prompt_value = self.prompt
+            except json.JSONDecodeError:
+                vlm = FiboVLM(quantize=int(self.quantize) if self.quantize is not None else None)
+                try:
+                    prompt_value = vlm.generate(prompt=self.prompt, seed=self.seed)
+                finally:
+                    del vlm
+                    gc.collect()
+                    mx.clear_cache()
+
+            generated_image = self._fibo_model.generate_image(
+                seed=self.seed,
+                prompt=prompt_value,
+                num_inference_steps=self.steps,
+                height=self.height,
+                width=self.width,
+                guidance=self.guidance,
+                negative_prompt=self.negative_prompt if self.negative_prompt else None,
+            )
+            return generated_image.image
+
+        try:
+            pil_image = await loop.run_in_executor(None, _generate)
+        finally:
+            self._remove_progress_callback(progress_callback)
+
+        return await context.image_from_pil(pil_image)
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [
+            HuggingFaceModel(repo_id="briaai/FIBO"),
+            HuggingFaceModel(repo_id="briaai/Fibo-lite"),
+        ]
+
+
+class MFluxFIBOEdit(BaseMFluxNode):
+    """
+    Edit images using Bria FIBO Edit via MFLUX.
+    mlx, fibo, image-editing, apple-silicon
+
+    Use cases:
+    - Instruction-based image editing from plain text or structured JSON
+    - Mask-free and maskless localized edit workflows through FIBO Edit
+    - Background matting via the FIBO Edit RMBG variant
+    """
+
+    prompt: str = Field(
+        default='{"edit_instruction":"Make the owl white instead of brown and add round glasses."}',
+        description="Edit instruction text or a structured JSON edit prompt string.",
+    )
+    negative_prompt: str = Field(
+        default="",
+        description="Negative prompt describing what to avoid.",
+    )
+    image: ImageRef = Field(
+        default=ImageRef(),
+        description="Image to edit.",
+    )
+    model: HuggingFaceModel = Field(
+        default=HuggingFaceModel(repo_id="briaai/Fibo-Edit"),
+        description="FIBO Edit model to load.",
+    )
+    quantize: QuantizationLevel | None = Field(
+        default=QuantizationLevel.BITS_4,
+        description="Quantization level for model weights.",
+    )
+    steps: int = Field(
+        default=20,
+        ge=1,
+        le=100,
+        description="Number of denoising steps.",
+    )
+    guidance: float = Field(
+        default=4.0,
+        ge=0.0,
+        description="Guidance scale. RMBG often uses 1.0.",
+    )
+    height: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Height of the generated image in pixels.",
+    )
+    width: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Width of the generated image in pixels.",
+    )
+    seed: int = Field(
+        default=0,
+        description="Seed for deterministic generation. Leave as 0 for random.",
+    )
+    lora_paths: list[str] = Field(
+        default_factory=list,
+        description="Optional LoRA adapter paths or HuggingFace repo IDs.",
+    )
+    lora_scales: list[float] = Field(
+        default_factory=list,
+        description="Scale values for the LoRA adapters. Must align with lora_paths when provided.",
+    )
+
+    _fibo_model: Any | None = None
+
+    @classmethod
+    def get_title(cls):
+        return "MFlux FIBO Edit"
+
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux FIBO Edit requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        lora_key = ",".join(self.lora_paths) if self.lora_paths else "none"
+        lora_scale_key = ",".join(str(scale) for scale in self.lora_scales) if self.lora_scales else "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo-edit"
+
+        model = ModelManager.get_model(cache_key)
+        if model is not None:
+            self._fibo_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+
+        def _load_model() -> "FIBOEdit":
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.fibo.variants.edit.fibo_edit import FIBOEdit
+
+            log.info(
+                "Loading MFlux FIBO Edit model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            model = FIBOEdit(
+                quantize=quantize_value,
+                lora_paths=self.lora_paths or None,
+                lora_scales=self.lora_scales or None,
+                model_config=ModelConfig.from_name(self.model.repo_id),
+            )
+            ModelManager.set_model(self.id, cache_key, model)
+            return model
+
+        self._fibo_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
+        self._ensure_supported_platform(
+            "MFlux FIBO Edit requires macOS (Apple Silicon / MLX)."
+        )
+        self._require_prompt(self.prompt, "Prompt cannot be empty for FIBO Edit.")
+        if not self.image.is_set():
+            raise ValueError("An input image is required for FIBO Edit.")
+        self._ensure_seed()
+
+        assert self._fibo_model is not None
+
+        pil_img = await context.image_to_pil(self.image)
+        tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+        temp_path = Path(tmp.name)
+        tmp.close()
+        pil_img.convert("RGB").save(temp_path)
+
+        loop = asyncio.get_running_loop()
+        total_steps = self.steps
+        progress_callback = self._register_progress_callback(context, total_steps)
+
+        def _generate() -> "PIL.Image.Image":
+            import mlx.core as mx
+            import PIL.Image
+            from mflux.models.fibo.variants.edit.util import FiboEditUtil
+            from mflux.models.fibo_vlm.model.fibo_vlm import FiboVLM
+
+            assert self._fibo_model is not None
+            try:
+                prompt_value = FiboEditUtil.ensure_edit_instruction(self.prompt)
+            except (TypeError, ValueError):
+                vlm = FiboVLM(quantize=int(self.quantize) if self.quantize is not None else None)
+                try:
+                    prompt_value = vlm.edit(
+                        image=pil_img.convert("RGB"),
+                        edit_instruction=self.prompt,
+                        use_mask=False,
+                        seed=self.seed,
+                    )
+                finally:
+                    del vlm
+                    gc.collect()
+                    mx.clear_cache()
+
+            generated_image = self._fibo_model.generate_image(
+                seed=self.seed,
+                prompt=prompt_value,
+                image_path=str(temp_path),
+                num_inference_steps=self.steps,
+                height=self.height,
+                width=self.width,
+                guidance=self.guidance,
+                negative_prompt=self.negative_prompt if self.negative_prompt else None,
+            )
+            return generated_image.image
+
+        try:
+            pil_image = await loop.run_in_executor(None, _generate)
+        finally:
+            self._remove_progress_callback(progress_callback)
+            with contextlib.suppress(FileNotFoundError):
+                temp_path.unlink()
+
+        return await context.image_from_pil(pil_image)
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [
+            HuggingFaceModel(repo_id="briaai/Fibo-Edit"),
+            HuggingFaceModel(repo_id="briaai/Fibo-Edit-RMBG"),
         ]
 
 
@@ -1378,21 +2011,21 @@ class MFluxQwenImage(BaseMFluxNode):
         description="Negative prompt describing what to avoid in the generation.",
     )
     model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="filipstrand/Qwen-Image-mflux-6bit"),
+        default=HuggingFaceModel(repo_id="Qwen/Qwen-Image"),
         description="Qwen Image model to load.",
     )
     quantize: QuantizationLevel | None = Field(
-        default=QuantizationLevel.BITS_6,
-        description="Quantization level for model weights. 6-bit recommended for Qwen.",
+        default=QuantizationLevel.BITS_8,
+        description="Quantization level for model weights. 8-bit is recommended for Qwen quality.",
     )
     steps: int = Field(
-        default=20,
+        default=30,
         ge=1,
         le=50,
         description="Number of denoising steps for the generation.",
     )
     guidance: float = Field(
-        default=3.5,
+        default=4.0,
         ge=0.0,
         description="Guidance scale for the generation.",
     )
@@ -1412,6 +2045,14 @@ class MFluxQwenImage(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave as 0 for random.",
     )
+    lora_paths: list[str] = Field(
+        default_factory=list,
+        description="Optional LoRA adapter paths or HuggingFace repo IDs.",
+    )
+    lora_scales: list[float] = Field(
+        default_factory=list,
+        description="Scale values for the LoRA adapters. Must align with lora_paths when provided.",
+    )
 
     _qwen_model: Any | None = None
 
@@ -1425,7 +2066,9 @@ class MFluxQwenImage(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_qwen-image"
+        lora_key = ",".join(self.lora_paths) if self.lora_paths else "none"
+        lora_scale_key = ",".join(str(scale) for scale in self.lora_scales) if self.lora_scales else "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1435,6 +2078,7 @@ class MFluxQwenImage(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "QwenImage":
+            from mflux.models.common.config import ModelConfig
             from mflux.models.qwen.variants.txt2img.qwen_image import QwenImage
 
             log.info(
@@ -1444,7 +2088,9 @@ class MFluxQwenImage(BaseMFluxNode):
             )
             model = QwenImage(
                 quantize=quantize_value,
-                model_path=self.model.repo_id if "/" in self.model.repo_id else None,
+                lora_paths=self.lora_paths or None,
+                lora_scales=self.lora_scales or None,
+                model_config=ModelConfig.from_name(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -1491,7 +2137,6 @@ class MFluxQwenImage(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HuggingFaceModel(repo_id="filipstrand/Qwen-Image-mflux-6bit"),
             HuggingFaceModel(repo_id="Qwen/Qwen-Image"),
         ]
 
@@ -1554,6 +2199,14 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         default=0,
         description="Seed for deterministic generation. Leave as 0 for random.",
     )
+    lora_paths: list[str] = Field(
+        default_factory=list,
+        description="Optional LoRA adapter paths or HuggingFace repo IDs.",
+    )
+    lora_scales: list[float] = Field(
+        default_factory=list,
+        description="Scale values for the LoRA adapters. Must align with lora_paths when provided.",
+    )
 
     _qwen_model: Any | None = None
 
@@ -1567,7 +2220,9 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_qwen-image-edit"
+        lora_key = ",".join(self.lora_paths) if self.lora_paths else "none"
+        lora_scale_key = ",".join(str(scale) for scale in self.lora_scales) if self.lora_scales else "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image-edit"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1577,6 +2232,7 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "QwenImageEdit":
+            from mflux.models.common.config import ModelConfig
             from mflux.models.qwen.variants.edit.qwen_image_edit import QwenImageEdit
 
             log.info(
@@ -1586,7 +2242,9 @@ class MFluxQwenImageEdit(BaseMFluxNode):
             )
             model = QwenImageEdit(
                 quantize=quantize_value,
-                model_path=self.model.repo_id if "/" in self.model.repo_id else None,
+                lora_paths=self.lora_paths or None,
+                lora_scales=self.lora_scales or None,
+                model_config=ModelConfig.from_name(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -1656,6 +2314,159 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         ]
 
 
+class MFluxZImage(BaseMFluxNode):
+    """
+    Generate images using the base Z-Image model via MFLUX.
+    mlx, z-image, text-to-image, apple-silicon
+
+    Use cases:
+    - Higher-quality base Z-Image generation for detailed prompts
+    - Training-oriented or non-turbo Z-Image workflows
+    - LoRA-enabled Z-Image generation on Apple Silicon
+    """
+
+    prompt: str = Field(
+        default="A detailed portrait in soft natural light",
+        description="Text prompt describing the image to generate.",
+    )
+    negative_prompt: str = Field(
+        default="",
+        description="Negative prompt describing what to avoid in the generation.",
+    )
+    model: HuggingFaceModel = Field(
+        default=HuggingFaceModel(repo_id="Tongyi-MAI/Z-Image"),
+        description="Base Z-Image model to load.",
+    )
+    quantize: QuantizationLevel | None = Field(
+        default=QuantizationLevel.BITS_4,
+        description="Quantization level for model weights.",
+    )
+    steps: int = Field(
+        default=50,
+        ge=1,
+        le=100,
+        description="Number of denoising steps. Base Z-Image typically uses more steps than Turbo.",
+    )
+    guidance: float = Field(
+        default=4.0,
+        ge=0.0,
+        description="Guidance scale for base Z-Image generation.",
+    )
+    height: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Height of the generated image in pixels.",
+    )
+    width: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Width of the generated image in pixels.",
+    )
+    seed: int = Field(
+        default=0,
+        description="Seed for deterministic generation. Leave as 0 for random.",
+    )
+    lora_path: str | None = Field(
+        default=None,
+        description="Optional path or HuggingFace repo ID for a LoRA adapter.",
+    )
+    lora_scale: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=2.0,
+        description="Scale factor for the LoRA adapter.",
+    )
+
+    _zimage_model: Any | None = None
+
+    @classmethod
+    def get_title(cls):
+        return "MFlux Z-Image"
+
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux Z-Image requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        lora_key = self.lora_path or "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_z-image"
+
+        model = ModelManager.get_model(cache_key)
+        if model is not None:
+            self._zimage_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+
+        def _load_model() -> "ZImageTurbo":
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.z_image.variants import ZImage
+
+            log.info(
+                "Loading MFlux Z-Image model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            lora_paths = [self.lora_path] if self.lora_path else None
+            lora_scales = [self.lora_scale] if self.lora_path else None
+
+            model = ZImage(
+                quantize=quantize_value,
+                lora_paths=lora_paths,
+                lora_scales=lora_scales,
+                model_config=ModelConfig.z_image(),
+            )
+            ModelManager.set_model(self.id, cache_key, model)
+            return model
+
+        self._zimage_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
+        self._ensure_supported_platform(
+            "MFlux Z-Image requires macOS (Apple Silicon / MLX)."
+        )
+        self._require_prompt(
+            self.prompt, "Prompt cannot be empty for Z-Image generation."
+        )
+        self._ensure_seed()
+
+        assert self._zimage_model is not None
+
+        loop = asyncio.get_running_loop()
+        total_steps = self.steps
+        progress_callback = self._register_progress_callback(context, total_steps)
+
+        def _generate() -> "PIL.Image.Image":
+            import PIL.Image
+
+            assert self._zimage_model is not None
+            return self._zimage_model.generate_image(
+                seed=self.seed,
+                prompt=self.prompt,
+                num_inference_steps=self.steps,
+                height=self.height,
+                width=self.width,
+                guidance=self.guidance,
+                negative_prompt=self.negative_prompt if self.negative_prompt else None,
+            )
+
+        try:
+            pil_image = await loop.run_in_executor(None, _generate)
+        finally:
+            self._remove_progress_callback(progress_callback)
+
+        return await context.image_from_pil(pil_image)
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [
+            HuggingFaceModel(repo_id="Tongyi-MAI/Z-Image"),
+        ]
+
+
 class MFluxZImageTurbo(BaseMFluxNode):
     """
     Generate images quickly using the Z-Image Turbo model via MFLUX.
@@ -1672,7 +2483,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
         description="Text prompt describing the image to generate.",
     )
     model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="filipstrand/Z-Image-Turbo-mflux-4bit"),
+        default=HuggingFaceModel(repo_id="Tongyi-MAI/Z-Image-Turbo"),
         description="Z-Image Turbo model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -1735,7 +2546,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "ZImageTurbo":
-            from mflux.models.z_image.variants.turbo.z_image_turbo import ZImageTurbo
+            from mflux.models.z_image.variants import ZImageTurbo
 
             log.info(
                 "Loading MFlux Z-Image Turbo model %s (quantize=%s)",
@@ -1747,7 +2558,6 @@ class MFluxZImageTurbo(BaseMFluxNode):
 
             model = ZImageTurbo(
                 quantize=quantize_value,
-                model_path=self.model.repo_id if "/" in self.model.repo_id else None,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
             )
@@ -1775,14 +2585,13 @@ class MFluxZImageTurbo(BaseMFluxNode):
             import PIL.Image
 
             assert self._zimage_model is not None
-            generated_image = self._zimage_model.generate_image(
+            return self._zimage_model.generate_image(
                 seed=self.seed,
                 prompt=self.prompt,
                 num_inference_steps=self.steps,
                 height=self.height,
                 width=self.width,
             )
-            return generated_image.image
 
         try:
             pil_image = await loop.run_in_executor(None, _generate)
@@ -1794,7 +2603,6 @@ class MFluxZImageTurbo(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HuggingFaceModel(repo_id="filipstrand/Z-Image-Turbo-mflux-4bit"),
             HuggingFaceModel(repo_id="Tongyi-MAI/Z-Image-Turbo"),
         ]
 
@@ -1814,19 +2622,23 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
         default=ImageRef(),
         description="Image to upscale.",
     )
-    resolution: int = Field(
-        default=1800,
-        ge=256,
-        le=4096,
-        description="Target resolution for the shortest edge in pixels.",
+    resolution: str = Field(
+        default="1800",
+        description="Target resolution for the shortest edge in pixels, or a scale factor like '2x' or '3x'.",
     )
     model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="numz/SeedVR2-3B"),
+        default=HuggingFaceModel(repo_id="numz/SeedVR2_comfyUI"),
         description="SeedVR2 model to load.",
     )
     quantize: QuantizationLevel | None = Field(
         default=QuantizationLevel.BITS_8,
         description="Quantization level (4 or 8 bit supported).",
+    )
+    softness: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Optional pre-downsampling softness. 0 disables it; higher values can produce smoother upscale results.",
     )
     seed: int = Field(
         default=0,
@@ -1855,6 +2667,7 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "SeedVR2":
+            from mflux.models.common.config import ModelConfig
             from mflux.models.seedvr2.variants.upscale.seedvr2 import SeedVR2
 
             log.info(
@@ -1864,7 +2677,7 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
             )
             model = SeedVR2(
                 quantize=quantize_value,
-                model_path=self.model.repo_id if "/" in self.model.repo_id else None,
+                model_config=ModelConfig.from_name(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -1894,12 +2707,20 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
+            from mflux.utils.scale_factor import ScaleFactor
 
             assert self._seedvr2_model is not None
+            resolution: int | ScaleFactor
+            resolution = (
+                ScaleFactor.parse(self.resolution)
+                if isinstance(self.resolution, str) and self.resolution.strip().lower().endswith("x")
+                else int(self.resolution)
+            )
             generated_image = self._seedvr2_model.generate_image(
                 seed=self.seed,
                 image_path=str(temp_path),
-                resolution=self.resolution,
+                resolution=resolution,
+                softness=self.softness,
             )
             return generated_image.image
 
@@ -1914,7 +2735,8 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HuggingFaceModel(repo_id="numz/SeedVR2-3B"),
+            HuggingFaceModel(repo_id="numz/SeedVR2_comfyUI"),
+            HuggingFaceModel(repo_id="numz/SeedVR2-7B"),
         ]
 
 
@@ -1942,7 +2764,7 @@ class MFluxInContext(BaseMFluxNode):
         description="Optional pre-defined style LoRA to apply.",
     )
     model: HFFlux = Field(
-        default=HFFlux(repo_id="dhairyashil/FLUX.1-dev-mflux-4bit"),
+        default=HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
         description="Base Flux dev model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -2033,7 +2855,6 @@ class MFluxInContext(BaseMFluxNode):
 
             model = Flux1InContextDev(
                 quantize=quantize_value,
-                model_path=self.model.repo_id if "/" in self.model.repo_id else None,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
             )
@@ -2112,6 +2933,5 @@ class MFluxInContext(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HFFlux]:
         return [
-            HFFlux(repo_id="dhairyashil/FLUX.1-dev-mflux-4bit"),
             HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
         ]
