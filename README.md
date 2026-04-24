@@ -16,7 +16,6 @@ All nodes live under `src/nodetool/nodes/mlx`:
 - `mlx.tts.TTS` – Kokoro and Sesame text-to-speech with optional chunked audio streaming
 - `mlx.mflux.ImageGeneration` – FLUX.1 image generation via the MFlux project (supports quantized models)
 
-Their DSL wrappers are available under `src/nodetool/dsl/mlx` for use in generated workflows.
 
 ## Requirements
 
@@ -58,17 +57,8 @@ Advanced users can still seed the Hugging Face cache manually, but using the UI 
 ## Usage
 
 1. Install `nodetool-core` and this package in the same environment
-2. Run `nodetool package scan` to generate metadata and DSL bindings
-3. (Optional) `nodetool codegen` to refresh typed DSL wrappers
-4. Build workflows either in the Nodetool UI or through Python DSL scripts using the `mlx` namespace
-
-Example (Python DSL):
-
-```python
-from nodetool.dsl.mlx import ImageGeneration
-
-node = ImageGeneration(prompt="A retrofuturistic skyline at dusk", steps=6)
-```
+2. Run `nodetool package scan` to generate package metadata
+3. Build workflows in the Nodetool UI using the `mlx` nodes
 
 ## Development
 
