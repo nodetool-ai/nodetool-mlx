@@ -15,7 +15,7 @@ from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
 
-DEFAULT_MLX_MODEL_ID = "mlx-community/Llama-3.2-3B-Instruct-4bit"
+DEFAULT_MLX_MODEL_ID = "mlx-community/gemma-4-e4b-it-OptiQ-4bit"
 
 
 class TextGeneration(BaseNode):
@@ -35,7 +35,7 @@ class TextGeneration(BaseNode):
         default=LanguageModel(
             provider=Provider.MLX,
             id=DEFAULT_MLX_MODEL_ID,
-            name="Llama 3.2 3B Instruct (4-bit)",
+            name="Gemma 4 e4b IT OptiQ (4-bit)",
         ),
         title="Model",
         description="MLX language model to use for generation. The model must be available in the local Hugging Face cache.",
@@ -151,26 +151,22 @@ class TextGeneration(BaseNode):
     @classmethod
     def get_recommended_models(cls):
         return [
-            HFTextGeneration(repo_id="mlx-community/Qwen3-0.6B-4bit-DWQ"),
-            HFTextGeneration(repo_id="mlx-community/Qwen3-1.7B-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Qwen3-1.7B-8bit"),
-            HFTextGeneration(repo_id="mlx-community/Qwen3-4B-Instruct-2507-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Qwen3-4B-Instruct-2507-8bit"),
-            HFTextGeneration(repo_id="mlx-community/Qwen3-4B-Thinking-2507-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Qwen3-4B-Thinking-2507-8bit"),
-            HFTextGeneration(repo_id="mlx-community/Qwen3-8B-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Qwen3-8B-8bit"),
-            HFTextGeneration(repo_id="mlx-community/gemma-3-1b-it-qat-4bit"),
-            HFTextGeneration(repo_id="mlx-community/gemma-3-1b-it-4bit"),
-            HFTextGeneration(repo_id="mlx-community/gemma-3-4b-it-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Llama-3.2-1B-Instruct-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Llama-3.2-1B-Instruct-8bit"),
-            HFTextGeneration(repo_id="mlx-community/Llama-3.2-3B-Instruct-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Llama-3.2-3B-Instruct-8bit"),
-            HFTextGeneration(repo_id="mlx-community/SmolLM3-3B-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Phi-3.5-mini-instruct-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Mistral-7B-Instruct-v0.3-4bit"),
-            HFTextGeneration(repo_id="mlx-community/Ministral-8B-Instruct-2410-4bit"),
+            HFTextGeneration(repo_id="mlx-community/gemma-4-e2b-it-4bit"),
+            HFTextGeneration(repo_id="mlx-community/gemma-4-e2b-it-OptiQ-4bit"),
+            HFTextGeneration(repo_id="mlx-community/gemma-4-e4b-it-4bit"),
+            HFTextGeneration(repo_id="mlx-community/gemma-4-e4b-it-OptiQ-4bit"),
+            HFTextGeneration(repo_id="mlx-community/gemma-4-e4b-it-6bit"),
+            HFTextGeneration(repo_id="mlx-community/gemma-4-e4b-it-8bit"),
+            HFTextGeneration(repo_id="mlx-community/gemma-4-26b-a4b-it-4bit"),
+            HFTextGeneration(repo_id="mlx-community/gemma-4-26b-a4b-it-8bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.6-35B-A3B-4bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.6-35B-A3B-4bit-DWQ"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.6-35B-A3B-nvfp4"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.6-35B-A3B-8bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.6-27B-4bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.6-27B-6bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.6-27B-8bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.6-27B-nvfp4"),
         ]
 
     async def preload_model(self, context: ProcessingContext) -> None:
