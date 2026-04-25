@@ -36,7 +36,13 @@ class Whisper(BaseNode):
         SMALL_EN = "mlx-community/whisper-small.en-mlx"
         MEDIUM = "mlx-community/whisper-medium-mlx"
         MEDIUM_EN = "mlx-community/whisper-medium.en-mlx"
+        LARGE_V2 = "mlx-community/whisper-large-v2-mlx"
         LARGE_V3 = "mlx-community/whisper-large-v3-mlx"
+        LARGE_V3_TURBO = "mlx-community/whisper-large-v3-turbo"
+        LARGE_V3_TURBO_Q4 = "mlx-community/whisper-large-v3-turbo-q4"
+        DISTIL_LARGE_V3 = "mlx-community/distil-whisper-large-v3"
+        DISTIL_MEDIUM_EN = "mlx-community/distil-whisper-medium.en"
+        DISTIL_SMALL_EN = "mlx-community/distil-whisper-small.en"
 
     model: Model = Field(
         default=Model.TINY_EN,
