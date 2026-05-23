@@ -9,7 +9,15 @@ import tempfile
 from contextlib import suppress
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, AsyncGenerator, ClassVar, Optional, TypedDict, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    AsyncGenerator,
+    ClassVar,
+    Optional,
+    TypedDict,
+    cast,
+)
 from pydantic import Field, PrivateAttr
 
 from nodetool.metadata.types import AudioRef, HuggingFaceModel, Provider
@@ -47,6 +55,9 @@ class BaseMLXTTS(BaseNode):
     @classmethod
     def is_visible(cls) -> bool:
         return cls is not BaseMLXTTS
+
+    def required_inputs(self):
+        return ["text"]
 
     @classmethod
     def is_cacheable(cls) -> bool:
@@ -342,6 +353,10 @@ class KokoroTTS(BaseMLXTTS):
     )
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "voice", "language", "temperature", "speed"]
+
+    @classmethod
     def get_title(cls):
         return "Kokoro TTS"
 
@@ -397,6 +412,13 @@ class SesameTTS(BaseMLXTTS):
         le=2.0,
         description="Speech speed multiplier for Sesame (0.5–2.0).",
     )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "reference_audio", "speed"]
+
+    def required_inputs(self):
+        return ["text", "reference_audio"]
 
     @classmethod
     def get_title(cls):
@@ -488,6 +510,10 @@ class SparkTTS(BaseMLXTTS):
         Pitch.HIGH: 1.5,
         Pitch.VERY_HIGH: 2.0,
     }
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "speed", "voice", "pitch", "gender"]
 
     @classmethod
     def get_title(cls):

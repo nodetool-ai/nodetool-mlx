@@ -160,8 +160,24 @@ class MFlux(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux"
+
+    def required_inputs(self):
+        return ["prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(

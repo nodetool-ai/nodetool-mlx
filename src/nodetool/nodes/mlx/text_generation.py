@@ -105,6 +105,9 @@ class TextGeneration(BaseNode):
     def get_basic_fields(cls) -> list[str]:
         return ["model", "prompt"]
 
+    def required_inputs(self):
+        return ["prompt"]
+
     @classmethod
     def is_streaming_output(cls) -> bool:
         return True

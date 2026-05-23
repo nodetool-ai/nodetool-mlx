@@ -39,7 +39,9 @@ if TYPE_CHECKING:
     from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
     from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
     from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
-    from mflux.models.flux.variants.in_context.flux_in_context_dev import Flux1InContextDev
+    from mflux.models.flux.variants.in_context.flux_in_context_dev import (
+        Flux1InContextDev,
+    )
     from mflux.models.flux2.variants import Flux2Klein, Flux2KleinEdit
     from mflux.models.fibo.variants.txt2img.fibo import FIBO
     from mflux.models.fibo.variants.edit.fibo_edit import FIBOEdit
@@ -55,6 +57,7 @@ log = get_logger(__name__)
 
 class InContextLoRAStyle(str, Enum):
     """Available styles for In-Context LoRA generation."""
+
     COUPLE = "couple"
     STORYBOARD = "storyboard"
     FONT = "font"
@@ -133,8 +136,26 @@ class MFluxImageToImage(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "image",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "image_strength",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux ImageToImage"
+
+    def required_inputs(self):
+        return ["image", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
@@ -301,12 +322,33 @@ class MFluxControlNet(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "control_image",
+            "model",
+            "controlnet_model",
+            "quantize",
+            "steps",
+            "guidance",
+            "controlnet_strength",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux ControlNet"
 
+    def required_inputs(self):
+        return ["control_image", "prompt"]
+
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}:{self.controlnet_model.repo_id}_flux-controlnet"
+        cache_key = (
+            f"{self.model.repo_id}:{self.controlnet_model.repo_id}_flux-controlnet"
+        )
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -317,7 +359,9 @@ class MFluxControlNet(BaseMFluxNode):
 
         def _load_model() -> "Flux1Controlnet":
             from mflux.models.common.config import ModelConfig
-            from mflux.models.flux.variants.controlnet.flux_controlnet import Flux1Controlnet
+            from mflux.models.flux.variants.controlnet.flux_controlnet import (
+                Flux1Controlnet,
+            )
 
             log.info(
                 "Loading MFlux ControlNet model %s with controlnet %s (quantize=%s)",
@@ -358,7 +402,6 @@ class MFluxControlNet(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            
 
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                 control_path = Path(tmp.name)
@@ -459,8 +502,26 @@ class MFluxInpaint(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "image",
+            "mask",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Inpaint"
+
+    def required_inputs(self):
+        return ["image", "mask", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -512,7 +573,7 @@ class MFluxInpaint(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            
+
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
@@ -634,8 +695,27 @@ class MFluxOutpaint(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "image",
+            "mask",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "padding",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Outpaint"
+
+    def required_inputs(self):
+        return ["image", "mask", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -845,8 +925,26 @@ class MFluxDepth(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "image",
+            "depth_image",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Depth"
+
+    def required_inputs(self):
+        return ["image", "depth_image", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -907,7 +1005,7 @@ class MFluxDepth(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            
+
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
@@ -1042,8 +1140,26 @@ class MFluxRedux(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "redux_image",
+            "redux_image_strength",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Redux"
+
+    def required_inputs(self):
+        return ["redux_image", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1100,7 +1216,7 @@ class MFluxRedux(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
         try:
             import PIL.Image
-            
+
             temp_paths: list[Path] = []
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
@@ -1219,8 +1335,25 @@ class MFluxKontext(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "reference_image",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Kontext"
+
+    def required_inputs(self):
+        return ["reference_image", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1273,7 +1406,7 @@ class MFluxKontext(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import PIL.Image
-            
+
             target_width = 16 * (self.width // 16)
             target_height = 16 * (self.height // 16)
 
@@ -1389,8 +1522,26 @@ class MFluxFlux2(BaseMFluxNode):
     _flux2_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+            "lora_path",
+            "lora_scale",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux FLUX.2"
+
+    def required_inputs(self):
+        return ["prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1544,8 +1695,27 @@ class MFluxFlux2Edit(BaseMFluxNode):
     _flux2_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "images",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+            "lora_path",
+            "lora_scale",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux FLUX.2 Edit"
+
+    def required_inputs(self):
+        return ["images", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1593,7 +1763,9 @@ class MFluxFlux2Edit(BaseMFluxNode):
             self.prompt, "Prompt cannot be empty for FLUX.2 edit generation."
         )
         if not self.images:
-            raise ValueError("At least one reference image is required for FLUX.2 edit.")
+            raise ValueError(
+                "At least one reference image is required for FLUX.2 edit."
+            )
 
         self._ensure_seed()
         assert self._flux2_model is not None
@@ -1711,8 +1883,27 @@ class MFluxFIBO(BaseMFluxNode):
     _fibo_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "negative_prompt",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+            "lora_paths",
+            "lora_scales",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux FIBO"
+
+    def required_inputs(self):
+        return ["prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1721,7 +1912,11 @@ class MFluxFIBO(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = ",".join(self.lora_paths) if self.lora_paths else "none"
-        lora_scale_key = ",".join(str(scale) for scale in self.lora_scales) if self.lora_scales else "none"
+        lora_scale_key = (
+            ",".join(str(scale) for scale in self.lora_scales)
+            if self.lora_scales
+            else "none"
+        )
         cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo"
 
         model = ModelManager.get_model(cache_key)
@@ -1774,7 +1969,9 @@ class MFluxFIBO(BaseMFluxNode):
                 json.loads(self.prompt)
                 prompt_value = self.prompt
             except json.JSONDecodeError:
-                vlm = FiboVLM(quantize=int(self.quantize) if self.quantize is not None else None)
+                vlm = FiboVLM(
+                    quantize=int(self.quantize) if self.quantize is not None else None
+                )
                 try:
                     prompt_value = vlm.generate(prompt=self.prompt, seed=self.seed)
                 finally:
@@ -1878,8 +2075,28 @@ class MFluxFIBOEdit(BaseMFluxNode):
     _fibo_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "negative_prompt",
+            "image",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+            "lora_paths",
+            "lora_scales",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux FIBO Edit"
+
+    def required_inputs(self):
+        return ["image", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1888,7 +2105,11 @@ class MFluxFIBOEdit(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = ",".join(self.lora_paths) if self.lora_paths else "none"
-        lora_scale_key = ",".join(str(scale) for scale in self.lora_scales) if self.lora_scales else "none"
+        lora_scale_key = (
+            ",".join(str(scale) for scale in self.lora_scales)
+            if self.lora_scales
+            else "none"
+        )
         cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo-edit"
 
         model = ModelManager.get_model(cache_key)
@@ -1949,7 +2170,9 @@ class MFluxFIBOEdit(BaseMFluxNode):
             try:
                 prompt_value = FiboEditUtil.ensure_edit_instruction(self.prompt)
             except (TypeError, ValueError):
-                vlm = FiboVLM(quantize=int(self.quantize) if self.quantize is not None else None)
+                vlm = FiboVLM(
+                    quantize=int(self.quantize) if self.quantize is not None else None
+                )
                 try:
                     prompt_value = vlm.edit(
                         image=pil_img.convert("RGB"),
@@ -2057,8 +2280,27 @@ class MFluxQwenImage(BaseMFluxNode):
     _qwen_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "negative_prompt",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+            "lora_paths",
+            "lora_scales",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Qwen Image"
+
+    def required_inputs(self):
+        return ["prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2067,7 +2309,11 @@ class MFluxQwenImage(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = ",".join(self.lora_paths) if self.lora_paths else "none"
-        lora_scale_key = ",".join(str(scale) for scale in self.lora_scales) if self.lora_scales else "none"
+        lora_scale_key = (
+            ",".join(str(scale) for scale in self.lora_scales)
+            if self.lora_scales
+            else "none"
+        )
         cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image"
 
         model = ModelManager.get_model(cache_key)
@@ -2211,8 +2457,28 @@ class MFluxQwenImageEdit(BaseMFluxNode):
     _qwen_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "negative_prompt",
+            "images",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+            "lora_paths",
+            "lora_scales",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Qwen Image Edit"
+
+    def required_inputs(self):
+        return ["images", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2221,7 +2487,11 @@ class MFluxQwenImageEdit(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = ",".join(self.lora_paths) if self.lora_paths else "none"
-        lora_scale_key = ",".join(str(scale) for scale in self.lora_scales) if self.lora_scales else "none"
+        lora_scale_key = (
+            ",".join(str(scale) for scale in self.lora_scales)
+            if self.lora_scales
+            else "none"
+        )
         cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image-edit"
 
         model = ModelManager.get_model(cache_key)
@@ -2255,12 +2525,12 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         self._ensure_supported_platform(
             "MFlux Qwen Image Edit requires macOS (Apple Silicon / MLX)."
         )
-        self._require_prompt(
-            self.prompt, "Prompt cannot be empty for Qwen Image Edit."
-        )
+        self._require_prompt(self.prompt, "Prompt cannot be empty for Qwen Image Edit.")
 
         if not self.images:
-            raise ValueError("At least one reference image is required for Qwen Image Edit.")
+            raise ValueError(
+                "At least one reference image is required for Qwen Image Edit."
+            )
 
         self._ensure_seed()
 
@@ -2382,8 +2652,27 @@ class MFluxZImage(BaseMFluxNode):
     _zimage_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "negative_prompt",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+            "lora_path",
+            "lora_scale",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Z-Image"
+
+    def required_inputs(self):
+        return ["prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2526,8 +2815,25 @@ class MFluxZImageTurbo(BaseMFluxNode):
     _zimage_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "model",
+            "quantize",
+            "steps",
+            "height",
+            "width",
+            "seed",
+            "lora_path",
+            "lora_scale",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux Z-Image Turbo"
+
+    def required_inputs(self):
+        return ["prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2648,8 +2954,15 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
     _seedvr2_model: Any | None = None
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["image", "resolution", "model", "quantize", "softness", "seed"]
+
+    @classmethod
     def get_title(cls):
         return "MFlux SeedVR2 Upscale"
+
+    def required_inputs(self):
+        return ["image"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2713,7 +3026,8 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
             resolution: int | ScaleFactor
             resolution = (
                 ScaleFactor.parse(self.resolution)
-                if isinstance(self.resolution, str) and self.resolution.strip().lower().endswith("x")
+                if isinstance(self.resolution, str)
+                and self.resolution.strip().lower().endswith("x")
                 else int(self.resolution)
             )
             generated_image = self._seedvr2_model.generate_image(
@@ -2816,8 +3130,26 @@ class MFluxInContext(BaseMFluxNode):
     }
 
     @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return [
+            "prompt",
+            "reference_image",
+            "style",
+            "model",
+            "quantize",
+            "steps",
+            "guidance",
+            "height",
+            "width",
+            "seed",
+        ]
+
+    @classmethod
     def get_title(cls):
         return "MFlux In-Context"
+
+    def required_inputs(self):
+        return ["reference_image", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2836,7 +3168,9 @@ class MFluxInContext(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1InContextDev":
-            from mflux.models.flux.variants.in_context.flux_in_context_dev import Flux1InContextDev
+            from mflux.models.flux.variants.in_context.flux_in_context_dev import (
+                Flux1InContextDev,
+            )
 
             log.info(
                 "Loading MFlux In-Context model %s (quantize=%s, style=%s)",
@@ -2880,6 +3214,7 @@ class MFluxInContext(BaseMFluxNode):
 
         # Save reference image to temp file
         import PIL.Image
+
         pil_img = await context.image_to_pil(self.reference_image)
         working_image = pil_img.convert("RGB")
 
@@ -2918,7 +3253,9 @@ class MFluxInContext(BaseMFluxNode):
             # We crop to return only the right half (the newly generated image)
             full_image = generated_image.image
             output_width = full_image.width // 2
-            cropped = full_image.crop((output_width, 0, full_image.width, full_image.height))
+            cropped = full_image.crop(
+                (output_width, 0, full_image.width, full_image.height)
+            )
             return cropped
 
         try:

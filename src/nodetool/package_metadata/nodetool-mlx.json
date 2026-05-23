@@ -1,7 +1,7 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.6.3-rc.47",
+  "version": "0.7.0-rc.8",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
@@ -139,8 +139,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 721321,
-          "likes": 4801
+          "downloads": 616450,
+          "likes": 4910
         },
         {
           "id": "black-forest-labs/FLUX.1-dev",
@@ -162,8 +162,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 684555,
-          "likes": 12686
+          "downloads": 715351,
+          "likes": 12859
         },
         {
           "id": "black-forest-labs/FLUX.1-Krea-dev",
@@ -187,8 +187,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 15720,
-          "likes": 857
+          "downloads": 10961,
+          "likes": 860
         }
       ],
       "basic_fields": [
@@ -377,8 +377,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 684555,
-          "likes": 12686
+          "downloads": 715351,
+          "likes": 12859
         },
         {
           "id": "InstantX/FLUX.1-dev-Controlnet-Canny",
@@ -399,8 +399,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2363,
-          "likes": 193
+          "downloads": 3403,
+          "likes": 194
         },
         {
           "id": "jasperai/Flux.1-dev-Controlnet-Upscaler",
@@ -422,8 +422,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2840,
-          "likes": 865
+          "downloads": 2022,
+          "likes": 868
         }
       ],
       "basic_fields": [
@@ -602,8 +602,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 2102,
-          "likes": 233
+          "downloads": 2284,
+          "likes": 237
         }
       ],
       "basic_fields": [
@@ -791,8 +791,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 7439,
-          "likes": 311
+          "downloads": 7677,
+          "likes": 314
         },
         {
           "id": "briaai/Fibo-lite",
@@ -822,8 +822,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 727,
-          "likes": 7
+          "downloads": 876,
+          "likes": 8
         }
       ],
       "basic_fields": [
@@ -1029,8 +1029,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 2058,
-          "likes": 64
+          "downloads": 2275,
+          "likes": 67
         },
         {
           "id": "briaai/Fibo-Edit-RMBG",
@@ -1055,8 +1055,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 151,
-          "likes": 42
+          "downloads": 32,
+          "likes": 43
         }
       ],
       "basic_fields": [
@@ -1228,8 +1228,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 253413,
-          "likes": 629
+          "downloads": 259816,
+          "likes": 684
         },
         {
           "id": "black-forest-labs/FLUX.2-klein-9B",
@@ -1252,8 +1252,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 131854,
-          "likes": 660
+          "downloads": 129354,
+          "likes": 760
         },
         {
           "id": "black-forest-labs/FLUX.2-klein-base-4B",
@@ -1276,8 +1276,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 1478302,
-          "likes": 126
+          "downloads": 195180,
+          "likes": 137
         },
         {
           "id": "black-forest-labs/FLUX.2-klein-base-9B",
@@ -1300,8 +1300,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 74921,
-          "likes": 210
+          "downloads": 89184,
+          "likes": 229
         }
       ],
       "basic_fields": [
@@ -1486,8 +1486,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 253413,
-          "likes": 629
+          "downloads": 259816,
+          "likes": 684
         },
         {
           "id": "black-forest-labs/FLUX.2-klein-9B",
@@ -1510,8 +1510,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 131854,
-          "likes": 660
+          "downloads": 129354,
+          "likes": 760
         }
       ],
       "basic_fields": [
@@ -1687,8 +1687,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 684555,
-          "likes": 12686
+          "downloads": 715351,
+          "likes": 12859
         },
         {
           "id": "black-forest-labs/FLUX.1-schnell",
@@ -1711,8 +1711,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 721321,
-          "likes": 4801
+          "downloads": 616450,
+          "likes": 4910
         },
         {
           "id": "black-forest-labs/FLUX.1-Krea-dev",
@@ -1736,8 +1736,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 15720,
-          "likes": 857
+          "downloads": 10961,
+          "likes": 860
         }
       ],
       "basic_fields": [
@@ -1923,8 +1923,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 684555,
-          "likes": 12686
+          "downloads": 715351,
+          "likes": 12859
         }
       ],
       "basic_fields": [
@@ -2101,8 +2101,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 239001,
-          "likes": 1022
+          "downloads": 279058,
+          "likes": 1034
         }
       ],
       "basic_fields": [
@@ -2267,8 +2267,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 58937,
-          "likes": 2598
+          "downloads": 77813,
+          "likes": 2630
         }
       ],
       "basic_fields": [
@@ -2454,8 +2454,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 239001,
-          "likes": 1022
+          "downloads": 279058,
+          "likes": 1034
         }
       ],
       "basic_fields": [
@@ -2643,8 +2643,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 205638,
-          "likes": 2470
+          "downloads": 168863,
+          "likes": 2491
         }
       ],
       "basic_fields": [
@@ -2848,8 +2848,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 184774,
-          "likes": 1107
+          "downloads": 259425,
+          "likes": 1140
         }
       ],
       "basic_fields": [
@@ -3025,8 +3025,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 9894,
-          "likes": 604
+          "downloads": 8374,
+          "likes": 612
         }
       ],
       "basic_fields": [
@@ -3154,8 +3154,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 208634,
-          "likes": 248
+          "downloads": 184829,
+          "likes": 269
         },
         {
           "id": "numz/SeedVR2-7B",
@@ -3334,8 +3334,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 43838,
-          "likes": 1051
+          "downloads": 32068,
+          "likes": 1109
         }
       ],
       "basic_fields": [
@@ -3496,8 +3496,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 1179840,
-          "likes": 4491
+          "downloads": 1229497,
+          "likes": 4664
         }
       ],
       "basic_fields": [
@@ -3693,7 +3693,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 746,
+          "downloads": 588,
           "likes": 5
         },
         {
@@ -3713,8 +3713,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 861737,
-          "likes": 47
+          "downloads": 673558,
+          "likes": 52
         },
         {
           "id": "mlx-community/Kokoro-82M-4bit",
@@ -3733,8 +3733,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 528,
-          "likes": 7
+          "downloads": 526,
+          "likes": 8
         },
         {
           "id": "mlx-community/Kokoro-82M-6bit",
@@ -3753,7 +3753,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 97,
+          "downloads": 110,
           "likes": 2
         },
         {
@@ -3773,17 +3773,16 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 323,
+          "downloads": 518,
           "likes": 7
         }
       ],
       "basic_fields": [
-        "text",
-        "speed",
         "model",
         "voice",
         "language",
-        "temperature"
+        "temperature",
+        "speed"
       ],
       "is_streaming_output": true,
       "expose_as_tool": true
@@ -3873,8 +3872,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 267,
-          "likes": 26
+          "downloads": 264,
+          "likes": 28
         },
         {
           "id": "mlx-community/csm-1b-8bit",
@@ -3896,15 +3895,14 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 41,
-          "likes": 1
+          "downloads": 119,
+          "likes": 2
         }
       ],
       "basic_fields": [
-        "text",
-        "speed",
         "model",
-        "reference_audio"
+        "reference_audio",
+        "speed"
       ],
       "is_streaming_output": true,
       "expose_as_tool": true
@@ -4030,7 +4028,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 240,
+          "downloads": 169,
           "likes": 4
         },
         {
@@ -4052,14 +4050,13 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 42,
+          "downloads": 28,
           "likes": 3
         }
       ],
       "basic_fields": [
-        "text",
-        "speed",
         "model",
+        "speed",
         "voice",
         "pitch",
         "gender"
@@ -4194,7 +4191,7 @@
           "type": "hf.text_generation",
           "name": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
           "repo_id": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
-          "size_on_disk": 618250443,
+          "size_on_disk": 670390492,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
@@ -4216,15 +4213,15 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 6546,
-          "likes": 14
+          "downloads": 6731,
+          "likes": 19
         },
         {
           "id": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
           "type": "hf.text_generation",
           "name": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
           "repo_id": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
-          "size_on_disk": 1451301609,
+          "size_on_disk": 1554019037,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
@@ -4246,15 +4243,15 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5651,
-          "likes": 5
+          "downloads": 4260,
+          "likes": 8
         },
         {
           "id": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
           "type": "hf.text_generation",
           "name": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
           "repo_id": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
-          "size_on_disk": 2968014472,
+          "size_on_disk": 3289845345,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
@@ -4276,8 +4273,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 4787,
-          "likes": 10
+          "downloads": 5158,
+          "likes": 15
         },
         {
           "id": "mlx-community/Qwen3.5-27B-4bit-DWQ",
@@ -4297,8 +4294,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1645,
-          "likes": 5
+          "downloads": 355,
+          "likes": 6
         },
         {
           "id": "mlx-community/Qwen3.5-REAP-97B-A10B-4bit",
@@ -4322,7 +4319,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1551,
+          "downloads": 165,
           "likes": 3
         },
         {
@@ -4352,8 +4349,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 932,
-          "likes": 3
+          "downloads": 475,
+          "likes": 4
         },
         {
           "id": "mlx-community/Qwen3.5-397B-A17B-8bit-gs32",
@@ -4375,7 +4372,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 288,
+          "downloads": 87,
           "likes": 0
         },
         {
@@ -4383,12 +4380,12 @@
           "type": "hf.text_generation",
           "name": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
           "repo_id": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
-          "size_on_disk": 6353536374,
+          "size_on_disk": 6566567261,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
             "safetensors",
-            "gemma4_text",
+            "gemma4",
             "quantized",
             "mixed-precision",
             "4bit",
@@ -4396,27 +4393,27 @@
             "optiq",
             "apple-silicon",
             "text-generation",
-            "gemma4",
+            "gemma-4",
             "conversational",
-            "license:apache-2.0",
+            "license:gemma",
             "4-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2415,
-          "likes": 7
+          "downloads": 10935,
+          "likes": 18
         },
         {
           "id": "mlx-community/gemma-4-e2b-it-OptiQ-4bit",
           "type": "hf.text_generation",
           "name": "mlx-community/gemma-4-e2b-it-OptiQ-4bit",
           "repo_id": "mlx-community/gemma-4-e2b-it-OptiQ-4bit",
-          "size_on_disk": 4203363809,
+          "size_on_disk": 4329221857,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
             "safetensors",
-            "gemma4_text",
+            "gemma4",
             "quantized",
             "mixed-precision",
             "4bit",
@@ -4424,22 +4421,22 @@
             "optiq",
             "apple-silicon",
             "text-generation",
-            "gemma4",
+            "gemma-4",
             "conversational",
-            "license:apache-2.0",
+            "license:gemma",
             "4-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 589,
-          "likes": 0
+          "downloads": 2980,
+          "likes": 2
         },
         {
           "id": "mlx-community/Gemma4-E2B-IT-Text-int4",
           "type": "hf.text_generation",
           "name": "mlx-community/Gemma4-E2B-IT-Text-int4",
           "repo_id": "mlx-community/Gemma4-E2B-IT-Text-int4",
-          "size_on_disk": 2671101837,
+          "size_on_disk": 2671102856,
           "pipeline_tag": "text-generation",
           "tags": [
             "safetensors",
@@ -4452,8 +4449,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 247,
-          "likes": 1
+          "downloads": 434,
+          "likes": 2
         }
       ],
       "basic_fields": [
@@ -4580,7 +4577,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1003,
+          "downloads": 1358,
           "likes": 2
         },
         {
@@ -4595,7 +4592,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 468,
+          "downloads": 298,
           "likes": 0
         },
         {
@@ -4612,7 +4609,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2885,
+          "downloads": 2766,
           "likes": 1
         },
         {
@@ -4627,7 +4624,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 303,
+          "downloads": 618,
           "likes": 0
         },
         {
@@ -4644,7 +4641,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 6295,
+          "downloads": 10779,
           "likes": 5
         },
         {
@@ -4659,7 +4656,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 417,
+          "downloads": 989,
           "likes": 0
         },
         {
@@ -4676,7 +4673,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 5843,
+          "downloads": 6018,
           "likes": 3
         },
         {
@@ -4691,7 +4688,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 212,
+          "downloads": 359,
           "likes": 1
         },
         {
@@ -4709,8 +4706,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 21731,
-          "likes": 75
+          "downloads": 182905,
+          "likes": 82
         }
       ],
       "basic_fields": [
