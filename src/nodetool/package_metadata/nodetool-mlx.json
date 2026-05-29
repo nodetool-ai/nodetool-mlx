@@ -1,7 +1,7 @@
 {
   "name": "nodetool-mlx",
   "description": "Apple Silicon MLX nodes for Nodetool",
-  "version": "0.7.0-rc.8",
+  "version": "0.7.0",
   "authors": [
     "Matthias Georgi <matti.georgi@gmail.com>"
   ],
