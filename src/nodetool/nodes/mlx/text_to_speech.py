@@ -37,6 +37,8 @@ log.setLevel(logging.DEBUG)
 class BaseMLXTTS(BaseNode):
     """Shared functionality for MLX-based text to speech nodes."""
 
+    _body: ClassVar[str] = "content_card"
+
     text: str = Field(
         default="Hello from MLX TTS.",
         description="Text content to synthesize into speech.",

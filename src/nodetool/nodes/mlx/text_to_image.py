@@ -39,6 +39,7 @@ class QuantizationLevel(IntEnum):
 
 class BaseMFluxNode(BaseNode):
     _expose_as_tool: ClassVar[bool] = True
+    _body: ClassVar[str] = "content_card"
 
     @classmethod
     def is_visible(cls) -> bool:

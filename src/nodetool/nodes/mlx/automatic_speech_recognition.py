@@ -4,7 +4,7 @@ import asyncio
 import logging
 from enum import Enum
 import sys
-from typing import TYPE_CHECKING, Any, Optional, TypedDict
+from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypedDict
 from pydantic import Field
 
 from nodetool.metadata.types import AudioRef, HuggingFaceModel
@@ -26,6 +26,8 @@ class Whisper(BaseNode):
     - Uses MLX for efficient Apple Silicon acceleration
     - Returns transcript and segments with optional word-level timestamps
     """
+
+    _body: ClassVar[str] = "content_card"
 
     class Model(str, Enum):
         TINY = "mlx-community/whisper-tiny-mlx"

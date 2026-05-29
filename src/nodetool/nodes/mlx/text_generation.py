@@ -30,6 +30,7 @@ class TextGeneration(BaseNode):
     """
 
     _provider: ClassVar[Provider] = Provider.MLX
+    _body: ClassVar[str] = "content_card"
 
     model: LanguageModel = Field(
         default=LanguageModel(

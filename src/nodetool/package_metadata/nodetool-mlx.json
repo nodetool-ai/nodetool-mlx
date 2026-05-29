@@ -12,6 +12,7 @@
       "description": "Generate images locally using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image generation, apple-silicon\n\n    Use cases:\n    - Create high quality images on Apple Silicon without external APIs\n    - Prototype prompts locally before running on cloud inference providers\n    - Experiment with quantized FLUX models (schnell/dev/krea-dev variants)\n\n    Recommended models:\n    - schnell: Fastest model, good for quick generations (2-4 steps)\n    - dev: More powerful model, higher quality (20-25 steps)\n    - krea-dev: Enhanced photorealism with distinctive aesthetics\n    - Quantized 4-bit models: Reduced memory usage versions of the official models",
       "namespace": "mlx.text_to_image",
       "node_type": "mlx.text_to_image.MFlux",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -201,8 +202,7 @@
         "width",
         "seed"
       ],
-      "inline_fields": [
-        "model",
+      "input_fields": [
         "prompt"
       ],
       "expose_as_tool": true
@@ -212,6 +212,7 @@
       "description": "Generate images with MFlux ControlNet guidance using local MLX acceleration.\n    mlx, flux, controlnet, conditioning, edge-detection\n\n    Use cases:\n    - Apply edge-aware guidance via ControlNet canny models\n    - Leverage local Apple Silicon acceleration for conditioned generations\n    - Upscale images using ControlNet upscaler weights",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxControlNet",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -444,11 +445,8 @@
         "seed"
       ],
       "input_fields": [
+        "prompt",
         "control_image"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -457,6 +455,7 @@
       "description": "Generate images with depth guidance via the MFlux depth pipeline using local MLX acceleration.\n    mlx, flux, depth, conditioning, structure-preserving\n\n    Use cases:\n    - Use a depth map to control structural composition while keeping prompt-driven appearance\n    - Provide both source image and depth map to transfer scene layout to a new generation\n    - Generate depth-guided outputs when only a depth map is available (source image optional)",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxDepth",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -630,12 +629,9 @@
         "seed"
       ],
       "input_fields": [
+        "prompt",
         "image",
         "depth_image"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -644,6 +640,7 @@
       "description": "Generate images using Bria FIBO via MFLUX.\n    mlx, fibo, text-to-image, apple-silicon\n\n    Use cases:\n    - High-control image generation from structured JSON prompts\n    - Plain-text generation via FIBO's VLM prompt expansion\n    - Fast few-step generation with FIBO Lite",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxFIBO",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -859,11 +856,8 @@
         "lora_scales"
       ],
       "input_fields": [
+        "prompt",
         "negative_prompt"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -872,6 +866,7 @@
       "description": "Edit images using Bria FIBO Edit via MFLUX.\n    mlx, fibo, image-editing, apple-silicon\n\n    Use cases:\n    - Instruction-based image editing from plain text or structured JSON\n    - Mask-free and maskless localized edit workflows through FIBO Edit\n    - Background matting via the FIBO Edit RMBG variant",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxFIBOEdit",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1100,12 +1095,9 @@
         "lora_scales"
       ],
       "input_fields": [
+        "prompt",
         "negative_prompt",
         "image"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -1114,6 +1106,7 @@
       "description": "Generate images using the FLUX.2 Klein models via MFLUX.\n    mlx, flux2, text-to-image, apple-silicon\n\n    Use cases:\n    - Fast FLUX.2 generation with distilled 4B/9B variants\n    - Higher-quality base FLUX.2 generation with more steps\n    - LoRA-enabled FLUX.2 generation on Apple Silicon",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxFlux2",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1350,8 +1343,7 @@
         "lora_path",
         "lora_scale"
       ],
-      "inline_fields": [
-        "model",
+      "input_fields": [
         "prompt"
       ],
       "expose_as_tool": true
@@ -1361,6 +1353,7 @@
       "description": "Edit images using FLUX.2 Klein image-conditioned editing.\n    mlx, flux2, image-editing, apple-silicon\n\n    Use cases:\n    - Edit images with one or more reference images using FLUX.2\n    - Fast distilled FLUX.2 editing on Apple Silicon\n    - LoRA-enabled FLUX.2 edit workflows",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxFlux2Edit",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1566,11 +1559,8 @@
         "lora_scale"
       ],
       "input_fields": [
+        "prompt",
         "images"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -1579,6 +1569,7 @@
       "description": "Transform an existing image using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image-to-image, apple-silicon\n\n    Use cases:\n    - Apply prompt-based edits to an existing image without relying on external APIs\n    - Experiment with strength-controlled transformations locally",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxImageToImage",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1798,11 +1789,8 @@
         "seed"
       ],
       "input_fields": [
+        "prompt",
         "image"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -1811,6 +1799,7 @@
       "description": "Generate style-consistent images using In-Context LoRA via MFLUX.\n    mlx, flux, in-context, style-transfer, apple-silicon\n\n    Use cases:\n    - Generate images following a specific style from a reference image\n    - Apply various pre-defined style LoRAs (illustration, portrait, storyboard, etc.)\n    - Create consistent visual identity across multiple generations",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxInContext",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1992,12 +1981,8 @@
         "seed"
       ],
       "input_fields": [
-        "reference_image"
-      ],
-      "inline_fields": [
-        "model",
         "prompt",
-        "style"
+        "reference_image"
       ],
       "expose_as_tool": true
     },
@@ -2006,6 +1991,7 @@
       "description": "Inpaint portions of an image locally using the MFLUX MLX implementation of FLUX.1 Fill.\n    mlx, flux, inpainting, mask editing\n\n    Use cases:\n    - Restore masked regions with prompt-guided content\n    - Blend new elements into an existing composition while preserving unmasked areas",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxInpaint",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2178,12 +2164,9 @@
         "seed"
       ],
       "input_fields": [
+        "prompt",
         "image",
         "mask"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -2192,6 +2175,7 @@
       "description": "Generate images using Kontext reference image fusion on Apple Silicon.\n    mlx, flux, kontext, reference guidance\n\n    Use cases:\n    - Leverage a reference image and prompt to produce stylistically consistent outputs\n    - Perform context-aware edits without external services\n    - Prototype Kontext-driven workflows locally",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxKontext",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2351,11 +2335,8 @@
         "seed"
       ],
       "input_fields": [
+        "prompt",
         "reference_image"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -2364,6 +2345,7 @@
       "description": "Outpaint an existing image by extending the canvas using the MFLUX Fill pipeline.\n    mlx, flux, outpainting, canvas extension\n\n    Use cases:\n    - Expand scene borders while maintaining continuity with the original image\n    - Add sky, foreground elements, or contextual scenery around a provided image",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxOutpaint",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2547,12 +2529,9 @@
         "seed"
       ],
       "input_fields": [
+        "prompt",
         "image",
         "mask"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -2561,6 +2540,7 @@
       "description": "Generate images using the Qwen Image model via MFLUX on Apple Silicon.\n    mlx, qwen, text-to-image, apple-silicon\n\n    Use cases:\n    - Generate high-quality images with multilingual prompt support including Chinese\n    - Create images with rendered Chinese text content (signs, calligraphy, menus)\n    - Leverage Qwen's 20B parameter vision-language model for detailed generation",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxQwenImage",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2744,11 +2724,8 @@
         "lora_scales"
       ],
       "input_fields": [
+        "prompt",
         "negative_prompt"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -2757,6 +2734,7 @@
       "description": "Edit images using natural language instructions with the Qwen Image Edit model.\n    mlx, qwen, image-editing, apple-silicon\n\n    Use cases:\n    - Modify images using natural language descriptions\n    - Combine elements from multiple reference images\n    - Apply transformations while maintaining original poses and positions",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxQwenImageEdit",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2957,12 +2935,9 @@
         "lora_scales"
       ],
       "input_fields": [
+        "prompt",
         "negative_prompt",
         "images"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -2971,6 +2946,7 @@
       "description": "Generate images using reference images with Flux Redux guidance on Apple Silicon.\n    mlx, flux, redux, reference fusion\n\n    Use cases:\n    - Blend multiple reference images with a text prompt to steer style and content\n    - Reinterpret a photo collection into a coherent output while keeping structure from the references\n    - Experiment locally with the Flux Redux pipeline without external APIs",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxRedux",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -3140,11 +3116,8 @@
         "seed"
       ],
       "input_fields": [
+        "prompt",
         "redux_image"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -3153,6 +3126,7 @@
       "description": "Upscale images using the SeedVR2 super-resolution model via MFLUX.\n    mlx, seedvr2, upscaling, super-resolution, apple-silicon\n\n    Use cases:\n    - Fast and faithful image upscaling (typically 1 step)\n    - High-fidelity super-resolution without text prompts\n    - Upscale by target resolution or scale factor",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxSeedVR2Upscale",
+      "body": "content_card",
       "properties": [
         {
           "name": "image",
@@ -3280,10 +3254,6 @@
       "input_fields": [
         "image"
       ],
-      "inline_fields": [
-        "model",
-        "resolution"
-      ],
       "expose_as_tool": true
     },
     {
@@ -3291,6 +3261,7 @@
       "description": "Generate images using the base Z-Image model via MFLUX.\n    mlx, z-image, text-to-image, apple-silicon\n\n    Use cases:\n    - Higher-quality base Z-Image generation for detailed prompts\n    - Training-oriented or non-turbo Z-Image workflows\n    - LoRA-enabled Z-Image generation on Apple Silicon",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxZImage",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -3464,11 +3435,8 @@
         "lora_scale"
       ],
       "input_fields": [
+        "prompt",
         "negative_prompt"
-      ],
-      "inline_fields": [
-        "model",
-        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -3477,6 +3445,7 @@
       "description": "Generate images quickly using the Z-Image Turbo model via MFLUX.\n    mlx, z-image, text-to-image, fast-generation, apple-silicon\n\n    Use cases:\n    - Fast image generation (typically 9 steps)\n    - Efficient 6B parameter model for quick iterations\n    - Support for LoRA adapters for style customization",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxZImageTurbo",
+      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -3630,8 +3599,7 @@
         "lora_path",
         "lora_scale"
       ],
-      "inline_fields": [
-        "model",
+      "input_fields": [
         "prompt"
       ],
       "expose_as_tool": true
@@ -3641,6 +3609,7 @@
       "description": "MLX Kokoro text-to-speech.",
       "namespace": "mlx.text_to_speech",
       "node_type": "mlx.text_to_speech.KokoroTTS",
+      "body": "content_card",
       "properties": [
         {
           "name": "text",
@@ -3910,10 +3879,6 @@
       "input_fields": [
         "text"
       ],
-      "inline_fields": [
-        "model",
-        "voice"
-      ],
       "is_streaming_output": true,
       "expose_as_tool": true
     },
@@ -3922,6 +3887,7 @@
       "description": "MLX Sesame / CSM text-to-speech with reference audio cloning.",
       "namespace": "mlx.text_to_speech",
       "node_type": "mlx.text_to_speech.SesameTTS",
+      "body": "content_card",
       "properties": [
         {
           "name": "text",
@@ -4038,9 +4004,6 @@
         "text",
         "reference_audio"
       ],
-      "inline_fields": [
-        "model"
-      ],
       "is_streaming_output": true,
       "expose_as_tool": true
     },
@@ -4049,6 +4012,7 @@
       "description": "MLX Spark text-to-speech.",
       "namespace": "mlx.text_to_speech",
       "node_type": "mlx.text_to_speech.SparkTTS",
+      "body": "content_card",
       "properties": [
         {
           "name": "text",
@@ -4201,11 +4165,6 @@
       "input_fields": [
         "text"
       ],
-      "inline_fields": [
-        "model",
-        "voice",
-        "gender"
-      ],
       "is_streaming_output": true,
       "expose_as_tool": true
     },
@@ -4214,6 +4173,7 @@
       "description": "Generate text using locally cached MLX models on Apple Silicon.\n    text, generation, mlx, local-llm\n\n    Use cases:\n    - Fast local iteration with MLX-converted instruction models\n    - Privacy-preserving summarization, drafting, or Q&A\n    - Building multi-node agent workflows without external APIs",
       "namespace": "mlx.text_generation",
       "node_type": "mlx.text_generation.TextGeneration",
+      "body": "content_card",
       "properties": [
         {
           "name": "model",
@@ -4603,10 +4563,7 @@
         "prompt"
       ],
       "input_fields": [
-        "system_prompt"
-      ],
-      "inline_fields": [
-        "model",
+        "system_prompt",
         "prompt"
       ],
       "is_streaming_output": true
@@ -4616,6 +4573,7 @@
       "description": "Transcribe an audio asset using MLX Whisper.\n    whisper, mlx, asr, speech-to-text\n\n    - Uses MLX for efficient Apple Silicon acceleration\n    - Returns transcript and segments with optional word-level timestamps",
       "namespace": "mlx.automatic_speech_recognition",
       "node_type": "mlx.automatic_speech_recognition.Whisper",
+      "body": "content_card",
       "properties": [
         {
           "name": "model",
@@ -4868,9 +4826,6 @@
       ],
       "input_fields": [
         "audio"
-      ],
-      "inline_fields": [
-        "model"
       ]
     }
   ]
