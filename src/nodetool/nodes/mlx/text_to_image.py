@@ -179,6 +179,14 @@ class MFlux(BaseMFluxNode):
     def required_inputs(self):
         return ["prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ["prompt"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "prompt"]
+
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
             "MFlux generation requires macOS (Apple Silicon / MLX)."

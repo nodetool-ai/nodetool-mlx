@@ -201,6 +201,10 @@
         "width",
         "seed"
       ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -439,6 +443,13 @@
         "width",
         "seed"
       ],
+      "input_fields": [
+        "control_image"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -617,6 +628,14 @@
         "height",
         "width",
         "seed"
+      ],
+      "input_fields": [
+        "image",
+        "depth_image"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -838,6 +857,13 @@
         "seed",
         "lora_paths",
         "lora_scales"
+      ],
+      "input_fields": [
+        "negative_prompt"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -1072,6 +1098,14 @@
         "seed",
         "lora_paths",
         "lora_scales"
+      ],
+      "input_fields": [
+        "negative_prompt",
+        "image"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -1316,6 +1350,10 @@
         "lora_path",
         "lora_scale"
       ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -1526,6 +1564,13 @@
         "seed",
         "lora_path",
         "lora_scale"
+      ],
+      "input_fields": [
+        "images"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -1752,6 +1797,13 @@
         "width",
         "seed"
       ],
+      "input_fields": [
+        "image"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -1939,6 +1991,14 @@
         "width",
         "seed"
       ],
+      "input_fields": [
+        "reference_image"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt",
+        "style"
+      ],
       "expose_as_tool": true
     },
     {
@@ -2117,6 +2177,14 @@
         "width",
         "seed"
       ],
+      "input_fields": [
+        "image",
+        "mask"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -2281,6 +2349,13 @@
         "height",
         "width",
         "seed"
+      ],
+      "input_fields": [
+        "reference_image"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -2471,6 +2546,14 @@
         "width",
         "seed"
       ],
+      "input_fields": [
+        "image",
+        "mask"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -2659,6 +2742,13 @@
         "seed",
         "lora_paths",
         "lora_scales"
+      ],
+      "input_fields": [
+        "negative_prompt"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -2866,6 +2956,14 @@
         "lora_paths",
         "lora_scales"
       ],
+      "input_fields": [
+        "negative_prompt",
+        "images"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -3041,6 +3139,13 @@
         "width",
         "seed"
       ],
+      "input_fields": [
+        "redux_image"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -3171,6 +3276,13 @@
         "quantize",
         "softness",
         "seed"
+      ],
+      "input_fields": [
+        "image"
+      ],
+      "inline_fields": [
+        "model",
+        "resolution"
       ],
       "expose_as_tool": true
     },
@@ -3351,6 +3463,13 @@
         "lora_path",
         "lora_scale"
       ],
+      "input_fields": [
+        "negative_prompt"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "expose_as_tool": true
     },
     {
@@ -3510,6 +3629,10 @@
         "seed",
         "lora_path",
         "lora_scale"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
       ],
       "expose_as_tool": true
     },
@@ -3784,6 +3907,13 @@
         "temperature",
         "speed"
       ],
+      "input_fields": [
+        "text"
+      ],
+      "inline_fields": [
+        "model",
+        "voice"
+      ],
       "is_streaming_output": true,
       "expose_as_tool": true
     },
@@ -3903,6 +4033,13 @@
         "model",
         "reference_audio",
         "speed"
+      ],
+      "input_fields": [
+        "text",
+        "reference_audio"
+      ],
+      "inline_fields": [
+        "model"
       ],
       "is_streaming_output": true,
       "expose_as_tool": true
@@ -4059,6 +4196,14 @@
         "speed",
         "voice",
         "pitch",
+        "gender"
+      ],
+      "input_fields": [
+        "text"
+      ],
+      "inline_fields": [
+        "model",
+        "voice",
         "gender"
       ],
       "is_streaming_output": true,
@@ -4457,6 +4602,13 @@
         "model",
         "prompt"
       ],
+      "input_fields": [
+        "system_prompt"
+      ],
+      "inline_fields": [
+        "model",
+        "prompt"
+      ],
       "is_streaming_output": true
     },
     {
@@ -4713,6 +4865,12 @@
       "basic_fields": [
         "model",
         "audio"
+      ],
+      "input_fields": [
+        "audio"
+      ],
+      "inline_fields": [
+        "model"
       ]
     }
   ]

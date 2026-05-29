@@ -109,6 +109,14 @@ class TextGeneration(BaseNode):
         return ["prompt"]
 
     @classmethod
+    def get_input_fields(cls):
+        return ["system_prompt", "prompt"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "prompt"]
+
+    @classmethod
     def is_streaming_output(cls) -> bool:
         return True
 

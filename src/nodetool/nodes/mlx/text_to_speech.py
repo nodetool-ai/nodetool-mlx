@@ -60,6 +60,14 @@ class BaseMLXTTS(BaseNode):
         return ["text"]
 
     @classmethod
+    def get_input_fields(cls):
+        return ["text"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model"]
+
+    @classmethod
     def is_cacheable(cls) -> bool:
         return False
 
@@ -357,6 +365,10 @@ class KokoroTTS(BaseMLXTTS):
         return ["model", "voice", "language", "temperature", "speed"]
 
     @classmethod
+    def get_inline_fields(cls):
+        return ["model", "voice"]
+
+    @classmethod
     def get_title(cls):
         return "Kokoro TTS"
 
@@ -419,6 +431,14 @@ class SesameTTS(BaseMLXTTS):
 
     def required_inputs(self):
         return ["text", "reference_audio"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ["text", "reference_audio"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model"]
 
     @classmethod
     def get_title(cls):
@@ -514,6 +534,10 @@ class SparkTTS(BaseMLXTTS):
     @classmethod
     def get_basic_fields(cls) -> list[str]:
         return ["model", "speed", "voice", "pitch", "gender"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "voice", "gender"]
 
     @classmethod
     def get_title(cls):

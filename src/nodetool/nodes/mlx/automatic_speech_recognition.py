@@ -84,6 +84,14 @@ class Whisper(BaseNode):
         return ["audio"]
 
     @classmethod
+    def get_input_fields(cls):
+        return ["audio"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model"]
+
+    @classmethod
     def get_title(cls):
         return "MLX Whisper"
 

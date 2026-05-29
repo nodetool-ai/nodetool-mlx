@@ -157,6 +157,14 @@ class MFluxImageToImage(BaseMFluxNode):
     def required_inputs(self):
         return ["image", "prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'image']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
         cache_key = f"{self.model.repo_id}_flux"
@@ -344,6 +352,14 @@ class MFluxControlNet(BaseMFluxNode):
     def required_inputs(self):
         return ["control_image", "prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'control_image']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
         cache_key = (
@@ -522,6 +538,14 @@ class MFluxInpaint(BaseMFluxNode):
 
     def required_inputs(self):
         return ["image", "mask", "prompt"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'image', 'mask']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -716,6 +740,14 @@ class MFluxOutpaint(BaseMFluxNode):
 
     def required_inputs(self):
         return ["image", "mask", "prompt"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'image', 'mask']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -946,6 +978,14 @@ class MFluxDepth(BaseMFluxNode):
     def required_inputs(self):
         return ["image", "depth_image", "prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'image', 'depth_image']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
             "MFlux depth generation requires macOS (Apple Silicon / MLX)."
@@ -1161,6 +1201,14 @@ class MFluxRedux(BaseMFluxNode):
     def required_inputs(self):
         return ["redux_image", "prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'redux_image']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
             "MFlux Redux generation requires macOS (Apple Silicon / MLX)."
@@ -1355,6 +1403,14 @@ class MFluxKontext(BaseMFluxNode):
     def required_inputs(self):
         return ["reference_image", "prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'reference_image']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
             "MFlux Kontext generation requires macOS (Apple Silicon / MLX)."
@@ -1543,6 +1599,14 @@ class MFluxFlux2(BaseMFluxNode):
     def required_inputs(self):
         return ["prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
             "MFlux FLUX.2 generation requires macOS (Apple Silicon / MLX)."
@@ -1716,6 +1780,14 @@ class MFluxFlux2Edit(BaseMFluxNode):
 
     def required_inputs(self):
         return ["images", "prompt"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'images']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1904,6 +1976,14 @@ class MFluxFIBO(BaseMFluxNode):
 
     def required_inputs(self):
         return ["prompt"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'negative_prompt']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2097,6 +2177,14 @@ class MFluxFIBOEdit(BaseMFluxNode):
 
     def required_inputs(self):
         return ["image", "prompt"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'negative_prompt', 'image']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2302,6 +2390,14 @@ class MFluxQwenImage(BaseMFluxNode):
     def required_inputs(self):
         return ["prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'negative_prompt']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
             "MFlux Qwen Image generation requires macOS (Apple Silicon / MLX)."
@@ -2479,6 +2575,14 @@ class MFluxQwenImageEdit(BaseMFluxNode):
 
     def required_inputs(self):
         return ["images", "prompt"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'negative_prompt', 'images']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2674,6 +2778,14 @@ class MFluxZImage(BaseMFluxNode):
     def required_inputs(self):
         return ["prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'negative_prompt']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
             "MFlux Z-Image requires macOS (Apple Silicon / MLX)."
@@ -2835,6 +2947,14 @@ class MFluxZImageTurbo(BaseMFluxNode):
     def required_inputs(self):
         return ["prompt"]
 
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt']
+
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
             "MFlux Z-Image Turbo requires macOS (Apple Silicon / MLX)."
@@ -2963,6 +3083,14 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
 
     def required_inputs(self):
         return ["image"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ['image']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'resolution']
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -3150,6 +3278,14 @@ class MFluxInContext(BaseMFluxNode):
 
     def required_inputs(self):
         return ["reference_image", "prompt"]
+
+    @classmethod
+    def get_input_fields(cls):
+        return ['prompt', 'reference_image']
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ['model', 'prompt', 'style']
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
