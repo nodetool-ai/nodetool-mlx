@@ -15,6 +15,7 @@ All nodes live under `src/nodetool/nodes/mlx`:
 - `mlx.whisper.MLXWhisper` – streaming speech-to-text using MLX Whisper checkpoints
 - `mlx.tts.TTS` – Kokoro and Sesame text-to-speech with optional chunked audio streaming
 - `mlx.mflux.ImageGeneration` – FLUX.1 image generation via the MFlux project (supports quantized models)
+- `mlx.image_to_text.MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen-VL, LLaVA)
 
 
 ## Requirements

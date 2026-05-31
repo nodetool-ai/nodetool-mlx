@@ -4827,6 +4827,122 @@
       "input_fields": [
         "audio"
       ]
+    },
+    {
+      "title": "MLX Vision Language",
+      "description": "Describe or answer questions about an image using MLX vision-language models.\n    mlx, vlm, image-to-text, vision, captioning, vqa, apple-silicon\n\n    Use cases:\n    - Generate captions or detailed descriptions for an image\n    - Visual question answering (VQA) about the contents of an image\n    - OCR-style reading and document understanding without external APIs\n    - Local multimodal understanding on Apple Silicon (Qwen-VL, LLaVA, etc.)",
+      "namespace": "mlx.image_to_text",
+      "node_type": "mlx.image_to_text.MLXVisionLanguage",
+      "body": "content_card",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "Describe this image in detail.",
+          "title": "Prompt",
+          "description": "Instruction or question about the image."
+        },
+        {
+          "name": "image",
+          "type": {
+            "type": "image"
+          },
+          "default": {
+            "type": "image",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Image",
+          "description": "Image to analyze."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.model"
+          },
+          "default": {
+            "type": "hf.model",
+            "repo_id": "mlx-community/Qwen2.5-VL-3B-Instruct-4bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "MLX vision-language model to load from the local Hugging Face cache."
+        },
+        {
+          "name": "max_tokens",
+          "type": {
+            "type": "int"
+          },
+          "default": 512,
+          "title": "Max Tokens",
+          "description": "Maximum number of tokens the model should generate.",
+          "min": 1.0,
+          "max": 4096.0
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.0,
+          "title": "Temperature",
+          "description": "Sampling temperature. Set to 0 for deterministic output.",
+          "min": 0.0,
+          "max": 2.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Qwen2.5-VL-3B-Instruct-4bit",
+          "type": "hf.model",
+          "name": "mlx-community/Qwen2.5-VL-3B-Instruct-4bit",
+          "repo_id": "mlx-community/Qwen2.5-VL-3B-Instruct-4bit"
+        },
+        {
+          "id": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
+          "type": "hf.model",
+          "name": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit",
+          "repo_id": "mlx-community/Qwen2.5-VL-7B-Instruct-4bit"
+        },
+        {
+          "id": "mlx-community/Qwen2.5-VL-7B-Instruct-8bit",
+          "type": "hf.model",
+          "name": "mlx-community/Qwen2.5-VL-7B-Instruct-8bit",
+          "repo_id": "mlx-community/Qwen2.5-VL-7B-Instruct-8bit"
+        },
+        {
+          "id": "mlx-community/llava-1.5-7b-4bit",
+          "type": "hf.model",
+          "name": "mlx-community/llava-1.5-7b-4bit",
+          "repo_id": "mlx-community/llava-1.5-7b-4bit"
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "image",
+        "model",
+        "max_tokens",
+        "temperature"
+      ],
+      "input_fields": [
+        "prompt",
+        "image"
+      ]
     }
   ]
 }
