@@ -1287,25 +1287,16 @@ class MFluxRedux(BaseMFluxNode):
             )
 
             def _generate() -> PIL.Image.Image:
-                config_kwargs: dict[str, Any] = {
-                    "num_inference_steps": self.steps,
-                    "height": target_height,
-                    "width": target_width,
-                    "guidance": self.guidance,
-                    "redux_image_paths": [redux_path],
-                    "redux_image_strengths": strength,
-                }
-
                 assert self._flux_model is not None
                 generated = self._flux_model.generate_image(
                     seed=self.seed,
                     prompt=self.prompt,
+                    redux_image_paths=[redux_path],
+                    redux_image_strengths=strength,
                     num_inference_steps=self.steps,
                     height=target_height,
                     width=target_width,
                     guidance=self.guidance,
-                    image_path=image_path_arg,
-                    depth_image_path=depth_image_path_arg,
                 )
                 return generated.image
 
@@ -1476,14 +1467,6 @@ class MFluxKontext(BaseMFluxNode):
                 working_image.save(image_path)
 
             try:
-                config_kwargs: dict[str, Any] = {
-                    "num_inference_steps": self.steps,
-                    "height": target_height,
-                    "width": target_width,
-                    "guidance": self.guidance,
-                    "image_path": image_path,
-                }
-
                 assert self._flux_model is not None
                 generated = self._flux_model.generate_image(
                     seed=self.seed,
@@ -1492,8 +1475,7 @@ class MFluxKontext(BaseMFluxNode):
                     height=target_height,
                     width=target_width,
                     guidance=self.guidance,
-                    image_path=image_path_arg,
-                    depth_image_path=depth_image_path_arg,
+                    image_path=str(image_path),
                 )
                 return generated.image
             finally:
@@ -2818,7 +2800,7 @@ class MFluxZImage(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
-                model_config=ModelConfig.z_image(),
+                model_config=ModelConfig.z_image(model_name=self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2972,6 +2954,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "ZImageTurbo":
+            from mflux.models.common.config import ModelConfig
             from mflux.models.z_image.variants import ZImageTurbo
 
             log.info(
@@ -2986,6 +2969,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
+                model_config=ModelConfig.z_image(model_name=self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
