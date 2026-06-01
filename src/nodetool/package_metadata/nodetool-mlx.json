@@ -4827,6 +4827,626 @@
       "input_fields": [
         "audio"
       ]
+    },
+    {
+      "title": "ACE-Step Music Generation",
+      "description": "Generate full songs locally with ACE-Step 1.5 on Apple Silicon (MLX).\n    mlx, music, audio, text-to-music, ace-step, apple-silicon\n\n    Use cases:\n    - Turn a text description (and optional lyrics) into a complete track\n    - Produce instrumental beds, demos or background music without cloud APIs\n    - Iterate on prompts locally using the fast turbo DiT, then switch to the\n      higher quality base / XL checkpoints\n\n    ACE-Step downloads its checkpoints from HuggingFace into\n    ``~/.cache/nodetool/acestep/checkpoints`` (configurable via\n    ``ACESTEP_CHECKPOINTS_DIR``) the first time a model is used.",
+      "namespace": "mlx.text_to_music",
+      "node_type": "mlx.text_to_music.ACEStepMusicGeneration",
+      "body": "content_card",
+      "properties": [
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A dreamy lo-fi hip hop beat with warm piano and vinyl crackle",
+          "title": "Prompt",
+          "description": "Text description (caption) of the music to generate."
+        },
+        {
+          "name": "lyrics",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Lyrics",
+          "description": "Optional lyrics. Use structure tags like [verse], [chorus] and [outro] on their own lines. Leave empty for instrumental output."
+        },
+        {
+          "name": "instrumental",
+          "type": {
+            "type": "bool"
+          },
+          "default": false,
+          "title": "Instrumental",
+          "description": "Generate music without vocals, ignoring any lyrics."
+        },
+        {
+          "name": "duration",
+          "type": {
+            "type": "float"
+          },
+          "default": 30.0,
+          "title": "Duration",
+          "description": "Target length in seconds (10-600). Use -1 to let the model decide.",
+          "min": -1.0,
+          "max": 600.0
+        },
+        {
+          "name": "dit_model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "acestep-v15-turbo",
+              "acestep-v15-base",
+              "acestep-v15-sft",
+              "acestep-v15-turbo-shift1",
+              "acestep-v15-turbo-shift3",
+              "acestep-v15-turbo-continuous",
+              "acestep-v15-xl-base",
+              "acestep-v15-xl-sft",
+              "acestep-v15-xl-turbo"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_music.DiTModel"
+          },
+          "default": "acestep-v15-turbo",
+          "title": "DiT Model",
+          "description": "Diffusion Transformer checkpoint used for synthesis."
+        },
+        {
+          "name": "language_model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "",
+              "acestep-5Hz-lm-0.6B",
+              "acestep-5Hz-lm-1.7B",
+              "acestep-5Hz-lm-4B"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_music.LanguageModel"
+          },
+          "default": "",
+          "title": "Planner LM",
+          "description": "Optional 5Hz language model. When enabled it expands the prompt and infers metadata via chain-of-thought before synthesis. Disabled runs ACE-Step in DiT-only mode."
+        },
+        {
+          "name": "inference_steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 8,
+          "title": "Inference Steps",
+          "description": "Number of diffusion steps. ~8 for turbo, ~50 for base/sft.",
+          "min": 1.0,
+          "max": 200.0
+        },
+        {
+          "name": "guidance_scale",
+          "type": {
+            "type": "float"
+          },
+          "default": 7.0,
+          "title": "Guidance Scale",
+          "description": "Classifier-free guidance strength. Turbo checkpoints force this to 1.0 internally for stability.",
+          "min": 0.0,
+          "max": 30.0
+        },
+        {
+          "name": "bpm",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "BPM",
+          "description": "Target tempo in beats per minute. 0 lets the model choose.",
+          "min": 0.0,
+          "max": 300.0
+        },
+        {
+          "name": "keyscale",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Key / Scale",
+          "description": "Optional key and mode, e.g. 'C major' or 'A minor'. Empty = auto."
+        },
+        {
+          "name": "time_signature",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Time Signature",
+          "description": "Optional time signature, e.g. '4/4'. Empty = auto."
+        },
+        {
+          "name": "vocal_language",
+          "type": {
+            "type": "enum",
+            "values": [
+              "unknown",
+              "English",
+              "Mandarin",
+              "Cantonese",
+              "Japanese",
+              "Korean",
+              "Spanish",
+              "French",
+              "German",
+              "Italian",
+              "Portuguese",
+              "Russian",
+              "Arabic",
+              "Hindi",
+              "Turkish",
+              "Vietnamese",
+              "Indonesian",
+              "Thai"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_music.VocalLanguage"
+          },
+          "default": "unknown",
+          "title": "Vocal Language",
+          "description": "Language hint for vocals."
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for reproducible generation. 0 picks a random seed.",
+          "min": 0.0
+        },
+        {
+          "name": "thinking",
+          "type": {
+            "type": "bool"
+          },
+          "default": true,
+          "title": "Planner Thinking",
+          "description": "Enable chain-of-thought when a planner LM is selected."
+        },
+        {
+          "name": "lm_temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.85,
+          "title": "LM Temperature",
+          "description": "Sampling temperature for the planner LM.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "lm_cfg_scale",
+          "type": {
+            "type": "float"
+          },
+          "default": 2.0,
+          "title": "LM Guidance",
+          "description": "Classifier-free guidance scale for the planner LM.",
+          "min": 0.0,
+          "max": 10.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "ACE-Step/Ace-Step1.5",
+          "type": "hf.model",
+          "name": "ACE-Step/Ace-Step1.5",
+          "repo_id": "ACE-Step/Ace-Step1.5",
+          "size_on_disk": 10092102593,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "diffusers",
+            "safetensors",
+            "acestep",
+            "feature-extraction",
+            "audio",
+            "music",
+            "text2music",
+            "text-to-audio",
+            "custom_code",
+            "arxiv:2602.00744",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 50589,
+          "likes": 761
+        },
+        {
+          "id": "ACE-Step/acestep-v15-base",
+          "type": "hf.model",
+          "name": "ACE-Step/acestep-v15-base",
+          "repo_id": "ACE-Step/acestep-v15-base",
+          "size_on_disk": 4791792407,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "acestep",
+            "feature-extraction",
+            "audio",
+            "music",
+            "text2music",
+            "text-to-audio",
+            "custom_code",
+            "arxiv:2602.00744",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 2493,
+          "likes": 61
+        },
+        {
+          "id": "ACE-Step/acestep-v15-sft",
+          "type": "hf.model",
+          "name": "ACE-Step/acestep-v15-sft",
+          "repo_id": "ACE-Step/acestep-v15-sft",
+          "size_on_disk": 4791792772,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "acestep",
+            "feature-extraction",
+            "audio",
+            "music",
+            "text2music",
+            "text-to-audio",
+            "custom_code",
+            "arxiv:2602.00744",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1651,
+          "likes": 50
+        },
+        {
+          "id": "ACE-Step/acestep-v15-xl-base",
+          "type": "hf.model",
+          "name": "ACE-Step/acestep-v15-xl-base",
+          "repo_id": "ACE-Step/acestep-v15-xl-base",
+          "size_on_disk": 19953389529,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "acestep",
+            "feature-extraction",
+            "audio",
+            "music",
+            "text2music",
+            "custom_code",
+            "text-to-audio",
+            "arxiv:2602.00744",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1698,
+          "likes": 79
+        },
+        {
+          "id": "ACE-Step/acestep-v15-xl-turbo",
+          "type": "hf.model",
+          "name": "ACE-Step/acestep-v15-xl-turbo",
+          "repo_id": "ACE-Step/acestep-v15-xl-turbo",
+          "size_on_disk": 19953378268,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "acestep",
+            "feature-extraction",
+            "audio",
+            "music",
+            "text2music",
+            "custom_code",
+            "text-to-audio",
+            "arxiv:2602.00744",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 5996,
+          "likes": 168
+        },
+        {
+          "id": "ACE-Step/acestep-5Hz-lm-0.6B",
+          "type": "hf.model",
+          "name": "ACE-Step/acestep-5Hz-lm-0.6B",
+          "repo_id": "ACE-Step/acestep-5Hz-lm-0.6B",
+          "size_on_disk": 1372702240,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "qwen3",
+            "text-generation",
+            "audio",
+            "music",
+            "text2music",
+            "text-to-audio",
+            "arxiv:2602.00744",
+            "license:mit",
+            "text-generation-inference",
+            "endpoints_compatible",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 8492,
+          "likes": 15
+        },
+        {
+          "id": "ACE-Step/acestep-5Hz-lm-4B",
+          "type": "hf.model",
+          "name": "ACE-Step/acestep-5Hz-lm-4B",
+          "repo_id": "ACE-Step/acestep-5Hz-lm-4B",
+          "size_on_disk": 8426085346,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "qwen3",
+            "text-generation",
+            "audio",
+            "music",
+            "text2music",
+            "text-to-audio",
+            "arxiv:2602.00744",
+            "license:mit",
+            "text-generation-inference",
+            "endpoints_compatible",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 8865,
+          "likes": 47
+        }
+      ],
+      "basic_fields": [
+        "prompt",
+        "lyrics",
+        "instrumental",
+        "duration",
+        "dit_model",
+        "inference_steps",
+        "guidance_scale",
+        "seed"
+      ],
+      "input_fields": [
+        "prompt",
+        "lyrics"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "ACE-Step Song Planner",
+      "description": "Turn a natural-language idea into a song blueprint using the ACE-Step LM.\n    mlx, music, planner, lyrics, ace-step, apple-silicon\n\n    Use cases:\n    - Expand a short idea into a caption, lyrics and musical metadata\n    - Generate lyrics and a key/BPM suggestion to feed into music generation\n    - Prototype song concepts before committing to full audio synthesis\n\n    This node only runs the 5Hz language model (no diffusion), so it is fast\n    and lightweight compared to full music generation.",
+      "namespace": "mlx.text_to_music",
+      "node_type": "mlx.text_to_music.ACEStepSongPlanner",
+      "body": "content_card",
+      "properties": [
+        {
+          "name": "query",
+          "type": {
+            "type": "str"
+          },
+          "default": "An uplifting indie pop song about chasing the sunrise",
+          "title": "Idea",
+          "description": "Natural-language description of the song you want to plan."
+        },
+        {
+          "name": "language_model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "",
+              "acestep-5Hz-lm-0.6B",
+              "acestep-5Hz-lm-1.7B",
+              "acestep-5Hz-lm-4B"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_music.LanguageModel"
+          },
+          "default": "acestep-5Hz-lm-1.7B",
+          "title": "Planner LM",
+          "description": "5Hz language model used to draft the song blueprint."
+        },
+        {
+          "name": "instrumental",
+          "type": {
+            "type": "bool"
+          },
+          "default": false,
+          "title": "Instrumental",
+          "description": "Plan an instrumental track (no lyrics)."
+        },
+        {
+          "name": "vocal_language",
+          "type": {
+            "type": "enum",
+            "values": [
+              "unknown",
+              "English",
+              "Mandarin",
+              "Cantonese",
+              "Japanese",
+              "Korean",
+              "Spanish",
+              "French",
+              "German",
+              "Italian",
+              "Portuguese",
+              "Russian",
+              "Arabic",
+              "Hindi",
+              "Turkish",
+              "Vietnamese",
+              "Indonesian",
+              "Thai"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_music.VocalLanguage"
+          },
+          "default": "unknown",
+          "title": "Vocal Language",
+          "description": "Preferred language for generated lyrics."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.85,
+          "title": "Temperature",
+          "description": "Sampling temperature for the planner LM.",
+          "min": 0.0,
+          "max": 2.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "caption"
+        },
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "lyrics"
+        },
+        {
+          "type": {
+            "type": "int"
+          },
+          "name": "bpm"
+        },
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "keyscale"
+        },
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "time_signature"
+        },
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "vocal_language"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "ACE-Step/Ace-Step1.5",
+          "type": "hf.model",
+          "name": "ACE-Step/Ace-Step1.5",
+          "repo_id": "ACE-Step/Ace-Step1.5",
+          "size_on_disk": 10092102593,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "diffusers",
+            "safetensors",
+            "acestep",
+            "feature-extraction",
+            "audio",
+            "music",
+            "text2music",
+            "text-to-audio",
+            "custom_code",
+            "arxiv:2602.00744",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 50589,
+          "likes": 761
+        },
+        {
+          "id": "ACE-Step/acestep-5Hz-lm-0.6B",
+          "type": "hf.model",
+          "name": "ACE-Step/acestep-5Hz-lm-0.6B",
+          "repo_id": "ACE-Step/acestep-5Hz-lm-0.6B",
+          "size_on_disk": 1372702240,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "qwen3",
+            "text-generation",
+            "audio",
+            "music",
+            "text2music",
+            "text-to-audio",
+            "arxiv:2602.00744",
+            "license:mit",
+            "text-generation-inference",
+            "endpoints_compatible",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 8492,
+          "likes": 15
+        },
+        {
+          "id": "ACE-Step/acestep-5Hz-lm-4B",
+          "type": "hf.model",
+          "name": "ACE-Step/acestep-5Hz-lm-4B",
+          "repo_id": "ACE-Step/acestep-5Hz-lm-4B",
+          "size_on_disk": 8426085346,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "qwen3",
+            "text-generation",
+            "audio",
+            "music",
+            "text2music",
+            "text-to-audio",
+            "arxiv:2602.00744",
+            "license:mit",
+            "text-generation-inference",
+            "endpoints_compatible",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 8865,
+          "likes": 47
+        }
+      ],
+      "basic_fields": [
+        "query",
+        "language_model",
+        "instrumental",
+        "vocal_language"
+      ],
+      "input_fields": [
+        "query"
+      ]
     }
   ]
 }
