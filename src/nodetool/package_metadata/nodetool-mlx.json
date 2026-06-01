@@ -4827,6 +4827,463 @@
       "input_fields": [
         "audio"
       ]
+    },
+    {
+      "title": "Stable Audio 3",
+      "description": "Generate music and sound effects from text with Stable Audio 3 on Apple Silicon.\n    mlx, audio, music, sound-effects, text-to-audio, apple-silicon, stable-audio\n\n    Use cases:\n    - Generate music loops and beds locally without cloud APIs\n    - Create sound effects from a text description\n    - Prototype audio ideas on-device with low latency",
+      "namespace": "mlx.text_to_audio",
+      "node_type": "mlx.text_to_audio.StableAudio3",
+      "body": "content_card",
+      "properties": [
+        {
+          "name": "model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "sm-music",
+              "sm-sfx",
+              "medium"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_audio.DiTModel"
+          },
+          "default": "sm-music",
+          "title": "Model",
+          "description": "DiT model: 'sm-music' (50M, fast music), 'sm-sfx' (50M, sound effects) or 'medium' (1.4B, higher fidelity). The matching SAME decoder is selected automatically."
+        },
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A driving lofi house loop with warm vinyl crackle",
+          "title": "Prompt",
+          "description": "Text prompt describing the audio to generate."
+        },
+        {
+          "name": "seconds",
+          "type": {
+            "type": "float"
+          },
+          "default": 10.0,
+          "title": "Seconds",
+          "description": "Output length in seconds (max 300; trimmed exactly).",
+          "min": 1.0,
+          "max": 300.0
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 8,
+          "title": "Steps",
+          "description": "Ping-pong sampling steps. The distilled model targets 8 (the sweet spot); 1-4 is faster but lower quality.",
+          "min": 1,
+          "max": 16
+        },
+        {
+          "name": "cfg",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Cfg",
+          "description": "Classifier-free guidance scale. 1.0 = off (fastest). >1.0 pushes toward the prompt; costs ~2x per step.",
+          "min": 0.0,
+          "max": 15.0
+        },
+        {
+          "name": "negative_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Negative Prompt",
+          "description": "Negative prompt for CFG's unconditional branch (only used when cfg != 1.0)."
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "stabilityai/stable-audio-3-optimized",
+          "type": "hf.model",
+          "name": "stabilityai/stable-audio-3-optimized",
+          "repo_id": "stabilityai/stable-audio-3-optimized",
+          "allow_patterns": [
+            "MLX/*"
+          ],
+          "size_on_disk": 8400000000,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "stable-audio-3",
+            "audio-generation",
+            "music",
+            "sound-effects",
+            "diffusion",
+            "text-to-audio",
+            "en",
+            "mlx",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 16
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "prompt",
+        "seconds",
+        "steps",
+        "cfg",
+        "negative_prompt",
+        "seed"
+      ],
+      "input_fields": [
+        "prompt"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "Stable Audio 3 Audio to Audio",
+      "description": "Transform an input clip into a variation guided by a text prompt (Stable Audio 3).\n    mlx, audio, audio-to-audio, style-transfer, variation, apple-silicon, stable-audio\n\n    Use cases:\n    - Create prompt-guided variations of an existing loop\n    - Restyle a melody or texture while keeping its broad structure\n    - Explore alternatives seeded from a reference recording",
+      "namespace": "mlx.text_to_audio",
+      "node_type": "mlx.text_to_audio.StableAudio3AudioToAudio",
+      "body": "content_card",
+      "properties": [
+        {
+          "name": "model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "sm-music",
+              "sm-sfx",
+              "medium"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_audio.DiTModel"
+          },
+          "default": "sm-music",
+          "title": "Model",
+          "description": "DiT model: 'sm-music' (50M, fast music), 'sm-sfx' (50M, sound effects) or 'medium' (1.4B, higher fidelity). The matching SAME decoder is selected automatically."
+        },
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A driving lofi house loop with warm vinyl crackle",
+          "title": "Prompt",
+          "description": "Text prompt describing the audio to generate."
+        },
+        {
+          "name": "seconds",
+          "type": {
+            "type": "float"
+          },
+          "default": 10.0,
+          "title": "Seconds",
+          "description": "Output length in seconds (max 300; trimmed exactly).",
+          "min": 1.0,
+          "max": 300.0
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 8,
+          "title": "Steps",
+          "description": "Ping-pong sampling steps. The distilled model targets 8 (the sweet spot); 1-4 is faster but lower quality.",
+          "min": 1,
+          "max": 16
+        },
+        {
+          "name": "cfg",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Cfg",
+          "description": "Classifier-free guidance scale. 1.0 = off (fastest). >1.0 pushes toward the prompt; costs ~2x per step.",
+          "min": 0.0,
+          "max": 15.0
+        },
+        {
+          "name": "negative_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Negative Prompt",
+          "description": "Negative prompt for CFG's unconditional branch (only used when cfg != 1.0)."
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": null,
+          "title": "Audio",
+          "description": "Input audio used as the starting point (resampled to 44.1 kHz stereo).",
+          "required": true
+        },
+        {
+          "name": "init_noise_level",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.7,
+          "title": "Init Noise Level",
+          "description": "How much noise to add to the input (\u03c3max). ~0.4-0.8 keeps structure while varying; 1.0 ignores the input entirely.",
+          "min": 0.01,
+          "max": 1.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "stabilityai/stable-audio-3-optimized",
+          "type": "hf.model",
+          "name": "stabilityai/stable-audio-3-optimized",
+          "repo_id": "stabilityai/stable-audio-3-optimized",
+          "allow_patterns": [
+            "MLX/*"
+          ],
+          "size_on_disk": 8400000000,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "stable-audio-3",
+            "audio-generation",
+            "music",
+            "sound-effects",
+            "diffusion",
+            "text-to-audio",
+            "en",
+            "mlx",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 16
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "prompt",
+        "audio",
+        "init_noise_level",
+        "seconds",
+        "steps",
+        "cfg",
+        "seed"
+      ],
+      "input_fields": [
+        "prompt",
+        "audio"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "Stable Audio 3 Inpaint",
+      "description": "Regenerate a time range inside an audio clip from a text prompt (Stable Audio 3).\n    mlx, audio, inpainting, edit, repair, apple-silicon, stable-audio\n\n    Use cases:\n    - Replace a section of a track while preserving the rest exactly\n    - Fix or restyle a few seconds of a recording\n    - Fill a gap with prompt-guided content that matches the surroundings",
+      "namespace": "mlx.text_to_audio",
+      "node_type": "mlx.text_to_audio.StableAudio3Inpaint",
+      "body": "content_card",
+      "properties": [
+        {
+          "name": "model",
+          "type": {
+            "type": "enum",
+            "values": [
+              "sm-music",
+              "sm-sfx",
+              "medium"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_audio.DiTModel"
+          },
+          "default": "sm-music",
+          "title": "Model",
+          "description": "DiT model: 'sm-music' (50M, fast music), 'sm-sfx' (50M, sound effects) or 'medium' (1.4B, higher fidelity). The matching SAME decoder is selected automatically."
+        },
+        {
+          "name": "prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "A driving lofi house loop with warm vinyl crackle",
+          "title": "Prompt",
+          "description": "Text prompt describing the audio to generate."
+        },
+        {
+          "name": "seconds",
+          "type": {
+            "type": "float"
+          },
+          "default": 10.0,
+          "title": "Seconds",
+          "description": "Output length in seconds (max 300; trimmed exactly).",
+          "min": 1.0,
+          "max": 300.0
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 8,
+          "title": "Steps",
+          "description": "Ping-pong sampling steps. The distilled model targets 8 (the sweet spot); 1-4 is faster but lower quality.",
+          "min": 1,
+          "max": 16
+        },
+        {
+          "name": "cfg",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Cfg",
+          "description": "Classifier-free guidance scale. 1.0 = off (fastest). >1.0 pushes toward the prompt; costs ~2x per step.",
+          "min": 0.0,
+          "max": 15.0
+        },
+        {
+          "name": "negative_prompt",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Negative Prompt",
+          "description": "Negative prompt for CFG's unconditional branch (only used when cfg != 1.0)."
+        },
+        {
+          "name": "seed",
+          "type": {
+            "type": "int"
+          },
+          "default": 0,
+          "title": "Seed",
+          "description": "Seed for deterministic generation. Leave as 0 for random."
+        },
+        {
+          "name": "audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": null,
+          "title": "Audio",
+          "description": "Input audio to edit (resampled to 44.1 kHz stereo).",
+          "required": true
+        },
+        {
+          "name": "inpaint_start",
+          "type": {
+            "type": "float"
+          },
+          "default": 2.0,
+          "title": "Inpaint Start",
+          "description": "Start of the range to regenerate, in seconds.",
+          "min": 0.0,
+          "max": 300.0
+        },
+        {
+          "name": "inpaint_end",
+          "type": {
+            "type": "float"
+          },
+          "default": 5.0,
+          "title": "Inpaint End",
+          "description": "End of the range to regenerate, in seconds (must be > start and <= seconds).",
+          "min": 0.0,
+          "max": 300.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "output"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "stabilityai/stable-audio-3-optimized",
+          "type": "hf.model",
+          "name": "stabilityai/stable-audio-3-optimized",
+          "repo_id": "stabilityai/stable-audio-3-optimized",
+          "allow_patterns": [
+            "MLX/*"
+          ],
+          "size_on_disk": 8400000000,
+          "pipeline_tag": "text-to-audio",
+          "tags": [
+            "stable-audio-3",
+            "audio-generation",
+            "music",
+            "sound-effects",
+            "diffusion",
+            "text-to-audio",
+            "en",
+            "mlx",
+            "license:other",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 16
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "prompt",
+        "audio",
+        "inpaint_start",
+        "inpaint_end",
+        "seconds",
+        "steps",
+        "cfg",
+        "seed"
+      ],
+      "input_fields": [
+        "prompt",
+        "audio"
+      ],
+      "expose_as_tool": true
     }
   ]
 }
