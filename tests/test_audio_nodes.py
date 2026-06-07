@@ -10,6 +10,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 from nodetool.nodes.mlx import speech_enhancement as se
 from nodetool.nodes.mlx import speech_to_text as stt
@@ -159,7 +160,7 @@ async def test_reference_audio_not_required_when_unset(ctx):
 
 def test_speed_validation():
     # Pydantic rejects out-of-range speed at construction time.
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         tts.KokoroTTS(text="hi", speed=5.0)
     # The runtime guard in _normalize_speed also rejects invalid values.
     node = tts.KokoroTTS(text="hi")
