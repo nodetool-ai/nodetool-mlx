@@ -369,13 +369,6 @@ class MLXProvider(BaseProvider):
         if not audio:
             raise ValueError("audio must not be empty")
 
-        # Whisper expects 16 kHz mono audio normalized to [-1, 1]
-        samples = convert_audio_to_standard_format(audio, target_sample_rate=16_000)
-        if samples.size == 0:
-            return ""
-        audio_float = (samples.astype(np.float32) / 32768.0).flatten()
-        audio_float = np.ascontiguousarray(audio_float, dtype=np.float32)
-
         # Ensure the model is present in the local Hugging Face cache
         if await self._resolve_cached_repo_path(model) is None:
             raise ValueError(
@@ -383,6 +376,8 @@ class MLXProvider(BaseProvider):
             )
 
         # Non-Whisper models are served through the mlx-audio speech-to-text runtime.
+        # Branch before the Whisper-specific decoding below so only Whisper pays the
+        # cost of converting the audio to a normalized 16 kHz float array.
         if "whisper" not in model.lower():
             return await self._transcribe_with_mlx_audio(
                 audio=audio,
@@ -393,6 +388,13 @@ class MLXProvider(BaseProvider):
                 word_timestamps=word_timestamps,
                 **kwargs,
             )
+
+        # Whisper expects 16 kHz mono audio normalized to [-1, 1]
+        samples = convert_audio_to_standard_format(audio, target_sample_rate=16_000)
+        if samples.size == 0:
+            return ""
+        audio_float = (samples.astype(np.float32) / 32768.0).flatten()
+        audio_float = np.ascontiguousarray(audio_float, dtype=np.float32)
 
         log.debug(
             "Transcribing audio with MLX Whisper model=%s language=%s temperature=%s",

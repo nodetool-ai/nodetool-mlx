@@ -168,6 +168,72 @@ def test_speed_validation():
         node._normalize_speed()
 
 
+class _FakeResult:
+    def __init__(self, audio, sample_rate):
+        self.audio = audio
+        self.sample_rate = sample_rate
+
+
+class _FakeTTSModel:
+    def __init__(self, results):
+        self._results = results
+
+    def generate(self, **kwargs):
+        return iter(self._results)
+
+
+async def test_sample_rate_change_mid_run_raises(monkeypatch):
+    """A model that switches sample rate after emitting audio must fail loudly."""
+    import sys
+
+    import numpy as np
+
+    # Stub the (macOS-only) mlx.core import used by _mx_array_to_numpy.
+    monkeypatch.setitem(sys.modules, "mlx", MagicMock())
+    monkeypatch.setitem(sys.modules, "mlx.core", MagicMock())
+    monkeypatch.setattr(tts.sys, "platform", "darwin")
+
+    node = tts.MLXTextToSpeech(text="hello", model="repo/x")
+    chunk = np.ones(8, dtype=np.float32)
+    node._tts_model = _FakeTTSModel(
+        [_FakeResult(chunk, 24_000), _FakeResult(chunk, 48_000)]
+    )
+    node._model_id_loaded = node._get_model_id()
+
+    with pytest.raises(ValueError, match="multiple sample rates"):
+        async for _ in node.gen_process(MagicMock()):
+            pass
+
+
+async def test_consistent_sample_rate_does_not_raise(monkeypatch):
+    import sys
+
+    import numpy as np
+
+    monkeypatch.setitem(sys.modules, "mlx", MagicMock())
+    monkeypatch.setitem(sys.modules, "mlx.core", MagicMock())
+    monkeypatch.setattr(tts.sys, "platform", "darwin")
+
+    node = tts.MLXTextToSpeech(text="hello", model="repo/x")
+    chunk = np.ones(8, dtype=np.float32)
+    node._tts_model = _FakeTTSModel(
+        [_FakeResult(chunk, 16_000), _FakeResult(chunk, 16_000)]
+    )
+    node._model_id_loaded = node._get_model_id()
+
+    ctx = MagicMock()
+
+    async def _audio_from_numpy(data, sample_rate, *a, **k):
+        assert sample_rate == 16_000
+        return "audio-ref"
+
+    ctx.audio_from_numpy = _audio_from_numpy
+
+    outputs = [item async for item in node.gen_process(ctx)]
+    # Two streamed chunks plus a final aggregated output.
+    assert outputs[-1]["audio"] == "audio-ref"
+
+
 # ---------------------------------------------------------------------------
 # STT parameters
 # ---------------------------------------------------------------------------

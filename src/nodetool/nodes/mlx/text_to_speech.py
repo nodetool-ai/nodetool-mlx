@@ -148,6 +148,7 @@ class BaseMLXTTS(BaseNode):
         params, cleanup_path = await self._build_generation_params(context)
 
         sample_rate = 24_000
+        sample_rate_locked = False
         all_chunks: list[np.ndarray] = []
         try:
             for seg_idx, segment in enumerate(segments):
@@ -163,7 +164,17 @@ class BaseMLXTTS(BaseNode):
                     audio = getattr(result, "audio", None)
                     result_sr = getattr(result, "sample_rate", None)
                     if result_sr:
-                        sample_rate = int(result_sr)
+                        new_sr = int(result_sr)
+                        # All collected chunks share a single sample rate. If the
+                        # model changes rate after audio has been emitted, the
+                        # concatenation below would be played back at the wrong
+                        # rate, so fail loudly instead of corrupting the output.
+                        if sample_rate_locked and new_sr != sample_rate:
+                            raise ValueError(
+                                f"{type(self).__name__} emitted multiple sample rates "
+                                f"({sample_rate} and {new_sr}); cannot concatenate audio safely."
+                            )
+                        sample_rate = new_sr
                     chunk = self._mx_array_to_numpy(audio)
                     if chunk.size == 0:
                         log.debug("Skipping empty MLX audio segment %d", idx)
@@ -171,6 +182,7 @@ class BaseMLXTTS(BaseNode):
                     chunk_msg, audio_int16 = self._encode_chunk(chunk, sample_rate)
                     yield {"chunk": chunk_msg, "audio": None}
                     all_chunks.append(audio_int16)
+                    sample_rate_locked = True
         finally:
             if cleanup_path:
                 with suppress(FileNotFoundError):
