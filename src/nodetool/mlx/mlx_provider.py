@@ -56,6 +56,7 @@ import mlx_vlm.prompt_utils
 import mlx_vlm.utils
 import mlx_audio.tts.utils
 import mlx_audio.tts.generate
+
 # mflux imports are lazy - only imported when image generation is used
 # This allows the MLX provider to be registered even if mflux isn't installed
 
@@ -95,7 +96,6 @@ from nodetool.integrations.huggingface.huggingface_models import (
 from nodetool.mlx.flux_model_loader import (
     load_flux_model,
 )
-
 
 log = get_logger(__name__)
 log.setLevel(logging.DEBUG)
@@ -231,7 +231,6 @@ class MLXProvider(BaseProvider):
         # otherwise specified.
         return 8192
 
-
     async def get_available_language_models(self) -> List[LanguageModel]:
         """
         Get available MLX models.
@@ -321,6 +320,32 @@ class MLXProvider(BaseProvider):
                 name="Whisper Large V3",
                 provider=Provider.MLX,
             ),
+            ASRModel(
+                id="mlx-community/whisper-large-v3-turbo",
+                name="Whisper Large V3 Turbo",
+                provider=Provider.MLX,
+            ),
+            # mlx-audio speech-to-text models
+            ASRModel(
+                id="mlx-community/parakeet-tdt-0.6b-v2",
+                name="Parakeet TDT 0.6B v2",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/parakeet-tdt-0.6b-v3",
+                name="Parakeet TDT 0.6B v3",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/Qwen3-ASR-0.6B-8bit",
+                name="Qwen3 ASR 0.6B (8-bit)",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/Qwen3-ASR-1.7B-8bit",
+                name="Qwen3 ASR 1.7B (8-bit)",
+                provider=Provider.MLX,
+            ),
         ]
         return models
 
@@ -355,6 +380,18 @@ class MLXProvider(BaseProvider):
         if await self._resolve_cached_repo_path(model) is None:
             raise ValueError(
                 f"Model {model} must be downloaded first (not found in cache)"
+            )
+
+        # Non-Whisper models are served through the mlx-audio speech-to-text runtime.
+        if "whisper" not in model.lower():
+            return await self._transcribe_with_mlx_audio(
+                audio=audio,
+                model=model,
+                language=language,
+                temperature=temperature,
+                timeout_s=timeout_s,
+                word_timestamps=word_timestamps,
+                **kwargs,
             )
 
         log.debug(
@@ -440,15 +477,129 @@ class MLXProvider(BaseProvider):
                 words = segment.get("words", [])
                 if words:
                     for w in words:
-                        chunks.append({
-                            "timestamp": [w.get("start", 0), w.get("end", 0)],
-                            "text": w.get("word", ""),
-                        })
+                        chunks.append(
+                            {
+                                "timestamp": [w.get("start", 0), w.get("end", 0)],
+                                "text": w.get("word", ""),
+                            }
+                        )
                 else:
-                    chunks.append({
-                        "timestamp": [segment.get("start", 0), segment.get("end", 0)],
-                        "text": segment.get("text", ""),
-                    })
+                    chunks.append(
+                        {
+                            "timestamp": [
+                                segment.get("start", 0),
+                                segment.get("end", 0),
+                            ],
+                            "text": segment.get("text", ""),
+                        }
+                    )
+
+        return {"text": text, "chunks": chunks}
+
+    async def _load_stt_model(self, model: str) -> Any:
+        """Load an mlx-audio speech-to-text model from cache or filesystem."""
+        cache_key = f"{model}_stt_model"
+
+        async with ModelManager.lock_model(cache_key):
+            stt_model = ModelManager.get_model(cache_key)
+            if stt_model is None:
+                repo_path = await self._resolve_cached_repo_path(model)
+                if repo_path is None:
+                    raise ValueError(
+                        f"Model {model} must be downloaded first (not found in cache)"
+                    )
+
+                def _load():
+                    from mlx_audio.stt.utils import load_model as load_stt
+
+                    log.info("Loading MLX STT model %s", model)
+                    return load_stt(repo_path)
+
+                stt_model = await asyncio.to_thread(_load)
+                node_id = f"mlx_stt_provider_{model}"
+                ModelManager.set_model(node_id, cache_key, stt_model)
+            return stt_model
+
+    async def _transcribe_with_mlx_audio(
+        self,
+        audio: bytes,
+        model: str,
+        language: str | None = None,
+        temperature: float = 0.0,
+        timeout_s: int | None = None,
+        word_timestamps: bool = False,
+        **kwargs: Any,
+    ) -> str | dict:
+        """Transcribe audio using non-Whisper mlx-audio STT models (Parakeet, Qwen3-ASR, ...)."""
+        stt_model = await self._load_stt_model(model)
+
+        # Persist the audio as a temporary 16 kHz mono WAV that mlx-audio can read.
+        segment = AudioSegment.from_file(BytesIO(audio))
+        segment = segment.set_frame_rate(16_000).set_channels(1).set_sample_width(2)
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+            audio_path = tmp.name
+        segment.export(audio_path, format="wav")
+
+        def _run() -> Any:
+            generate = stt_model.generate
+            sig = inspect.signature(generate)
+            accepts_var_kw = any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+            )
+            candidate = dict(kwargs)
+            if language is not None:
+                candidate.setdefault("language", language)
+            if temperature is not None:
+                candidate.setdefault("temperature", temperature)
+            if accepts_var_kw:
+                call_kwargs = candidate
+            else:
+                call_kwargs = {
+                    k: v for k, v in candidate.items() if k in sig.parameters
+                }
+            return generate(audio_path, **call_kwargs)
+
+        try:
+            task = asyncio.to_thread(_run)
+            if timeout_s is not None:
+                result = await asyncio.wait_for(task, timeout=timeout_s)
+            else:
+                result = await task
+        except asyncio.TimeoutError as exc:
+            raise TimeoutError(
+                f"MLX speech recognition timed out after {timeout_s} seconds"
+            ) from exc
+        except Exception as exc:
+            log.error("MLX STT transcription failed: %s", exc)
+            raise RuntimeError(f"MLX STT transcription failed: {exc}") from exc
+        finally:
+            try:
+                os.remove(audio_path)
+            except OSError:
+                pass
+
+        text = str(getattr(result, "text", "") or "")
+        if isinstance(result, str):
+            text = result
+
+        if not word_timestamps:
+            return text
+
+        # Normalize segments / sentences into timestamped chunks
+        raw_segments = getattr(result, "segments", None)
+        if raw_segments is None:
+            raw_segments = getattr(result, "sentences", None)
+        chunks = []
+        for seg in raw_segments or []:
+            if isinstance(seg, dict):
+                start = seg.get("start", 0)
+                end = seg.get("end", 0)
+                seg_text = seg.get("text", "")
+            else:
+                start = getattr(seg, "start", 0)
+                end = getattr(seg, "end", 0)
+                seg_text = getattr(seg, "text", "")
+            chunks.append({"timestamp": [start, end], "text": seg_text})
 
         return {"text": text, "chunks": chunks}
 
@@ -783,7 +934,124 @@ class MLXProvider(BaseProvider):
             ),
         ]
 
-        return kokoro_models + sesame_models + spark_models
+        # Qwen3-TTS multilingual models with speaker voices
+        qwen3_voices = ["Chelsie", "Ethan", "Vivian"]
+        qwen3_models = [
+            TTSModel(id=repo, name=name, provider=Provider.MLX, voices=qwen3_voices)
+            for repo, name in [
+                ("mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16", "Qwen3-TTS 0.6B Base"),
+                ("mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16", "Qwen3-TTS 1.7B Base"),
+                (
+                    "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+                    "Qwen3-TTS 1.7B Base (8-bit)",
+                ),
+                (
+                    "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-bf16",
+                    "Qwen3-TTS 1.7B Custom Voice",
+                ),
+                (
+                    "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16",
+                    "Qwen3-TTS 1.7B Voice Design",
+                ),
+            ]
+        ]
+
+        # KittenTTS compact English models
+        kitten_voices = [
+            "expr-voice-2-m",
+            "expr-voice-2-f",
+            "expr-voice-3-m",
+            "expr-voice-3-f",
+            "expr-voice-4-m",
+            "expr-voice-4-f",
+            "expr-voice-5-m",
+            "expr-voice-5-f",
+        ]
+        kitten_models = [
+            TTSModel(id=repo, name=name, provider=Provider.MLX, voices=kitten_voices)
+            for repo, name in [
+                ("mlx-community/kitten-tts-nano-0.8", "Kitten TTS Nano"),
+                ("mlx-community/kitten-tts-micro-0.8", "Kitten TTS Micro"),
+                ("mlx-community/kitten-tts-mini-0.8", "Kitten TTS Mini"),
+            ]
+        ]
+
+        # Voxtral TTS multilingual models with voice presets
+        voxtral_voices = [
+            "neutral_female",
+            "neutral_male",
+            "casual_female",
+            "casual_male",
+            "cheerful_female",
+            "ar_male",
+            "de_female",
+            "de_male",
+            "es_female",
+            "es_male",
+            "fr_female",
+            "fr_male",
+            "hi_female",
+            "hi_male",
+            "it_female",
+            "it_male",
+            "nl_female",
+            "nl_male",
+            "pt_female",
+            "pt_male",
+        ]
+        voxtral_models = [
+            TTSModel(
+                id="mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
+                name="Voxtral 4B TTS",
+                provider=Provider.MLX,
+                voices=voxtral_voices,
+            )
+        ]
+
+        # MeloTTS lightweight English model (accent via language code)
+        melotts_models = [
+            TTSModel(
+                id="mlx-community/MeloTTS-English-MLX",
+                name="Melo TTS English",
+                provider=Provider.MLX,
+                voices=["EN-US", "EN-BR", "EN_INDIA", "EN-AU", "EN-Default"],
+            )
+        ]
+
+        # Voice-cloning / zero-shot models (no fixed voice presets)
+        cloning_models = [
+            TTSModel(id=repo, name=name, provider=Provider.MLX, voices=[])
+            for repo, name in [
+                ("mlx-community/Dia-1.6B", "Dia 1.6B"),
+                ("mlx-community/Dia-1.6B-fp16", "Dia 1.6B (fp16)"),
+                ("mlx-community/OuteTTS-1.0-0.6B-fp16", "OuteTTS 1.0 0.6B"),
+                ("mlx-community/outetts-0.3-500M-bf16", "OuteTTS 0.3 500M"),
+                ("mlx-community/OmniVoice-bf16", "OmniVoice"),
+                ("mlx-community/chatterbox-fp16", "Chatterbox TTS"),
+                ("mlx-community/Chatterbox-TTS-fp16", "Chatterbox TTS (fp16)"),
+                ("mlx-community/higgs-audio-v2-3B-mlx-bf16", "Higgs Audio v2 3B"),
+                ("mlx-community/higgs-audio-v2-3B-mlx-q8", "Higgs Audio v2 3B (q8)"),
+                (
+                    "mlx-community/LongCat-AudioDiT-1B-4bit",
+                    "LongCat-AudioDiT 1B (4-bit)",
+                ),
+                (
+                    "mlx-community/LongCat-AudioDiT-3.5B-4bit",
+                    "LongCat-AudioDiT 3.5B (4-bit)",
+                ),
+            ]
+        ]
+
+        return (
+            kokoro_models
+            + sesame_models
+            + spark_models
+            + qwen3_models
+            + kitten_models
+            + voxtral_models
+            + melotts_models
+            + cloning_models
+        )
 
     # ------------------------------------------------------------------
     # Tool emulation helpers
@@ -1254,7 +1522,9 @@ class MLXProvider(BaseProvider):
                 return None
             return mdl, proc, cfg
 
-    def _set_cached_vlm_model(self, model: str, mdl: nn.Module, proc: Any, cfg: Any) -> None:
+    def _set_cached_vlm_model(
+        self, model: str, mdl: nn.Module, proc: Any, cfg: Any
+    ) -> None:
         key = self._cache_key_vlm(model)
         expires_at = time.monotonic() + _CACHE_TTL_SECONDS
         with _VLM_MODEL_CACHE_LOCK:
@@ -1615,7 +1885,9 @@ class MLXProvider(BaseProvider):
         adapter = self.adapter_path or ""
         return f"{model}|{adapter}"
 
-    def _get_cached_model(self, model: str) -> tuple[nn.Module, TokenizerWrapper] | None:
+    def _get_cached_model(
+        self, model: str
+    ) -> tuple[nn.Module, TokenizerWrapper] | None:
         key = self._cache_key(model)
         now = time.monotonic()
         with _MODEL_CACHE_LOCK:
@@ -1629,7 +1901,9 @@ class MLXProvider(BaseProvider):
                 return None
             return mdl, tok
 
-    def _set_cached_model(self, model: str, mdl: nn.Module, tok: TokenizerWrapper) -> None:
+    def _set_cached_model(
+        self, model: str, mdl: nn.Module, tok: TokenizerWrapper
+    ) -> None:
         key = self._cache_key(model)
         expires_at = time.monotonic() + _CACHE_TTL_SECONDS
         with _MODEL_CACHE_LOCK:
@@ -2134,7 +2408,9 @@ class MLXProvider(BaseProvider):
                     if model is None:
                         quantize = 4
                         model_config = (
-                            ModelConfig.z_image_turbo() if "turbo" in model_id_lower else ModelConfig.z_image()
+                            ModelConfig.z_image_turbo()
+                            if "turbo" in model_id_lower
+                            else ModelConfig.z_image()
                         )
                         model = ZImage(quantize=quantize, model_config=model_config)
                         ModelManager.set_model(cache_key, cache_key, model)
@@ -2144,7 +2420,9 @@ class MLXProvider(BaseProvider):
 
                     model = ModelManager.get_model(cache_key)
                     if model is None:
-                        model = Flux2Klein(quantize=4, model_config=ModelConfig.from_name(model_id))
+                        model = Flux2Klein(
+                            quantize=4, model_config=ModelConfig.from_name(model_id)
+                        )
                         ModelManager.set_model(cache_key, cache_key, model)
                 elif is_qwen:
                     from mflux.models.common.config import ModelConfig
@@ -2152,7 +2430,9 @@ class MLXProvider(BaseProvider):
 
                     model = ModelManager.get_model(cache_key)
                     if model is None:
-                        model = QwenImage(quantize=8, model_config=ModelConfig.from_name(model_id))
+                        model = QwenImage(
+                            quantize=8, model_config=ModelConfig.from_name(model_id)
+                        )
                         ModelManager.set_model(cache_key, cache_key, model)
                 elif is_fibo:
                     from mflux.models.common.config import ModelConfig
@@ -2160,7 +2440,9 @@ class MLXProvider(BaseProvider):
 
                     model = ModelManager.get_model(cache_key)
                     if model is None:
-                        model = FIBO(quantize=4, model_config=ModelConfig.from_name(model_id))
+                        model = FIBO(
+                            quantize=4, model_config=ModelConfig.from_name(model_id)
+                        )
                         ModelManager.set_model(cache_key, cache_key, model)
                 else:
                     model = await load_flux_model(
@@ -2183,7 +2465,10 @@ class MLXProvider(BaseProvider):
                         except json.JSONDecodeError:
                             vlm = FiboVLM(quantize=4)
                             try:
-                                prompt_value = vlm.generate(prompt=params.prompt, seed=params.seed if params.seed is not None else 42)
+                                prompt_value = vlm.generate(
+                                    prompt=params.prompt,
+                                    seed=params.seed if params.seed is not None else 42,
+                                )
                             finally:
                                 del vlm
                                 gc.collect()
@@ -2191,7 +2476,27 @@ class MLXProvider(BaseProvider):
                     else:
                         prompt_value = params.prompt
 
-                    default_steps = 9 if "z-image-turbo" in model_id_lower else 50 if is_z_image else 4 if is_flux2 else 30 if is_qwen else 8 if "fibo-lite" in model_id_lower else 20 if is_fibo else 4
+                    default_steps = (
+                        9
+                        if "z-image-turbo" in model_id_lower
+                        else (
+                            50
+                            if is_z_image
+                            else (
+                                4
+                                if is_flux2
+                                else (
+                                    30
+                                    if is_qwen
+                                    else (
+                                        8
+                                        if "fibo-lite" in model_id_lower
+                                        else 20 if is_fibo else 4
+                                    )
+                                )
+                            )
+                        )
+                    )
                     generated = model.generate_image(
                         seed=params.seed if params.seed is not None else 0,
                         prompt=prompt_value,
@@ -2199,7 +2504,9 @@ class MLXProvider(BaseProvider):
                         height=params.height or 1024,
                         width=params.width or 1024,
                         guidance=params.guidance_scale,
-                        negative_prompt=(params.negative_prompt if (is_qwen or is_fibo) else None),
+                        negative_prompt=(
+                            params.negative_prompt if (is_qwen or is_fibo) else None
+                        ),
                     )
                     return generated.image if hasattr(generated, "image") else generated
 
@@ -2258,7 +2565,11 @@ class MLXProvider(BaseProvider):
             cache_key = f"{model_id}_z-image"
             model = ModelManager.get_model(cache_key)
             if model is None:
-                model_config = ModelConfig.z_image_turbo() if "turbo" in model_id_lower else ModelConfig.z_image()
+                model_config = (
+                    ModelConfig.z_image_turbo()
+                    if "turbo" in model_id_lower
+                    else ModelConfig.z_image()
+                )
                 model = ZImage(quantize=4, model_config=model_config)
                 ModelManager.set_model(cache_key, cache_key, model)
         elif is_flux2:
@@ -2268,7 +2579,9 @@ class MLXProvider(BaseProvider):
             cache_key = f"{model_id}_flux2"
             model = ModelManager.get_model(cache_key)
             if model is None:
-                model = Flux2Klein(quantize=4, model_config=ModelConfig.from_name(model_id))
+                model = Flux2Klein(
+                    quantize=4, model_config=ModelConfig.from_name(model_id)
+                )
                 ModelManager.set_model(cache_key, cache_key, model)
         elif is_seedvr2:
             from mflux.models.common.config import ModelConfig
@@ -2277,7 +2590,9 @@ class MLXProvider(BaseProvider):
             cache_key = f"{model_id}_seedvr2"
             model = ModelManager.get_model(cache_key)
             if model is None:
-                model = SeedVR2(quantize=4, model_config=ModelConfig.from_name(model_id))
+                model = SeedVR2(
+                    quantize=4, model_config=ModelConfig.from_name(model_id)
+                )
                 ModelManager.set_model(cache_key, cache_key, model)
         elif is_qwen:
             from mflux.models.common.config import ModelConfig
@@ -2286,7 +2601,9 @@ class MLXProvider(BaseProvider):
             cache_key = f"{model_id}_qwen-image-edit"
             model = ModelManager.get_model(cache_key)
             if model is None:
-                model = QwenImageEdit(quantize=8, model_config=ModelConfig.from_name(model_id))
+                model = QwenImageEdit(
+                    quantize=8, model_config=ModelConfig.from_name(model_id)
+                )
                 ModelManager.set_model(cache_key, cache_key, model)
         elif is_fibo:
             from mflux.models.common.config import ModelConfig
@@ -2295,7 +2612,9 @@ class MLXProvider(BaseProvider):
             cache_key = f"{model_id}_fibo-edit"
             model = ModelManager.get_model(cache_key)
             if model is None:
-                model = FIBOEdit(quantize=4, model_config=ModelConfig.from_name(model_id))
+                model = FIBOEdit(
+                    quantize=4, model_config=ModelConfig.from_name(model_id)
+                )
                 ModelManager.set_model(cache_key, cache_key, model)
         else:
             model = await load_flux_model(
@@ -2339,7 +2658,9 @@ class MLXProvider(BaseProvider):
                             resolution = params.target_height
                         else:
                             resolution = 1800
-                    elif isinstance(resolution_value, str) and resolution_value.strip().lower().endswith("x"):
+                    elif isinstance(
+                        resolution_value, str
+                    ) and resolution_value.strip().lower().endswith("x"):
                         resolution = ScaleFactor.parse(resolution_value)
                     else:
                         resolution = int(resolution_value)
@@ -2373,7 +2694,9 @@ class MLXProvider(BaseProvider):
                     from mflux.models.fibo_vlm.model.fibo_vlm import FiboVLM
 
                     try:
-                        prompt_value = FiboEditUtil.ensure_edit_instruction(params.prompt)
+                        prompt_value = FiboEditUtil.ensure_edit_instruction(
+                            params.prompt
+                        )
                     except (TypeError, ValueError):
                         vlm = FiboVLM(quantize=4)
                         try:
@@ -2395,7 +2718,8 @@ class MLXProvider(BaseProvider):
                         num_inference_steps=params.num_inference_steps or 20,
                         height=params.target_height or target_height,
                         width=params.target_width or target_width,
-                        guidance=params.guidance_scale or (1.0 if "rmbg" in model_id_lower else 4.0),
+                        guidance=params.guidance_scale
+                        or (1.0 if "rmbg" in model_id_lower else 4.0),
                         negative_prompt=params.negative_prompt,
                     )
                     return generated.image if hasattr(generated, "image") else generated

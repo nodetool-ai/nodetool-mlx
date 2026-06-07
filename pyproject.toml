@@ -34,6 +34,10 @@ dev = [
     "mypy>=1.9.0",
 ]
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 

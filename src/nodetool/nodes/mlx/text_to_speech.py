@@ -51,6 +51,10 @@ class BaseMLXTTS(BaseNode):
     )
 
     _provider: ClassVar[Provider] = Provider.MLX
+    # When True the input text is split on newlines and each line is synthesized
+    # separately. Dialogue / long-form models (Dia, OmniVoice, ...) override this
+    # to False so the model receives the full text and can manage its own chunking.
+    _split_text_by_lines: ClassVar[bool] = True
     _tts_model: Any | None = PrivateAttr(default=None)
     _model_id_loaded: str | None = PrivateAttr(default=None)
 
@@ -118,6 +122,13 @@ class BaseMLXTTS(BaseNode):
         audio: AudioRef | None
         chunk: Chunk
 
+    def _iter_text_segments(self) -> list[str]:
+        """Split the input text into the segments fed to ``model.generate``."""
+        if self._split_text_by_lines:
+            return [line.strip() for line in self.text.split("\n") if line.strip()]
+        text = self.text.strip()
+        return [text] if text else []
+
     async def gen_process(
         self, context: ProcessingContext
     ) -> AsyncGenerator[OutputType, None]:
@@ -129,32 +140,35 @@ class BaseMLXTTS(BaseNode):
 
         assert self._tts_model is not None
 
-        # Split text by newlines and process each line separately
-        lines = [line.strip() for line in self.text.split("\n") if line.strip()]
+        segments = self._iter_text_segments()
 
-        if not lines:
+        if not segments:
             raise ValueError("No text content to synthesize")
 
         params, cleanup_path = await self._build_generation_params(context)
 
+        sample_rate = 24_000
         all_chunks: list[np.ndarray] = []
         try:
-            for line_idx, line in enumerate(lines):
-                # Update params with current line
-                line_params = params.copy()
-                line_params["text"] = line
+            for seg_idx, segment in enumerate(segments):
+                # Update params with current text segment
+                seg_params = params.copy()
+                seg_params["text"] = segment
 
                 log.debug(
-                    f"Generating audio for line {line_idx + 1}/{len(lines)}: {line[:50]}..."
+                    f"Generating audio for segment {seg_idx + 1}/{len(segments)}: {segment[:50]}..."
                 )
 
-                for idx, result in enumerate(self._tts_model.generate(**line_params)):
+                for idx, result in enumerate(self._tts_model.generate(**seg_params)):
                     audio = getattr(result, "audio", None)
+                    result_sr = getattr(result, "sample_rate", None)
+                    if result_sr:
+                        sample_rate = int(result_sr)
                     chunk = self._mx_array_to_numpy(audio)
                     if chunk.size == 0:
                         log.debug("Skipping empty MLX audio segment %d", idx)
                         continue
-                    chunk_msg, audio_int16 = self._encode_chunk(chunk)
+                    chunk_msg, audio_int16 = self._encode_chunk(chunk, sample_rate)
                     yield {"chunk": chunk_msg, "audio": None}
                     all_chunks.append(audio_int16)
         finally:
@@ -167,7 +181,7 @@ class BaseMLXTTS(BaseNode):
 
         combined = all_chunks[0] if len(all_chunks) == 1 else np.concatenate(all_chunks)
         yield {
-            "audio": await context.audio_from_numpy(combined, 24_000),
+            "audio": await context.audio_from_numpy(combined, sample_rate),
             "chunk": Chunk(content="", done=True, content_type="audio"),
         }
 
@@ -202,7 +216,9 @@ class BaseMLXTTS(BaseNode):
                 pass
         return np.asarray(audio, dtype=np.float32)
 
-    def _encode_chunk(self, chunk: np.ndarray) -> tuple[Chunk, np.ndarray]:
+    def _encode_chunk(
+        self, chunk: np.ndarray, sample_rate: int = 24_000
+    ) -> tuple[Chunk, np.ndarray]:
         import numpy as np
 
         audio_int16 = self._to_int16(chunk)
@@ -210,7 +226,7 @@ class BaseMLXTTS(BaseNode):
             content=base64.b64encode(audio_int16.tobytes()).decode("utf-8"),
             content_type="audio",
             content_metadata={
-                "sample_rate": 24_000,
+                "sample_rate": sample_rate,
                 "channels": 1,
                 "dtype": "int16",
             },
@@ -567,4 +583,800 @@ class SparkTTS(BaseMLXTTS):
         )
         if self.voice:
             params["voice"] = self.voice
+        return params, cleanup
+
+
+class Qwen3TTS(BaseMLXTTS):
+    """MLX Qwen3-TTS multilingual text-to-speech with speaker voices and voice design."""
+
+    _expose_as_tool: ClassVar[bool] = True
+
+    class Model(str, Enum):
+        QWEN3_TTS_06B_BASE = "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16"
+        QWEN3_TTS_06B_CUSTOM = "mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-bf16"
+        QWEN3_TTS_17B_BASE_BF16 = "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16"
+        QWEN3_TTS_17B_BASE_8BIT = "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit"
+        QWEN3_TTS_17B_CUSTOM_BF16 = "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-bf16"
+        QWEN3_TTS_17B_CUSTOM_6BIT = "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-6bit"
+        QWEN3_TTS_17B_VOICE_DESIGN = (
+            "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16"
+        )
+
+    model: Model = Field(
+        default=Model.QWEN3_TTS_17B_BASE_8BIT,
+        description="Qwen3-TTS model variant to load.",
+    )
+    voice: str = Field(
+        default="Chelsie",
+        description="Speaker name for multi-speaker models (e.g. Chelsie, Ethan, Vivian).",
+    )
+    language: str = Field(
+        default="auto",
+        description="Language code (e.g. auto, English, Chinese, Japanese, Korean).",
+    )
+    instruct: str = Field(
+        default="",
+        description="Optional voice-design instruction describing the target voice (VoiceDesign models).",
+    )
+    temperature: float = Field(
+        default=0.9,
+        ge=0.0,
+        le=2.0,
+        description="Sampling temperature for the talker model.",
+    )
+    speed: float = Field(
+        default=1.0,
+        ge=0.5,
+        le=2.0,
+        description="Speech speed multiplier (0.5-2.0).",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "voice", "language", "temperature", "speed"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "voice"]
+
+    @classmethod
+    def get_title(cls):
+        return "Qwen3 TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    def _normalize_speed(self) -> float:
+        value = float(self.speed)
+        if not 0.5 <= value <= 2.0:
+            raise ValueError("Qwen3-TTS speed must be between 0.5 and 2.0.")
+        return value
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params.update(
+            {
+                "voice": self.voice or None,
+                "lang_code": self.language or "auto",
+                "temperature": self.temperature,
+            }
+        )
+        if self.instruct.strip():
+            params["instruct"] = self.instruct.strip()
+        return params, cleanup
+
+
+class KittenTTS(BaseMLXTTS):
+    """MLX KittenTTS compact, edge-friendly English text-to-speech."""
+
+    _expose_as_tool: ClassVar[bool] = True
+
+    class Model(str, Enum):
+        KITTEN_NANO = "mlx-community/kitten-tts-nano-0.8"
+        KITTEN_MICRO = "mlx-community/kitten-tts-micro-0.8"
+        KITTEN_MINI = "mlx-community/kitten-tts-mini-0.8"
+
+    class Voice(str, Enum):
+        EXPR_VOICE_2_M = "expr-voice-2-m"
+        EXPR_VOICE_2_F = "expr-voice-2-f"
+        EXPR_VOICE_3_M = "expr-voice-3-m"
+        EXPR_VOICE_3_F = "expr-voice-3-f"
+        EXPR_VOICE_4_M = "expr-voice-4-m"
+        EXPR_VOICE_4_F = "expr-voice-4-f"
+        EXPR_VOICE_5_M = "expr-voice-5-m"
+        EXPR_VOICE_5_F = "expr-voice-5-f"
+
+    model: Model = Field(
+        default=Model.KITTEN_NANO,
+        description="KittenTTS model variant to load.",
+    )
+    voice: Voice = Field(
+        default=Voice.EXPR_VOICE_5_M,
+        description="Voice preset supported by KittenTTS.",
+    )
+    speed: float = Field(
+        default=1.0,
+        ge=0.5,
+        le=2.0,
+        description="Speech speed multiplier (0.5-2.0).",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "voice", "speed"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "voice"]
+
+    @classmethod
+    def get_title(cls):
+        return "Kitten TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    def _normalize_speed(self) -> float:
+        value = float(self.speed)
+        if not 0.5 <= value <= 2.0:
+            raise ValueError("KittenTTS speed must be between 0.5 and 2.0.")
+        return value
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params["voice"] = self.voice.value
+        return params, cleanup
+
+
+class DiaTTS(BaseMLXTTS):
+    """MLX Dia dialogue text-to-speech.
+
+    Use the ``[S1]`` and ``[S2]`` speaker tags inside the text to script multi-turn
+    dialogue. Optionally provide reference audio to clone a voice.
+    """
+
+    _expose_as_tool: ClassVar[bool] = True
+    # Dia interprets the whole script (including newlines / speaker tags) at once.
+    _split_text_by_lines: ClassVar[bool] = False
+
+    class Model(str, Enum):
+        DIA_1_6B = "mlx-community/Dia-1.6B"
+        DIA_1_6B_FP16 = "mlx-community/Dia-1.6B-fp16"
+
+    model: Model = Field(
+        default=Model.DIA_1_6B_FP16,
+        description="Dia model variant to load.",
+    )
+    text: str = Field(
+        default="[S1] Hello, how are you? [S2] I'm doing great, thanks for asking!",
+        description="Dialogue script. Use [S1] and [S2] to tag speaker turns.",
+    )
+    temperature: float = Field(
+        default=1.3,
+        ge=0.0,
+        le=2.0,
+        description="Sampling temperature.",
+    )
+    top_p: float = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus sampling probability mass.",
+    )
+    reference_audio: AudioRef = Field(
+        default=AudioRef(),
+        description="Optional reference audio for voice cloning.",
+    )
+    reference_text: str = Field(
+        default="",
+        description="Transcript of the reference audio (required when cloning a voice).",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "temperature", "top_p"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model"]
+
+    @classmethod
+    def get_title(cls):
+        return "Dia TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params.update(
+            {
+                "temperature": self.temperature,
+                "top_p": self.top_p,
+            }
+        )
+        if self.reference_audio is not None and self.reference_audio.is_set():
+            ref_path = await self._export_reference_audio(context, self.reference_audio)
+            params["ref_audio"] = ref_path
+            if self.reference_text.strip():
+                params["ref_text"] = self.reference_text.strip()
+            cleanup = ref_path
+        return params, cleanup
+
+
+class OuteTTS(BaseMLXTTS):
+    """MLX OuteTTS efficient multilingual text-to-speech with optional voice cloning."""
+
+    _expose_as_tool: ClassVar[bool] = True
+
+    class Model(str, Enum):
+        OUTETTS_1_0_0_6B = "mlx-community/OuteTTS-1.0-0.6B-fp16"
+        OUTETTS_0_3_500M = "mlx-community/outetts-0.3-500M-bf16"
+
+    model: Model = Field(
+        default=Model.OUTETTS_1_0_0_6B,
+        description="OuteTTS model variant to load.",
+    )
+    voice: str = Field(
+        default="",
+        description="Optional built-in speaker name. Leave empty to use a default voice.",
+    )
+    temperature: float = Field(
+        default=0.4,
+        ge=0.0,
+        le=2.0,
+        description="Sampling temperature.",
+    )
+    top_p: float = Field(
+        default=0.9,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus sampling probability mass.",
+    )
+    reference_audio: AudioRef = Field(
+        default=AudioRef(),
+        description="Optional reference audio for voice cloning.",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "voice", "temperature", "top_p"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "voice"]
+
+    @classmethod
+    def get_title(cls):
+        return "Oute TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params.update(
+            {
+                "temperature": self.temperature,
+                "top_p": self.top_p,
+            }
+        )
+        if self.voice.strip():
+            params["voice"] = self.voice.strip()
+        if self.reference_audio is not None and self.reference_audio.is_set():
+            ref_path = await self._export_reference_audio(context, self.reference_audio)
+            params["ref_audio"] = ref_path
+            cleanup = ref_path
+        return params, cleanup
+
+
+class OmniVoiceTTS(BaseMLXTTS):
+    """MLX OmniVoice zero-shot multilingual text-to-speech (646+ languages)."""
+
+    _expose_as_tool: ClassVar[bool] = True
+    _split_text_by_lines: ClassVar[bool] = False
+
+    class Model(str, Enum):
+        OMNIVOICE_BF16 = "mlx-community/OmniVoice-bf16"
+
+    model: Model = Field(
+        default=Model.OMNIVOICE_BF16,
+        description="OmniVoice model variant to load.",
+    )
+    language: str = Field(
+        default="english",
+        description="Target language name (e.g. english, spanish, french, chinese).",
+    )
+    duration_s: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=60.0,
+        description="Target duration in seconds. 0 lets the model decide automatically.",
+    )
+    num_steps: int = Field(
+        default=32,
+        ge=1,
+        le=128,
+        description="Number of diffusion sampling steps.",
+    )
+    guidance_scale: float = Field(
+        default=2.0,
+        ge=0.0,
+        le=10.0,
+        description="Classifier-free guidance scale.",
+    )
+    reference_audio: AudioRef = Field(
+        default=AudioRef(),
+        description="Optional reference audio for voice cloning.",
+    )
+    reference_text: str = Field(
+        default="",
+        description="Transcript of the reference audio (used when cloning a voice).",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "language", "duration_s", "num_steps", "guidance_scale"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model"]
+
+    @classmethod
+    def get_title(cls):
+        return "OmniVoice TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params.update(
+            {
+                "language": self.language or "english",
+                "num_steps": self.num_steps,
+                "guidance_scale": self.guidance_scale,
+            }
+        )
+        if self.duration_s > 0:
+            params["duration_s"] = self.duration_s
+        if self.reference_audio is not None and self.reference_audio.is_set():
+            ref_path = await self._export_reference_audio(context, self.reference_audio)
+            params["ref_audio"] = ref_path
+            if self.reference_text.strip():
+                params["ref_text"] = self.reference_text.strip()
+            cleanup = ref_path
+        return params, cleanup
+
+
+class MeloTTS(BaseMLXTTS):
+    """MLX MeloTTS lightweight VITS2-based multilingual text-to-speech."""
+
+    _expose_as_tool: ClassVar[bool] = True
+
+    class Model(str, Enum):
+        MELOTTS_ENGLISH = "mlx-community/MeloTTS-English-MLX"
+
+    class LanguageCode(str, Enum):
+        EN_US = "EN-US"
+        EN_BR = "EN-BR"
+        EN_INDIA = "EN_INDIA"
+        EN_AU = "EN-AU"
+        EN_DEFAULT = "EN-Default"
+
+    model: Model = Field(
+        default=Model.MELOTTS_ENGLISH,
+        description="MeloTTS model variant to load.",
+    )
+    language: LanguageCode = Field(
+        default=LanguageCode.EN_US,
+        description="Accent / language code for the speaker.",
+    )
+    speed: float = Field(
+        default=1.0,
+        ge=0.5,
+        le=2.0,
+        description="Speech speed multiplier (0.5-2.0).",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "language", "speed"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "language"]
+
+    @classmethod
+    def get_title(cls):
+        return "Melo TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    def _normalize_speed(self) -> float:
+        value = float(self.speed)
+        if not 0.5 <= value <= 2.0:
+            raise ValueError("MeloTTS speed must be between 0.5 and 2.0.")
+        return value
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params["lang_code"] = self.language.value
+        return params, cleanup
+
+
+class VoxtralTTS(BaseMLXTTS):
+    """MLX Voxtral TTS — Mistral's multilingual text-to-speech with voice presets."""
+
+    _expose_as_tool: ClassVar[bool] = True
+
+    class Model(str, Enum):
+        VOXTRAL_4B_TTS = "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16"
+
+    class Voice(str, Enum):
+        NEUTRAL_FEMALE = "neutral_female"
+        NEUTRAL_MALE = "neutral_male"
+        CASUAL_FEMALE = "casual_female"
+        CASUAL_MALE = "casual_male"
+        CHEERFUL_FEMALE = "cheerful_female"
+        AR_MALE = "ar_male"
+        DE_FEMALE = "de_female"
+        DE_MALE = "de_male"
+        ES_FEMALE = "es_female"
+        ES_MALE = "es_male"
+        FR_FEMALE = "fr_female"
+        FR_MALE = "fr_male"
+        HI_FEMALE = "hi_female"
+        HI_MALE = "hi_male"
+        IT_FEMALE = "it_female"
+        IT_MALE = "it_male"
+        NL_FEMALE = "nl_female"
+        NL_MALE = "nl_male"
+        PT_FEMALE = "pt_female"
+        PT_MALE = "pt_male"
+
+    model: Model = Field(
+        default=Model.VOXTRAL_4B_TTS,
+        description="Voxtral TTS model variant to load.",
+    )
+    voice: Voice = Field(
+        default=Voice.NEUTRAL_FEMALE,
+        description="Voice preset supported by Voxtral TTS.",
+    )
+    temperature: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=2.0,
+        description="Sampling temperature.",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "voice", "temperature"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "voice"]
+
+    @classmethod
+    def get_title(cls):
+        return "Voxtral TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params.update(
+            {
+                "voice": self.voice.value,
+                "temperature": self.temperature,
+            }
+        )
+        return params, cleanup
+
+
+class ChatterboxTTS(BaseMLXTTS):
+    """MLX Chatterbox expressive multilingual text-to-speech with voice cloning."""
+
+    _expose_as_tool: ClassVar[bool] = True
+
+    class Model(str, Enum):
+        CHATTERBOX_FP16 = "mlx-community/chatterbox-fp16"
+        CHATTERBOX_TTS_FP16 = "mlx-community/Chatterbox-TTS-fp16"
+
+    model: Model = Field(
+        default=Model.CHATTERBOX_FP16,
+        description="Chatterbox model variant to load.",
+    )
+    exaggeration: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Emotional exaggeration intensity.",
+    )
+    cfg_weight: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Classifier-free guidance weight (pacing / fidelity).",
+    )
+    temperature: float = Field(
+        default=0.8,
+        ge=0.0,
+        le=2.0,
+        description="Sampling temperature.",
+    )
+    reference_audio: AudioRef = Field(
+        default=AudioRef(),
+        description="Optional reference audio for voice cloning.",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "exaggeration", "cfg_weight", "temperature"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model"]
+
+    @classmethod
+    def get_title(cls):
+        return "Chatterbox TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params.update(
+            {
+                "exaggeration": self.exaggeration,
+                "cfg_weight": self.cfg_weight,
+                "temperature": self.temperature,
+            }
+        )
+        if self.reference_audio is not None and self.reference_audio.is_set():
+            ref_path = await self._export_reference_audio(context, self.reference_audio)
+            params["ref_audio"] = ref_path
+            cleanup = ref_path
+        return params, cleanup
+
+
+class HiggsAudioTTS(BaseMLXTTS):
+    """MLX Higgs Audio conversational text-to-speech with zero-shot voice cloning."""
+
+    _expose_as_tool: ClassVar[bool] = True
+    _split_text_by_lines: ClassVar[bool] = False
+
+    class Model(str, Enum):
+        HIGGS_V2_3B_BF16 = "mlx-community/higgs-audio-v2-3B-mlx-bf16"
+        HIGGS_V2_3B_Q6 = "mlx-community/higgs-audio-v2-3B-mlx-q6"
+        HIGGS_V2_3B_Q8 = "mlx-community/higgs-audio-v2-3B-mlx-q8"
+
+    model: Model = Field(
+        default=Model.HIGGS_V2_3B_Q8,
+        description="Higgs Audio model variant to load.",
+    )
+    temperature: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=2.0,
+        description="Sampling temperature.",
+    )
+    reference_audio: AudioRef = Field(
+        default=AudioRef(),
+        description="Optional reference audio for zero-shot voice cloning.",
+    )
+    reference_text: str = Field(
+        default="",
+        description="Transcript of the reference audio (used when cloning a voice).",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "temperature"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model"]
+
+    @classmethod
+    def get_title(cls):
+        return "Higgs Audio TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params["temperature"] = self.temperature
+        if self.reference_audio is not None and self.reference_audio.is_set():
+            ref_path = await self._export_reference_audio(context, self.reference_audio)
+            params["ref_audio"] = ref_path
+            if self.reference_text.strip():
+                params["ref_text"] = self.reference_text.strip()
+            cleanup = ref_path
+        return params, cleanup
+
+
+class LongCatAudioTTS(BaseMLXTTS):
+    """MLX LongCat-AudioDiT diffusion text-to-speech with zero-shot voice cloning."""
+
+    _expose_as_tool: ClassVar[bool] = True
+    _split_text_by_lines: ClassVar[bool] = False
+
+    class Model(str, Enum):
+        LONGCAT_1B_BF16 = "mlx-community/LongCat-AudioDiT-1B-bf16"
+        LONGCAT_1B_4BIT = "mlx-community/LongCat-AudioDiT-1B-4bit"
+        LONGCAT_1B_8BIT = "mlx-community/LongCat-AudioDiT-1B-8bit"
+        LONGCAT_3_5B_BF16 = "mlx-community/LongCat-AudioDiT-3.5B-bf16"
+        LONGCAT_3_5B_4BIT = "mlx-community/LongCat-AudioDiT-3.5B-4bit"
+        LONGCAT_3_5B_8BIT = "mlx-community/LongCat-AudioDiT-3.5B-8bit"
+
+    model: Model = Field(
+        default=Model.LONGCAT_1B_4BIT,
+        description="LongCat-AudioDiT model variant to load.",
+    )
+    language: str = Field(
+        default="en",
+        description="Language code (e.g. en, zh).",
+    )
+    steps: int = Field(
+        default=16,
+        ge=1,
+        le=128,
+        description="Number of diffusion sampling steps.",
+    )
+    cfg_strength: float = Field(
+        default=4.0,
+        ge=0.0,
+        le=10.0,
+        description="Classifier-free guidance strength.",
+    )
+    reference_audio: AudioRef = Field(
+        default=AudioRef(),
+        description="Optional reference audio for zero-shot voice cloning.",
+    )
+    reference_text: str = Field(
+        default="",
+        description="Transcript of the reference audio (used when cloning a voice).",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "language", "steps", "cfg_strength"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model"]
+
+    @classmethod
+    def get_title(cls):
+        return "LongCat Audio TTS"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        params.update(
+            {
+                "lang_code": self.language or "en",
+                "steps": self.steps,
+                "cfg_strength": self.cfg_strength,
+            }
+        )
+        if self.reference_audio is not None and self.reference_audio.is_set():
+            ref_path = await self._export_reference_audio(context, self.reference_audio)
+            params["ref_audio"] = ref_path
+            if self.reference_text.strip():
+                params["ref_text"] = self.reference_text.strip()
+            cleanup = ref_path
+        return params, cleanup
+
+
+class MLXTextToSpeech(BaseMLXTTS):
+    """Generic MLX text-to-speech node.
+
+    Run any text-to-speech model supported by the ``mlx-audio`` library by entering
+    its Hugging Face repository id. Useful for models that do not have a dedicated
+    typed node yet.
+    """
+
+    _expose_as_tool: ClassVar[bool] = True
+    _split_text_by_lines: ClassVar[bool] = False
+
+    model: str = Field(
+        default="mlx-community/Kokoro-82M-bf16",
+        description="Hugging Face repository id of any mlx-audio TTS model.",
+    )
+    voice: str = Field(
+        default="",
+        description="Optional voice / speaker preset (model dependent).",
+    )
+    language: str = Field(
+        default="",
+        description="Optional language code (model dependent, e.g. 'a', 'en', 'auto').",
+    )
+    temperature: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=2.0,
+        description="Optional sampling temperature. 0 uses the model default.",
+    )
+    speed: float = Field(
+        default=1.0,
+        ge=0.5,
+        le=2.0,
+        description="Speech speed multiplier (0.5-2.0).",
+    )
+    reference_audio: AudioRef = Field(
+        default=AudioRef(),
+        description="Optional reference audio for models that support voice cloning.",
+    )
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        return ["model", "voice", "language", "speed"]
+
+    @classmethod
+    def get_inline_fields(cls):
+        return ["model", "voice"]
+
+    @classmethod
+    def get_title(cls):
+        return "MLX Text To Speech"
+
+    def _normalize_speed(self) -> float:
+        value = float(self.speed)
+        if not 0.5 <= value <= 2.0:
+            raise ValueError("Speed must be between 0.5 and 2.0.")
+        return value
+
+    async def _build_generation_params(
+        self, context: ProcessingContext
+    ) -> tuple[dict[str, Any], Optional[str]]:
+        params, cleanup = await super()._build_generation_params(context)
+        if self.voice.strip():
+            params["voice"] = self.voice.strip()
+        if self.language.strip():
+            params["lang_code"] = self.language.strip()
+        if self.temperature > 0:
+            params["temperature"] = self.temperature
+        if self.reference_audio is not None and self.reference_audio.is_set():
+            ref_path = await self._export_reference_audio(context, self.reference_audio)
+            params["ref_audio"] = ref_path
+            cleanup = ref_path
         return params, cleanup
