@@ -7,11 +7,14 @@ on any platform.
 
 from __future__ import annotations
 
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
 from pydantic import ValidationError
 
+from nodetool.nodes.mlx import automatic_speech_recognition as asr
 from nodetool.nodes.mlx import speech_enhancement as se
 from nodetool.nodes.mlx import speech_to_text as stt
 from nodetool.nodes.mlx import text_to_speech as tts
@@ -41,6 +44,53 @@ STT_NODE_CLASSES = [
 ]
 
 ENHANCEMENT_NODE_CLASSES = [se.DeepFilterNet, se.MossFormer2]
+
+# Every MLX audio node that exposes a ``model`` field. The frontend only renders
+# the model-select widget (with downloadable recommended models) when the field's
+# metadata type triggers it; see ``_renders_model_select`` below.
+MODEL_FIELD_NODE_CLASSES = (
+    TTS_NODE_CLASSES + STT_NODE_CLASSES + ENHANCEMENT_NODE_CLASSES + [asr.Whisper]
+)
+
+
+def _model_property_type(node_cls) -> str:
+    props = {p.name: p for p in node_cls.properties()}
+    assert "model" in props, f"{node_cls.__name__} has no 'model' property"
+    return props["model"].type.type
+
+
+def _renders_model_select(type_str: str) -> bool:
+    """Mirror the frontend resolver (PropertyInput.resolver.tsx handleModelTypes).
+
+    A property renders the model-select widget when its type ends with ``_model``
+    or starts with ``hf.`` / ``tjs.``.
+    """
+    return type_str.endswith("_model") or type_str.startswith(("hf.", "tjs."))
+
+
+# ---------------------------------------------------------------------------
+# Model-select widget eligibility
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("node_cls", MODEL_FIELD_NODE_CLASSES)
+def test_model_field_renders_model_select(node_cls):
+    model_type = _model_property_type(node_cls)
+    assert _renders_model_select(model_type), (
+        f"{node_cls.__name__}.model has type {model_type!r}, which will not render "
+        "the model-select widget in the frontend"
+    )
+
+
+@pytest.mark.parametrize("node_cls", MODEL_FIELD_NODE_CLASSES)
+def test_model_field_has_recommended_models(node_cls):
+    models = node_cls.get_recommended_models()
+    assert models, f"{node_cls.__name__} should recommend at least one model"
+    model_type = _model_property_type(node_cls)
+    for m in models:
+        assert m.repo_id, f"{node_cls.__name__} recommended a model with no repo_id"
+        assert m.type == model_type, (
+            f"{node_cls.__name__} recommends a {m.type!r} model but its field is "
+            f"{model_type!r}; they should match"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -194,7 +244,7 @@ async def test_sample_rate_change_mid_run_raises(monkeypatch):
     monkeypatch.setitem(sys.modules, "mlx.core", MagicMock())
     monkeypatch.setattr(tts.sys, "platform", "darwin")
 
-    node = tts.MLXTextToSpeech(text="hello", model="repo/x")
+    node = tts.MLXTextToSpeech(text="hello", model=tts.HFTextToSpeech(repo_id="repo/x"))
     chunk = np.ones(8, dtype=np.float32)
     node._tts_model = _FakeTTSModel(
         [_FakeResult(chunk, 24_000), _FakeResult(chunk, 48_000)]
@@ -215,7 +265,7 @@ async def test_consistent_sample_rate_does_not_raise(monkeypatch):
     monkeypatch.setitem(sys.modules, "mlx.core", MagicMock())
     monkeypatch.setattr(tts.sys, "platform", "darwin")
 
-    node = tts.MLXTextToSpeech(text="hello", model="repo/x")
+    node = tts.MLXTextToSpeech(text="hello", model=tts.HFTextToSpeech(repo_id="repo/x"))
     chunk = np.ones(8, dtype=np.float32)
     node._tts_model = _FakeTTSModel(
         [_FakeResult(chunk, 16_000), _FakeResult(chunk, 16_000)]
@@ -302,3 +352,182 @@ def test_enhancement_metadata(node_cls):
 
 def test_deepfilternet_version_default():
     assert se.DeepFilterNet().version == se.DeepFilterNet.Version.V3
+
+
+# ---------------------------------------------------------------------------
+# Hugging Face cache resolution
+#
+# Models downloaded by revision/commit (rather than by branch) end up cached
+# without a ``refs/main`` pointer, so ``try_to_load_from_cache(repo, "config.json")``
+# returns None even though every file is present on disk. The nodes must still
+# recognise such models as available instead of demanding a re-download.
+# ---------------------------------------------------------------------------
+def _fake_hf_cache(repo_id: str, snapshot_dir, files: list[str]):
+    rev = SimpleNamespace(
+        snapshot_path=snapshot_dir,
+        files=[
+            SimpleNamespace(file_name=Path(f).name, file_path=snapshot_dir / f)
+            for f in files
+        ],
+    )
+    repo = SimpleNamespace(repo_id=repo_id, repo_type="model", revisions=[rev])
+    return SimpleNamespace(repos=[repo])
+
+
+def _patch_revision_only_cache(monkeypatch, repo_id, snapshot_dir, files):
+    """Simulate a cache with files present but no ``refs/main`` pointer."""
+    import huggingface_hub
+
+    monkeypatch.setattr(huggingface_hub, "try_to_load_from_cache", lambda *a, **k: None)
+    monkeypatch.setattr(
+        huggingface_hub,
+        "scan_cache_dir",
+        lambda *a, **k: _fake_hf_cache(repo_id, snapshot_dir, files),
+    )
+
+
+def test_find_cached_snapshot_falls_back_to_scan(monkeypatch, tmp_path):
+    from nodetool.nodes.mlx import _hf_cache
+
+    snap = tmp_path / "snap"
+    snap.mkdir()
+    (snap / "config.json").write_text("{}")
+    _patch_revision_only_cache(
+        monkeypatch, "repo/x", snap, ["config.json", "model.safetensors"]
+    )
+
+    assert _hf_cache.find_cached_snapshot("repo/x", "config.json") == snap
+
+
+def test_find_cached_snapshot_returns_none_when_absent(monkeypatch):
+    from nodetool.nodes.mlx import _hf_cache
+
+    _patch_revision_only_cache(monkeypatch, "other/repo", None, [])
+    assert _hf_cache.find_cached_snapshot("repo/x", "config.json") is None
+
+
+async def test_tts_preload_accepts_revision_only_cache(monkeypatch, tmp_path):
+    import mlx_audio.tts.utils as tts_utils
+
+    rid = "mlx-community/kitten-tts-nano-0.8"
+    snap = tmp_path / "snap"
+    snap.mkdir()
+    (snap / "config.json").write_text("{}")
+
+    monkeypatch.setattr(tts.sys, "platform", "darwin")
+    _patch_revision_only_cache(
+        monkeypatch, rid, snap, ["config.json", "model.safetensors"]
+    )
+
+    captured = {}
+
+    def _fake_load(path, *a, **k):
+        captured["path"] = Path(path)
+        return "kitten-model"
+
+    monkeypatch.setattr(tts_utils, "load_model", _fake_load)
+
+    node = tts.KittenTTS()
+    await node.preload_model(MagicMock())
+
+    assert node._tts_model == "kitten-model"
+    assert captured["path"] == snap
+
+
+async def test_stt_preload_accepts_revision_only_cache(monkeypatch, tmp_path):
+    import mlx_audio.stt.utils as stt_utils
+
+    rid = "mlx-community/parakeet-tdt-0.6b-v3"
+    snap = tmp_path / "snap"
+    snap.mkdir()
+    (snap / "config.json").write_text("{}")
+
+    monkeypatch.setattr(stt.sys, "platform", "darwin")
+    _patch_revision_only_cache(
+        monkeypatch, rid, snap, ["config.json", "model.safetensors"]
+    )
+
+    captured = {}
+
+    def _fake_load(path, *a, **k):
+        captured["path"] = Path(path)
+        return "parakeet-model"
+
+    monkeypatch.setattr(stt_utils, "load_model", _fake_load)
+
+    node = stt.Parakeet()
+    await node.preload_model(MagicMock())
+
+    assert node._stt_model == "parakeet-model"
+    assert captured["path"] == snap
+
+
+# ---------------------------------------------------------------------------
+# espeak / phonemizer setup
+#
+# Many mlx-audio TTS models (Kokoro, Kitten, Melo, ...) phonemize text via
+# phonemizer's espeak backend, which raises "espeak not installed on your
+# system" unless pointed at a library. ``espeakng_loader`` bundles one; the
+# TTS base must wire it so these models work without a system espeak-ng.
+# ---------------------------------------------------------------------------
+def test_configure_espeak_wires_bundled_library(monkeypatch):
+    espeakng_loader = pytest.importorskip("espeakng_loader")
+    pytest.importorskip("phonemizer")
+    from phonemizer.backend.espeak.wrapper import EspeakWrapper
+
+    captured = {}
+    monkeypatch.setattr(
+        EspeakWrapper,
+        "set_library",
+        classmethod(lambda cls, p: captured.__setitem__("lib", p)),
+    )
+    monkeypatch.setattr(
+        EspeakWrapper,
+        "set_data_path",
+        classmethod(lambda cls, p: captured.__setitem__("data", p)),
+    )
+
+    tts.BaseMLXTTS._configure_espeak()
+
+    assert captured["lib"] == espeakng_loader.get_library_path()
+    assert captured["data"] == espeakng_loader.get_data_path()
+
+
+def test_configure_espeak_is_noop_without_phonemizer(monkeypatch):
+    # Models that don't need espeak must still load when the optional
+    # phonemizer stack is absent.
+    import builtins
+
+    real_import = builtins.__import__
+
+    def _fail_phonemizer(name, *args, **kwargs):
+        if name.startswith("phonemizer") or name == "espeakng_loader":
+            raise ImportError(name)
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _fail_phonemizer)
+    # Must not raise.
+    tts.BaseMLXTTS._configure_espeak()
+
+
+async def test_tts_preload_configures_espeak(monkeypatch, tmp_path):
+    import mlx_audio.tts.utils as tts_utils
+
+    rid = "mlx-community/kitten-tts-nano-0.8"
+    snap = tmp_path / "snap"
+    snap.mkdir()
+    (snap / "config.json").write_text("{}")
+
+    monkeypatch.setattr(tts.sys, "platform", "darwin")
+    _patch_revision_only_cache(monkeypatch, rid, snap, ["config.json"])
+    monkeypatch.setattr(tts_utils, "load_model", lambda *a, **k: "kitten-model")
+
+    called = {}
+    monkeypatch.setattr(
+        tts.BaseMLXTTS,
+        "_configure_espeak",
+        staticmethod(lambda: called.__setitem__("configured", True)),
+    )
+
+    await tts.KittenTTS().preload_model(MagicMock())
+    assert called.get("configured") is True

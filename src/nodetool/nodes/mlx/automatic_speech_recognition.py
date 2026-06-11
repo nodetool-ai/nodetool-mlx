@@ -7,7 +7,11 @@ import sys
 from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypedDict
 from pydantic import Field
 
-from nodetool.metadata.types import AudioRef, HuggingFaceModel
+from nodetool.metadata.types import (
+    AudioRef,
+    HFAutomaticSpeechRecognition,
+    HuggingFaceModel,
+)
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -46,8 +50,8 @@ class Whisper(BaseNode):
         DISTIL_MEDIUM_EN = "mlx-community/distil-whisper-medium.en"
         DISTIL_SMALL_EN = "mlx-community/distil-whisper-small.en"
 
-    model: Model = Field(
-        default=Model.TINY_EN,
+    model: HFAutomaticSpeechRecognition = Field(
+        default=HFAutomaticSpeechRecognition(repo_id=Model.TINY_EN.value),
         description="Model to use for transcription",
     )
 
@@ -117,10 +121,10 @@ class Whisper(BaseNode):
         from huggingface_hub import scan_cache_dir
 
         cache = scan_cache_dir()
-        found = any(r.repo_id == self.model.value for r in cache.repos)
+        found = any(r.repo_id == self.model.repo_id for r in cache.repos)
         if not found:
             raise ValueError(
-                f"Model {self.model.value} must be downloaded first, check recommended models"
+                f"Model {self.model.repo_id} must be downloaded first, check recommended models"
             )
 
     async def process(self, context: ProcessingContext) -> OutputType:
@@ -147,7 +151,7 @@ class Whisper(BaseNode):
         def _do_transcribe(audio: np.ndarray) -> dict[str, Any]:
             return mlx_whisper.transcribe(
                 audio,
-                path_or_hf_repo=self.model.value,
+                path_or_hf_repo=self.model.repo_id,
                 compression_ratio_threshold=self.compression_ratio_threshold,
                 logprob_threshold=self.logprob_threshold,
                 no_speech_threshold=self.no_speech_threshold,
@@ -175,4 +179,6 @@ class Whisper(BaseNode):
         These correspond to files listed on the HF repo page and are suitable
         for whisper.cpp bindings.
         """
-        return [HuggingFaceModel(repo_id=p.value, path=None) for p in cls.Model]
+        return [
+            HFAutomaticSpeechRecognition(repo_id=p.value, path=None) for p in cls.Model
+        ]

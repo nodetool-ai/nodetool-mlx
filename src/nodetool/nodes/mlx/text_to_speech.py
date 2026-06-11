@@ -8,7 +8,6 @@ import sys
 import tempfile
 from contextlib import suppress
 from enum import Enum
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,11 +15,10 @@ from typing import (
     ClassVar,
     Optional,
     TypedDict,
-    cast,
 )
 from pydantic import Field, PrivateAttr
 
-from nodetool.metadata.types import AudioRef, HuggingFaceModel, Provider
+from nodetool.metadata.types import AudioRef, HFTextToSpeech, HuggingFaceModel, Provider
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
@@ -28,7 +26,6 @@ from nodetool.workflows.types import Chunk
 if TYPE_CHECKING:
     import mlx.core as mx
     import numpy as np
-    from huggingface_hub import try_to_load_from_cache
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -85,28 +82,50 @@ class BaseMLXTTS(BaseNode):
         if sys.platform != "darwin":
             raise RuntimeError("MLX TTS requires macOS (Apple Silicon / MLX).")
 
+    @staticmethod
+    def _configure_espeak() -> None:
+        """Point phonemizer at the bundled espeak-ng library.
+
+        Many mlx-audio TTS models (Kokoro, Kitten, Melo, ...) phonemize text via
+        phonemizer's espeak backend, which raises "espeak not installed on your
+        system" unless it can locate a library. ``espeakng_loader`` ships one, so
+        wiring it here makes those models work without a system espeak-ng install.
+        No-op when the optional phonemizer stack is unavailable, so models that
+        don't need espeak still load.
+        """
+        try:
+            import espeakng_loader
+            from phonemizer.backend.espeak.wrapper import EspeakWrapper
+        except ImportError:
+            return
+        with suppress(Exception):
+            EspeakWrapper.set_library(espeakng_loader.get_library_path())
+        with suppress(Exception):
+            EspeakWrapper.set_data_path(espeakng_loader.get_data_path())
+
     def _get_model_id(self) -> str:
         model = getattr(self, "model", None)
-        if model is None:
+        repo_id = getattr(model, "repo_id", "") if model is not None else ""
+        if not repo_id:
             raise ValueError("Model must be selected before loading MLX TTS.")
-        if isinstance(model, Enum):
-            return cast(str, model.value)
-        return str(model)
+        return repo_id
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform()
+        self._configure_espeak()
         model_id = self._get_model_id()
 
         if self._tts_model is not None and self._model_id_loaded == model_id:
             return
 
-        from huggingface_hub import try_to_load_from_cache
+        from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
-        model_path = try_to_load_from_cache(model_id, "config.json")
-        if not model_path:
-            raise ValueError(f"Model {model_id} must be downloaded first")
+        load_target = find_cached_snapshot(model_id, "config.json")
+        if load_target is None:
+            raise ValueError(
+                f"Model {model_id} must be downloaded first, check recommended models"
+            )
 
-        load_target = Path(model_path).parent
         loop = asyncio.get_running_loop()
 
         def _load_model() -> Any:
@@ -365,8 +384,8 @@ class KokoroTTS(BaseMLXTTS):
         ZF_XIAOXIAO = "zf_xiaoxiao"
         ZF_XIAOYI = "zf_xiaoyi"
 
-    model: Model = Field(
-        default=Model.KOKORO_82M,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.KOKORO_82M.value),
         description="Kokoro model variant to load.",
     )
     voice: Voice = Field(
@@ -405,11 +424,11 @@ class KokoroTTS(BaseMLXTTS):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HuggingFaceModel(repo_id=cls.Model.KOKORO_82M.value),
-            HuggingFaceModel(repo_id=cls.Model.KOKORO_82M_BF16.value),
-            HuggingFaceModel(repo_id=cls.Model.KOKORO_82M_4BIT.value),
-            HuggingFaceModel(repo_id=cls.Model.KOKORO_82M_6BIT.value),
-            HuggingFaceModel(repo_id=cls.Model.KOKORO_82M_8BIT.value),
+            HFTextToSpeech(repo_id=cls.Model.KOKORO_82M.value),
+            HFTextToSpeech(repo_id=cls.Model.KOKORO_82M_BF16.value),
+            HFTextToSpeech(repo_id=cls.Model.KOKORO_82M_4BIT.value),
+            HFTextToSpeech(repo_id=cls.Model.KOKORO_82M_6BIT.value),
+            HFTextToSpeech(repo_id=cls.Model.KOKORO_82M_8BIT.value),
         ]
 
     def _normalize_speed(self) -> float:
@@ -441,8 +460,8 @@ class SesameTTS(BaseMLXTTS):
         SESAME_1B = "mlx-community/csm-1b"
         SESAME_1B_8BIT = "mlx-community/csm-1b-8bit"
 
-    model: Model = Field(
-        default=Model.SESAME_1B,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.SESAME_1B.value),
         description="Sesame/CSM model variant to load.",
     )
     reference_audio: AudioRef = Field(
@@ -477,8 +496,8 @@ class SesameTTS(BaseMLXTTS):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HuggingFaceModel(repo_id=cls.Model.SESAME_1B.value),
-            HuggingFaceModel(repo_id=cls.Model.SESAME_1B_8BIT.value),
+            HFTextToSpeech(repo_id=cls.Model.SESAME_1B.value),
+            HFTextToSpeech(repo_id=cls.Model.SESAME_1B_8BIT.value),
         ]
 
     def _normalize_speed(self) -> float:
@@ -525,8 +544,8 @@ class SparkTTS(BaseMLXTTS):
         FEMALE = "female"
         MALE = "male"
 
-    model: Model = Field(
-        default=Model.SPARK_TTS_0_5B_BF16,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.SPARK_TTS_0_5B_BF16.value),
         description="Spark model variant to load.",
     )
     speed: Speed = Field(
@@ -576,8 +595,8 @@ class SparkTTS(BaseMLXTTS):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HuggingFaceModel(repo_id=cls.Model.SPARK_TTS_0_5B_BF16.value),
-            HuggingFaceModel(repo_id=cls.Model.SPARK_TTS_0_5B_8BIT.value),
+            HFTextToSpeech(repo_id=cls.Model.SPARK_TTS_0_5B_BF16.value),
+            HFTextToSpeech(repo_id=cls.Model.SPARK_TTS_0_5B_8BIT.value),
         ]
 
     def _normalize_speed(self) -> float:
@@ -614,8 +633,8 @@ class Qwen3TTS(BaseMLXTTS):
             "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16"
         )
 
-    model: Model = Field(
-        default=Model.QWEN3_TTS_17B_BASE_8BIT,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.QWEN3_TTS_17B_BASE_8BIT.value),
         description="Qwen3-TTS model variant to load.",
     )
     voice: str = Field(
@@ -657,7 +676,7 @@ class Qwen3TTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     def _normalize_speed(self) -> float:
         value = float(self.speed)
@@ -701,8 +720,8 @@ class KittenTTS(BaseMLXTTS):
         EXPR_VOICE_5_M = "expr-voice-5-m"
         EXPR_VOICE_5_F = "expr-voice-5-f"
 
-    model: Model = Field(
-        default=Model.KITTEN_NANO,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.KITTEN_NANO.value),
         description="KittenTTS model variant to load.",
     )
     voice: Voice = Field(
@@ -730,7 +749,7 @@ class KittenTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     def _normalize_speed(self) -> float:
         value = float(self.speed)
@@ -761,8 +780,8 @@ class DiaTTS(BaseMLXTTS):
         DIA_1_6B = "mlx-community/Dia-1.6B"
         DIA_1_6B_FP16 = "mlx-community/Dia-1.6B-fp16"
 
-    model: Model = Field(
-        default=Model.DIA_1_6B_FP16,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.DIA_1_6B_FP16.value),
         description="Dia model variant to load.",
     )
     text: str = Field(
@@ -804,7 +823,7 @@ class DiaTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     async def _build_generation_params(
         self, context: ProcessingContext
@@ -834,8 +853,8 @@ class OuteTTS(BaseMLXTTS):
         OUTETTS_1_0_0_6B = "mlx-community/OuteTTS-1.0-0.6B-fp16"
         OUTETTS_0_3_500M = "mlx-community/outetts-0.3-500M-bf16"
 
-    model: Model = Field(
-        default=Model.OUTETTS_1_0_0_6B,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.OUTETTS_1_0_0_6B.value),
         description="OuteTTS model variant to load.",
     )
     voice: str = Field(
@@ -873,7 +892,7 @@ class OuteTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     async def _build_generation_params(
         self, context: ProcessingContext
@@ -903,8 +922,8 @@ class OmniVoiceTTS(BaseMLXTTS):
     class Model(str, Enum):
         OMNIVOICE_BF16 = "mlx-community/OmniVoice-bf16"
 
-    model: Model = Field(
-        default=Model.OMNIVOICE_BF16,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.OMNIVOICE_BF16.value),
         description="OmniVoice model variant to load.",
     )
     language: str = Field(
@@ -952,7 +971,7 @@ class OmniVoiceTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     async def _build_generation_params(
         self, context: ProcessingContext
@@ -991,8 +1010,8 @@ class MeloTTS(BaseMLXTTS):
         EN_AU = "EN-AU"
         EN_DEFAULT = "EN-Default"
 
-    model: Model = Field(
-        default=Model.MELOTTS_ENGLISH,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.MELOTTS_ENGLISH.value),
         description="MeloTTS model variant to load.",
     )
     language: LanguageCode = Field(
@@ -1020,7 +1039,7 @@ class MeloTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     def _normalize_speed(self) -> float:
         value = float(self.speed)
@@ -1066,8 +1085,8 @@ class VoxtralTTS(BaseMLXTTS):
         PT_FEMALE = "pt_female"
         PT_MALE = "pt_male"
 
-    model: Model = Field(
-        default=Model.VOXTRAL_4B_TTS,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.VOXTRAL_4B_TTS.value),
         description="Voxtral TTS model variant to load.",
     )
     voice: Voice = Field(
@@ -1095,7 +1114,7 @@ class VoxtralTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     async def _build_generation_params(
         self, context: ProcessingContext
@@ -1119,8 +1138,8 @@ class ChatterboxTTS(BaseMLXTTS):
         CHATTERBOX_FP16 = "mlx-community/chatterbox-fp16"
         CHATTERBOX_TTS_FP16 = "mlx-community/Chatterbox-TTS-fp16"
 
-    model: Model = Field(
-        default=Model.CHATTERBOX_FP16,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.CHATTERBOX_FP16.value),
         description="Chatterbox model variant to load.",
     )
     exaggeration: float = Field(
@@ -1160,7 +1179,7 @@ class ChatterboxTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     async def _build_generation_params(
         self, context: ProcessingContext
@@ -1191,8 +1210,8 @@ class HiggsAudioTTS(BaseMLXTTS):
         HIGGS_V2_3B_Q6 = "mlx-community/higgs-audio-v2-3B-mlx-q6"
         HIGGS_V2_3B_Q8 = "mlx-community/higgs-audio-v2-3B-mlx-q8"
 
-    model: Model = Field(
-        default=Model.HIGGS_V2_3B_Q8,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.HIGGS_V2_3B_Q8.value),
         description="Higgs Audio model variant to load.",
     )
     temperature: float = Field(
@@ -1224,7 +1243,7 @@ class HiggsAudioTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     async def _build_generation_params(
         self, context: ProcessingContext
@@ -1254,8 +1273,8 @@ class LongCatAudioTTS(BaseMLXTTS):
         LONGCAT_3_5B_4BIT = "mlx-community/LongCat-AudioDiT-3.5B-4bit"
         LONGCAT_3_5B_8BIT = "mlx-community/LongCat-AudioDiT-3.5B-8bit"
 
-    model: Model = Field(
-        default=Model.LONGCAT_1B_4BIT,
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id=Model.LONGCAT_1B_4BIT.value),
         description="LongCat-AudioDiT model variant to load.",
     )
     language: str = Field(
@@ -1297,7 +1316,7 @@ class LongCatAudioTTS(BaseMLXTTS):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFTextToSpeech(repo_id=m.value) for m in cls.Model]
 
     async def _build_generation_params(
         self, context: ProcessingContext
@@ -1330,9 +1349,9 @@ class MLXTextToSpeech(BaseMLXTTS):
     _expose_as_tool: ClassVar[bool] = True
     _split_text_by_lines: ClassVar[bool] = False
 
-    model: str = Field(
-        default="mlx-community/Kokoro-82M-bf16",
-        description="Hugging Face repository id of any mlx-audio TTS model.",
+    model: HFTextToSpeech = Field(
+        default=HFTextToSpeech(repo_id="mlx-community/Kokoro-82M-bf16"),
+        description="Any mlx-audio TTS model. Pick a recommended model or enter a Hugging Face repo id.",
     )
     voice: str = Field(
         default="",
@@ -1370,6 +1389,19 @@ class MLXTextToSpeech(BaseMLXTTS):
     @classmethod
     def get_title(cls):
         return "MLX Text To Speech"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        # A representative cross-section of mlx-audio TTS families. The model
+        # select still lets users enter any other Hugging Face repo id.
+        return [
+            HFTextToSpeech(repo_id="mlx-community/Kokoro-82M-bf16"),
+            HFTextToSpeech(repo_id="mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit"),
+            HFTextToSpeech(repo_id="mlx-community/kitten-tts-nano-0.8"),
+            HFTextToSpeech(repo_id="mlx-community/Dia-1.6B-fp16"),
+            HFTextToSpeech(repo_id="mlx-community/csm-1b"),
+            HFTextToSpeech(repo_id="mlx-community/OuteTTS-1.0-0.6B-fp16"),
+        ]
 
     def _normalize_speed(self) -> float:
         value = float(self.speed)

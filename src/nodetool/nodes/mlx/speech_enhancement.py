@@ -4,11 +4,16 @@ import asyncio
 import logging
 import sys
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, TypedDict, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypedDict
 
 from pydantic import Field, PrivateAttr
 
-from nodetool.metadata.types import AudioRef, HuggingFaceModel, Provider
+from nodetool.metadata.types import (
+    AudioRef,
+    HFAudioToAudio,
+    HuggingFaceModel,
+    Provider,
+)
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -74,11 +79,10 @@ class BaseMLXSpeechEnhancement(BaseNode):
 
     def _get_model_id(self) -> str:
         model = getattr(self, "model", None)
-        if model is None:
+        repo_id = getattr(model, "repo_id", "") if model is not None else ""
+        if not repo_id:
             raise ValueError("Model must be selected before loading the MLX model.")
-        if isinstance(model, Enum):
-            return cast(str, model.value)
-        return str(model)
+        return repo_id
 
     def _load_model_sync(self) -> Any:
         """Load the enhancement model. Implemented by subclasses."""
@@ -151,8 +155,8 @@ class DeepFilterNet(BaseMLXSpeechEnhancement):
         V2 = "2"
         V3 = "3"
 
-    model: Model = Field(
-        default=Model.DEEPFILTERNET,
+    model: HFAudioToAudio = Field(
+        default=HFAudioToAudio(repo_id=Model.DEEPFILTERNET.value),
         description="DeepFilterNet model repository.",
     )
     version: Version = Field(
@@ -170,7 +174,7 @@ class DeepFilterNet(BaseMLXSpeechEnhancement):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=cls.Model.DEEPFILTERNET.value)]
+        return [HFAudioToAudio(repo_id=cls.Model.DEEPFILTERNET.value)]
 
     def _load_model_sync(self) -> Any:
         from mlx_audio.sts.models.deepfilternet import DeepFilterNetModel
@@ -205,8 +209,8 @@ class MossFormer2(BaseMLXSpeechEnhancement):
         MOSSFORMER2_SE_48K_8BIT = "starkdmi/MossFormer2_SE_48K_MLX-8bit"
         MOSSFORMER2_SE_48K_4BIT = "starkdmi/MossFormer2_SE_48K_MLX-4bit"
 
-    model: Model = Field(
-        default=Model.MOSSFORMER2_SE_48K,
+    model: HFAudioToAudio = Field(
+        default=HFAudioToAudio(repo_id=Model.MOSSFORMER2_SE_48K.value),
         description="MossFormer2 speech enhancement model variant.",
     )
 
@@ -216,7 +220,7 @@ class MossFormer2(BaseMLXSpeechEnhancement):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFAudioToAudio(repo_id=m.value) for m in cls.Model]
 
     def _load_model_sync(self) -> Any:
         from mlx_audio.sts.models.mossformer2_se import MossFormer2SEModel

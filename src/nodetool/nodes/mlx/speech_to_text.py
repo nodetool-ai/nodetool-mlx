@@ -8,12 +8,16 @@ import sys
 import tempfile
 from contextlib import suppress
 from enum import Enum
-from pathlib import Path
-from typing import Any, ClassVar, TypedDict, cast
+from typing import Any, ClassVar, TypedDict
 
 from pydantic import Field, PrivateAttr
 
-from nodetool.metadata.types import AudioRef, HuggingFaceModel, Provider
+from nodetool.metadata.types import (
+    AudioRef,
+    HFAutomaticSpeechRecognition,
+    HuggingFaceModel,
+    Provider,
+)
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -74,11 +78,10 @@ class BaseMLXSpeechToText(BaseNode):
 
     def _get_model_id(self) -> str:
         model = getattr(self, "model", None)
-        if model is None:
+        repo_id = getattr(model, "repo_id", "") if model is not None else ""
+        if not repo_id:
             raise ValueError("Model must be selected before loading MLX STT.")
-        if isinstance(model, Enum):
-            return cast(str, model.value)
-        return str(model)
+        return repo_id
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform()
@@ -87,15 +90,14 @@ class BaseMLXSpeechToText(BaseNode):
         if self._stt_model is not None and self._model_id_loaded == model_id:
             return
 
-        from huggingface_hub import try_to_load_from_cache
+        from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
-        model_path = try_to_load_from_cache(model_id, "config.json")
-        if not model_path:
+        load_target = find_cached_snapshot(model_id, "config.json")
+        if load_target is None:
             raise ValueError(
                 f"Model {model_id} must be downloaded first, check recommended models"
             )
 
-        load_target = Path(model_path).parent
         loop = asyncio.get_running_loop()
 
         def _load_model() -> Any:
@@ -204,8 +206,8 @@ class Parakeet(BaseMLXSpeechToText):
         PARAKEET_TDT_0_6B_V2 = "mlx-community/parakeet-tdt-0.6b-v2"
         PARAKEET_TDT_0_6B_V3 = "mlx-community/parakeet-tdt-0.6b-v3"
 
-    model: Model = Field(
-        default=Model.PARAKEET_TDT_0_6B_V3,
+    model: HFAutomaticSpeechRecognition = Field(
+        default=HFAutomaticSpeechRecognition(repo_id=Model.PARAKEET_TDT_0_6B_V3.value),
         description="Parakeet model variant to use for transcription.",
     )
     chunk_duration: float = Field(
@@ -221,7 +223,7 @@ class Parakeet(BaseMLXSpeechToText):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFAutomaticSpeechRecognition(repo_id=m.value) for m in cls.Model]
 
     def _build_generate_kwargs(self) -> dict[str, Any]:
         kwargs: dict[str, Any] = {}
@@ -245,8 +247,8 @@ class Qwen3ASR(BaseMLXSpeechToText):
         QWEN3_ASR_0_6B_8BIT = "mlx-community/Qwen3-ASR-0.6B-8bit"
         QWEN3_ASR_1_7B_8BIT = "mlx-community/Qwen3-ASR-1.7B-8bit"
 
-    model: Model = Field(
-        default=Model.QWEN3_ASR_0_6B_8BIT,
+    model: HFAutomaticSpeechRecognition = Field(
+        default=HFAutomaticSpeechRecognition(repo_id=Model.QWEN3_ASR_0_6B_8BIT.value),
         description="Qwen3-ASR model variant to use for transcription.",
     )
     language: str = Field(
@@ -276,7 +278,7 @@ class Qwen3ASR(BaseMLXSpeechToText):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFAutomaticSpeechRecognition(repo_id=m.value) for m in cls.Model]
 
     def _build_generate_kwargs(self) -> dict[str, Any]:
         kwargs: dict[str, Any] = {
@@ -302,8 +304,10 @@ class Qwen3ForcedAligner(BaseMLXSpeechToText):
     class Model(str, Enum):
         QWEN3_FORCED_ALIGNER_0_6B_8BIT = "mlx-community/Qwen3-ForcedAligner-0.6B-8bit"
 
-    model: Model = Field(
-        default=Model.QWEN3_FORCED_ALIGNER_0_6B_8BIT,
+    model: HFAutomaticSpeechRecognition = Field(
+        default=HFAutomaticSpeechRecognition(
+            repo_id=Model.QWEN3_FORCED_ALIGNER_0_6B_8BIT.value
+        ),
         description="Qwen3-ForcedAligner model variant to use.",
     )
     text: str = Field(
@@ -332,7 +336,7 @@ class Qwen3ForcedAligner(BaseMLXSpeechToText):
 
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
-        return [HuggingFaceModel(repo_id=m.value) for m in cls.Model]
+        return [HFAutomaticSpeechRecognition(repo_id=m.value) for m in cls.Model]
 
     def _build_generate_kwargs(self) -> dict[str, Any]:
         if not self.text.strip():
@@ -354,9 +358,11 @@ class MLXSpeechToText(BaseMLXSpeechToText):
 
     _expose_as_tool: ClassVar[bool] = True
 
-    model: str = Field(
-        default="mlx-community/parakeet-tdt-0.6b-v3",
-        description="Hugging Face repository id of any mlx-audio STT model.",
+    model: HFAutomaticSpeechRecognition = Field(
+        default=HFAutomaticSpeechRecognition(
+            repo_id="mlx-community/parakeet-tdt-0.6b-v3"
+        ),
+        description="Any mlx-audio STT model. Pick a recommended model or enter a Hugging Face repo id.",
     )
     language: str = Field(
         default="",
@@ -376,6 +382,16 @@ class MLXSpeechToText(BaseMLXSpeechToText):
     @classmethod
     def get_title(cls):
         return "MLX Speech To Text"
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+        # Common mlx-audio ASR models. The model select still lets users enter
+        # any other Hugging Face repo id.
+        return [
+            HFAutomaticSpeechRecognition(repo_id="mlx-community/parakeet-tdt-0.6b-v3"),
+            HFAutomaticSpeechRecognition(repo_id="mlx-community/Qwen3-ASR-0.6B-8bit"),
+            HFAutomaticSpeechRecognition(repo_id="mlx-community/Qwen3-ASR-1.7B-8bit"),
+        ]
 
     def _build_generate_kwargs(self) -> dict[str, Any]:
         kwargs: dict[str, Any] = {"max_tokens": self.max_tokens}

@@ -33,30 +33,19 @@
       ],
       "properties": [
         {
-          "default": "mlx-community/whisper-tiny.en-mlx",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/whisper-tiny.en-mlx",
+            "type": "hf.automatic_speech_recognition",
+            "variant": null
+          },
           "description": "Model to use for transcription",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.automatic_speech_recognition.Whisper.Model",
-            "values": [
-              "mlx-community/whisper-tiny-mlx",
-              "mlx-community/whisper-tiny.en-mlx",
-              "mlx-community/whisper-base-mlx",
-              "mlx-community/whisper-base.en-mlx",
-              "mlx-community/whisper-small-mlx",
-              "mlx-community/whisper-small.en-mlx",
-              "mlx-community/whisper-medium-mlx",
-              "mlx-community/whisper-medium.en-mlx",
-              "mlx-community/whisper-large-v2-mlx",
-              "mlx-community/whisper-large-v3-mlx",
-              "mlx-community/whisper-large-v3-turbo",
-              "mlx-community/whisper-large-v3-turbo-q4",
-              "mlx-community/distil-whisper-large-v3",
-              "mlx-community/distil-whisper-medium.en",
-              "mlx-community/distil-whisper-small.en"
-            ]
+            "type": "hf.automatic_speech_recognition"
           }
         },
         {
@@ -137,7 +126,7 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 313,
@@ -152,7 +141,7 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 54462,
@@ -169,7 +158,7 @@
             "automatic-speech-recognition",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 688,
@@ -184,7 +173,7 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 13712,
@@ -201,7 +190,7 @@
             "automatic-speech-recognition",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 1140,
@@ -216,7 +205,7 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 5762,
@@ -233,7 +222,7 @@
             "automatic-speech-recognition",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 363,
@@ -248,7 +237,7 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 226,
@@ -263,7 +252,7 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 262262,
@@ -281,7 +270,7 @@
             "license:mit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 35321,
@@ -298,7 +287,7 @@
             "automatic-speech-recognition",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 1621,
@@ -313,7 +302,7 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 1099,
@@ -328,7 +317,7 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 29,
@@ -343,13 +332,13 @@
             "whisper",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "id": "mlx-community/distil-whisper-small.en",
           "name": "mlx-community/distil-whisper-small.en",
           "repo_id": "mlx-community/distil-whisper-small.en",
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         }
       ],
       "title": "MLX Whisper"
@@ -3790,16 +3779,19 @@
           }
         },
         {
-          "default": "mlx-community/DeepFilterNet-mlx",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/DeepFilterNet-mlx",
+            "type": "hf.audio_to_audio",
+            "variant": null
+          },
           "description": "DeepFilterNet model repository.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.speech_enhancement.DeepFilterNet.Model",
-            "values": [
-              "mlx-community/DeepFilterNet-mlx"
-            ]
+            "type": "hf.audio_to_audio"
           }
         },
         {
@@ -3843,7 +3835,7 @@
             "license:mit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.audio_to_audio"
         }
       ],
       "title": "DeepFilterNet"
@@ -3886,18 +3878,19 @@
           }
         },
         {
-          "default": "starkdmi/MossFormer2_SE_48K_MLX",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "starkdmi/MossFormer2_SE_48K_MLX",
+            "type": "hf.audio_to_audio",
+            "variant": null
+          },
           "description": "MossFormer2 speech enhancement model variant.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.speech_enhancement.MossFormer2.Model",
-            "values": [
-              "starkdmi/MossFormer2_SE_48K_MLX",
-              "starkdmi/MossFormer2_SE_48K_MLX-8bit",
-              "starkdmi/MossFormer2_SE_48K_MLX-4bit"
-            ]
+            "type": "hf.audio_to_audio"
           }
         }
       ],
@@ -3914,19 +3907,19 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.audio_to_audio"
         },
         {
           "id": "starkdmi/MossFormer2_SE_48K_MLX-8bit",
           "name": "starkdmi/MossFormer2_SE_48K_MLX-8bit",
           "repo_id": "starkdmi/MossFormer2_SE_48K_MLX-8bit",
-          "type": "hf.model"
+          "type": "hf.audio_to_audio"
         },
         {
           "id": "starkdmi/MossFormer2_SE_48K_MLX-4bit",
           "name": "starkdmi/MossFormer2_SE_48K_MLX-4bit",
           "repo_id": "starkdmi/MossFormer2_SE_48K_MLX-4bit",
-          "type": "hf.model"
+          "type": "hf.audio_to_audio"
         }
       ],
       "title": "MossFormer2"
@@ -3982,12 +3975,19 @@
           }
         },
         {
-          "default": "mlx-community/parakeet-tdt-0.6b-v3",
-          "description": "Hugging Face repository id of any mlx-audio STT model.",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/parakeet-tdt-0.6b-v3",
+            "type": "hf.automatic_speech_recognition",
+            "variant": null
+          },
+          "description": "Any mlx-audio STT model. Pick a recommended model or enter a Hugging Face repo id.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "str"
+            "type": "hf.automatic_speech_recognition"
           }
         },
         {
@@ -4009,6 +4009,106 @@
           "type": {
             "type": "int"
           }
+        }
+      ],
+      "recommended_models": [
+        {
+          "downloads": 1293858,
+          "has_model_index": false,
+          "id": "mlx-community/parakeet-tdt-0.6b-v3",
+          "likes": 44,
+          "name": "mlx-community/parakeet-tdt-0.6b-v3",
+          "pipeline_tag": "automatic-speech-recognition",
+          "repo_id": "mlx-community/parakeet-tdt-0.6b-v3",
+          "size_on_disk": 2509044141,
+          "tags": [
+            "mlx",
+            "safetensors",
+            "automatic-speech-recognition",
+            "speech",
+            "audio",
+            "FastConformer",
+            "Conformer",
+            "Parakeet",
+            "en",
+            "es",
+            "fr",
+            "de",
+            "bg",
+            "hr",
+            "cs",
+            "da",
+            "nl",
+            "et",
+            "fi",
+            "el",
+            "hu",
+            "it",
+            "lv",
+            "lt",
+            "mt",
+            "pl",
+            "pt",
+            "ro",
+            "sk",
+            "sl",
+            "sv",
+            "ru",
+            "uk",
+            "base_model:nvidia/parakeet-tdt-0.6b-v3",
+            "base_model:finetune:nvidia/parakeet-tdt-0.6b-v3",
+            "license:cc-by-4.0",
+            "region:us"
+          ],
+          "type": "hf.automatic_speech_recognition"
+        },
+        {
+          "downloads": 1176,
+          "has_model_index": false,
+          "id": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "likes": 3,
+          "name": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "repo_id": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "size_on_disk": 1010773761,
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_asr",
+            "mlx",
+            "speech-to-text",
+            "speech",
+            "transcription",
+            "asr",
+            "stt",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "type": "hf.automatic_speech_recognition"
+        },
+        {
+          "downloads": 2736,
+          "has_model_index": false,
+          "id": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "likes": 12,
+          "name": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "repo_id": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "size_on_disk": 2467859030,
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_asr",
+            "mlx",
+            "speech-to-text",
+            "speech",
+            "transcription",
+            "asr",
+            "stt",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "type": "hf.automatic_speech_recognition"
         }
       ],
       "title": "MLX Speech To Text"
@@ -4063,17 +4163,19 @@
           }
         },
         {
-          "default": "mlx-community/parakeet-tdt-0.6b-v3",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/parakeet-tdt-0.6b-v3",
+            "type": "hf.automatic_speech_recognition",
+            "variant": null
+          },
           "description": "Parakeet model variant to use for transcription.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.speech_to_text.Parakeet.Model",
-            "values": [
-              "mlx-community/parakeet-tdt-0.6b-v2",
-              "mlx-community/parakeet-tdt-0.6b-v3"
-            ]
+            "type": "hf.automatic_speech_recognition"
           }
         },
         {
@@ -4112,7 +4214,7 @@
             "license:cc-by-4.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 1293858,
@@ -4162,7 +4264,7 @@
             "license:cc-by-4.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         }
       ],
       "title": "Parakeet"
@@ -4218,17 +4320,19 @@
           }
         },
         {
-          "default": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/Qwen3-ASR-0.6B-8bit",
+            "type": "hf.automatic_speech_recognition",
+            "variant": null
+          },
           "description": "Qwen3-ASR model variant to use for transcription.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.speech_to_text.Qwen3ASR.Model",
-            "values": [
-              "mlx-community/Qwen3-ASR-0.6B-8bit",
-              "mlx-community/Qwen3-ASR-1.7B-8bit"
-            ]
+            "type": "hf.automatic_speech_recognition"
           }
         },
         {
@@ -4286,7 +4390,7 @@
             "8-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         },
         {
           "downloads": 2736,
@@ -4310,7 +4414,7 @@
             "8-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         }
       ],
       "title": "Qwen3 ASR"
@@ -4367,16 +4471,19 @@
           }
         },
         {
-          "default": "mlx-community/Qwen3-ForcedAligner-0.6B-8bit",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/Qwen3-ForcedAligner-0.6B-8bit",
+            "type": "hf.automatic_speech_recognition",
+            "variant": null
+          },
           "description": "Qwen3-ForcedAligner model variant to use.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.speech_to_text.Qwen3ForcedAligner.Model",
-            "values": [
-              "mlx-community/Qwen3-ForcedAligner-0.6B-8bit"
-            ]
+            "type": "hf.automatic_speech_recognition"
           }
         },
         {
@@ -4421,7 +4528,7 @@
             "8-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.automatic_speech_recognition"
         }
       ],
       "title": "Qwen3 Forced Aligner"
@@ -5172,17 +5279,19 @@
           }
         },
         {
-          "default": "mlx-community/chatterbox-fp16",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/chatterbox-fp16",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "Chatterbox model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.ChatterboxTTS.Model",
-            "values": [
-              "mlx-community/chatterbox-fp16",
-              "mlx-community/Chatterbox-TTS-fp16"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -5282,7 +5391,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 141,
@@ -5303,7 +5412,7 @@
             "base_model:finetune:ResembleAI/chatterbox",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Chatterbox TTS"
@@ -5359,17 +5468,19 @@
           }
         },
         {
-          "default": "mlx-community/Dia-1.6B-fp16",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/Dia-1.6B-fp16",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "Dia model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.DiaTTS.Model",
-            "values": [
-              "mlx-community/Dia-1.6B",
-              "mlx-community/Dia-1.6B-fp16"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -5439,7 +5550,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 69,
@@ -5460,7 +5571,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Dia TTS"
@@ -5515,18 +5626,19 @@
           }
         },
         {
-          "default": "mlx-community/higgs-audio-v2-3B-mlx-q8",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/higgs-audio-v2-3B-mlx-q8",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "Higgs Audio model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.HiggsAudioTTS.Model",
-            "values": [
-              "mlx-community/higgs-audio-v2-3B-mlx-bf16",
-              "mlx-community/higgs-audio-v2-3B-mlx-q6",
-              "mlx-community/higgs-audio-v2-3B-mlx-q8"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -5570,7 +5682,7 @@
           "id": "mlx-community/higgs-audio-v2-3B-mlx-bf16",
           "name": "mlx-community/higgs-audio-v2-3B-mlx-bf16",
           "repo_id": "mlx-community/higgs-audio-v2-3B-mlx-bf16",
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 129,
@@ -5598,7 +5710,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 122,
@@ -5626,7 +5738,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Higgs Audio TTS"
@@ -5682,18 +5794,19 @@
           }
         },
         {
-          "default": "mlx-community/kitten-tts-nano-0.8",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/kitten-tts-nano-0.8",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "KittenTTS model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.KittenTTS.Model",
-            "values": [
-              "mlx-community/kitten-tts-nano-0.8",
-              "mlx-community/kitten-tts-micro-0.8",
-              "mlx-community/kitten-tts-mini-0.8"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -5736,7 +5849,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 12,
@@ -5756,7 +5869,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 22,
@@ -5776,7 +5889,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Kitten TTS"
@@ -5834,20 +5947,19 @@
           }
         },
         {
-          "default": "prince-canuma/Kokoro-82M",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "prince-canuma/Kokoro-82M",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "Kokoro model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.KokoroTTS.Model",
-            "values": [
-              "prince-canuma/Kokoro-82M",
-              "mlx-community/Kokoro-82M-bf16",
-              "mlx-community/Kokoro-82M-4bit",
-              "mlx-community/Kokoro-82M-6bit",
-              "mlx-community/Kokoro-82M-8bit"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -5974,7 +6086,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 335366,
@@ -5994,7 +6106,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 531,
@@ -6014,7 +6126,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 107,
@@ -6034,7 +6146,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 501,
@@ -6054,7 +6166,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Kokoro TTS"
@@ -6111,21 +6223,19 @@
           }
         },
         {
-          "default": "mlx-community/LongCat-AudioDiT-1B-4bit",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/LongCat-AudioDiT-1B-4bit",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "LongCat-AudioDiT model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.LongCatAudioTTS.Model",
-            "values": [
-              "mlx-community/LongCat-AudioDiT-1B-bf16",
-              "mlx-community/LongCat-AudioDiT-1B-4bit",
-              "mlx-community/LongCat-AudioDiT-1B-8bit",
-              "mlx-community/LongCat-AudioDiT-3.5B-bf16",
-              "mlx-community/LongCat-AudioDiT-3.5B-4bit",
-              "mlx-community/LongCat-AudioDiT-3.5B-8bit"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -6206,7 +6316,7 @@
             "tts",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 26,
@@ -6230,7 +6340,7 @@
             "4-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 12,
@@ -6254,7 +6364,7 @@
             "8-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 21,
@@ -6277,7 +6387,7 @@
             "tts",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 28,
@@ -6301,7 +6411,7 @@
             "4-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 18,
@@ -6325,7 +6435,7 @@
             "8-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "LongCat Audio TTS"
@@ -6382,12 +6492,19 @@
           }
         },
         {
-          "default": "mlx-community/Kokoro-82M-bf16",
-          "description": "Hugging Face repository id of any mlx-audio TTS model.",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/Kokoro-82M-bf16",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
+          "description": "Any mlx-audio TTS model. Pick a recommended model or enter a Hugging Face repo id.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "str"
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -6433,6 +6550,150 @@
           "type": {
             "type": "audio"
           }
+        }
+      ],
+      "recommended_models": [
+        {
+          "downloads": 335366,
+          "has_model_index": false,
+          "id": "mlx-community/Kokoro-82M-bf16",
+          "likes": 52,
+          "name": "mlx-community/Kokoro-82M-bf16",
+          "pipeline_tag": "text-to-speech",
+          "repo_id": "mlx-community/Kokoro-82M-bf16",
+          "size_on_disk": 389410807,
+          "tags": [
+            "mlx",
+            "text-to-speech",
+            "en",
+            "base_model:yl4579/StyleTTS2-LJSpeech",
+            "base_model:finetune:yl4579/StyleTTS2-LJSpeech",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "type": "hf.text_to_speech"
+        },
+        {
+          "downloads": 2252,
+          "has_model_index": false,
+          "id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "likes": 6,
+          "name": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "pipeline_tag": "text-to-speech",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "size_on_disk": 3104158788,
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "type": "hf.text_to_speech"
+        },
+        {
+          "downloads": 21,
+          "has_model_index": false,
+          "id": "mlx-community/kitten-tts-nano-0.8",
+          "likes": 0,
+          "name": "mlx-community/kitten-tts-nano-0.8",
+          "pipeline_tag": "text-to-speech",
+          "repo_id": "mlx-community/kitten-tts-nano-0.8",
+          "size_on_disk": 61731543,
+          "tags": [
+            "mlx",
+            "safetensors",
+            "kitten_tts",
+            "text-to-speech",
+            "kitten-tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "type": "hf.text_to_speech"
+        },
+        {
+          "downloads": 69,
+          "has_model_index": false,
+          "id": "mlx-community/Dia-1.6B-fp16",
+          "likes": 3,
+          "name": "mlx-community/Dia-1.6B-fp16",
+          "pipeline_tag": "text-to-speech",
+          "repo_id": "mlx-community/Dia-1.6B-fp16",
+          "size_on_disk": 3222365078,
+          "tags": [
+            "mlx",
+            "safetensors",
+            "text-to-speech",
+            "en",
+            "base_model:nari-labs/Dia-1.6B",
+            "base_model:finetune:nari-labs/Dia-1.6B",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "type": "hf.text_to_speech"
+        },
+        {
+          "downloads": 284,
+          "has_model_index": false,
+          "id": "mlx-community/csm-1b",
+          "likes": 28,
+          "name": "mlx-community/csm-1b",
+          "pipeline_tag": "text-to-speech",
+          "repo_id": "mlx-community/csm-1b",
+          "size_on_disk": 6218711994,
+          "tags": [
+            "mlx",
+            "safetensors",
+            "sesame",
+            "text-to-speech",
+            "en",
+            "base_model:sesame/csm-1b",
+            "base_model:finetune:sesame/csm-1b",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "type": "hf.text_to_speech"
+        },
+        {
+          "downloads": 36,
+          "has_model_index": false,
+          "id": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "likes": 0,
+          "name": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "pipeline_tag": "text-to-speech",
+          "repo_id": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "size_on_disk": 1220980213,
+          "tags": [
+            "outetts",
+            "safetensors",
+            "qwen3",
+            "mlx",
+            "text-to-speech",
+            "en",
+            "zh",
+            "nl",
+            "fr",
+            "ka",
+            "de",
+            "hu",
+            "it",
+            "ja",
+            "ko",
+            "lv",
+            "pl",
+            "ru",
+            "es",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "MLX Text To Speech"
@@ -6488,16 +6749,19 @@
           }
         },
         {
-          "default": "mlx-community/MeloTTS-English-MLX",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/MeloTTS-English-MLX",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "MeloTTS model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.MeloTTS.Model",
-            "values": [
-              "mlx-community/MeloTTS-English-MLX"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -6542,7 +6806,7 @@
             "license:mit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Melo TTS"
@@ -6600,16 +6864,19 @@
           }
         },
         {
-          "default": "mlx-community/OmniVoice-bf16",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/OmniVoice-bf16",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "OmniVoice model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.OmniVoiceTTS.Model",
-            "values": [
-              "mlx-community/OmniVoice-bf16"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -6693,7 +6960,7 @@
             "omnivoice",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "OmniVoice TTS"
@@ -6750,17 +7017,19 @@
           }
         },
         {
-          "default": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "OuteTTS model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.OuteTTS.Model",
-            "values": [
-              "mlx-community/OuteTTS-1.0-0.6B-fp16",
-              "mlx-community/outetts-0.3-500M-bf16"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -6843,13 +7112,13 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "id": "mlx-community/outetts-0.3-500M-bf16",
           "name": "mlx-community/outetts-0.3-500M-bf16",
           "repo_id": "mlx-community/outetts-0.3-500M-bf16",
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Oute TTS"
@@ -6907,22 +7176,19 @@
           }
         },
         {
-          "default": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "Qwen3-TTS model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.Qwen3TTS.Model",
-            "values": [
-              "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
-              "mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-bf16",
-              "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16",
-              "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
-              "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-bf16",
-              "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-6bit",
-              "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -6987,7 +7253,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 499,
@@ -7011,7 +7277,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 10567,
@@ -7035,7 +7301,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 2252,
@@ -7060,7 +7326,7 @@
             "8-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 855,
@@ -7084,7 +7350,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 225,
@@ -7109,7 +7375,7 @@
             "6-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 1508,
@@ -7133,7 +7399,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Qwen3 TTS"
@@ -7190,17 +7456,19 @@
           }
         },
         {
-          "default": "mlx-community/csm-1b",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/csm-1b",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "Sesame/CSM model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.SesameTTS.Model",
-            "values": [
-              "mlx-community/csm-1b",
-              "mlx-community/csm-1b-8bit"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -7235,7 +7503,7 @@
             "license:apache-2.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 170,
@@ -7258,7 +7526,7 @@
             "8-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Sesame TTS"
@@ -7322,17 +7590,19 @@
           }
         },
         {
-          "default": "mlx-community/Spark-TTS-0.5B-bf16",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/Spark-TTS-0.5B-bf16",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "Spark model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.SparkTTS.Model",
-            "values": [
-              "mlx-community/Spark-TTS-0.5B-bf16",
-              "mlx-community/Spark-TTS-0.5B-8bit"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -7397,7 +7667,7 @@
             "license:cc-by-nc-sa-4.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         },
         {
           "downloads": 36,
@@ -7419,7 +7689,7 @@
             "8-bit",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Spark TTS"
@@ -7475,16 +7745,19 @@
           }
         },
         {
-          "default": "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
+            "type": "hf.text_to_speech",
+            "variant": null
+          },
           "description": "Voxtral TTS model variant to load.",
           "name": "model",
           "title": "Model",
           "type": {
-            "type": "enum",
-            "type_name": "nodetool.nodes.mlx.text_to_speech.VoxtralTTS.Model",
-            "values": [
-              "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16"
-            ]
+            "type": "hf.text_to_speech"
           }
         },
         {
@@ -7562,7 +7835,7 @@
             "license:cc-by-nc-4.0",
             "region:us"
           ],
-          "type": "hf.model"
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "Voxtral TTS"
