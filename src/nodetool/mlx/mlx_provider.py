@@ -2284,8 +2284,11 @@ class MLXProvider(BaseProvider):
         if not text:
             raise ValueError("text must not be empty")
 
-        # Default voice and parameters
-        voice = voice or "af_heart"
+        # "af_heart" is a Kokoro preset; injecting it into other model families
+        # breaks their speaker lookup (KittenTTS raises, Qwen3-TTS mis-renders),
+        # so only default it for Kokoro and let other models use their own default.
+        if not voice and "kokoro" in model.lower():
+            voice = "af_heart"
         speed = max(0.5, min(2.0, speed))
 
         try:
@@ -2320,6 +2323,7 @@ class MLXProvider(BaseProvider):
                 """Stream audio chunks in background thread."""
                 try:
                     assert tts_model.generate is not None
+                    target_sr = 24_000
                     for result in tts_model.generate(**gen_params):
                         audio = result.audio
                         if audio is None:
@@ -2330,6 +2334,19 @@ class MLXProvider(BaseProvider):
                             chunk_float = audio.astype(np.float32).numpy()
                         else:
                             chunk_float = np.asarray(audio, dtype=np.float32)
+
+                        # The provider contract is 24kHz mono; models like Dia
+                        # emit other rates, so resample to keep playback speed
+                        # and pitch correct.
+                        result_sr = int(getattr(result, "sample_rate", 0) or 0)
+                        if result_sr and result_sr != target_sr and chunk_float.size:
+                            n_out = int(round(chunk_float.size * target_sr / result_sr))
+                            if n_out > 0:
+                                x_old = np.arange(chunk_float.size) / result_sr
+                                x_new = np.arange(n_out) / target_sr
+                                chunk_float = np.interp(
+                                    x_new, x_old, chunk_float
+                                ).astype(np.float32)
 
                         chunk_int16 = np.clip(chunk_float, -1.0, 1.0)
                         chunk_int16 = (chunk_int16 * 32767.0).astype(np.int16)

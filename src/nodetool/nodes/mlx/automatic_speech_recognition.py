@@ -17,7 +17,6 @@ from nodetool.workflows.processing_context import ProcessingContext
 
 if TYPE_CHECKING:
     import numpy as np
-    from huggingface_hub import try_to_load_from_cache
 
 log = logging.getLogger(__name__)
 
@@ -118,11 +117,13 @@ class Whisper(BaseNode):
         segments: list
 
     async def preload_model(self, context: ProcessingContext):
-        from huggingface_hub import scan_cache_dir
+        from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
-        cache = scan_cache_dir()
-        found = any(r.repo_id == self.model.repo_id for r in cache.repos)
-        if not found:
+        loop = asyncio.get_running_loop()
+        found = await loop.run_in_executor(
+            None, find_cached_snapshot, self.model.repo_id, "config.json"
+        )
+        if found is None:
             raise ValueError(
                 f"Model {self.model.repo_id} must be downloaded first, check recommended models"
             )

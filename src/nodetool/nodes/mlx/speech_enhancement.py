@@ -84,6 +84,10 @@ class BaseMLXSpeechEnhancement(BaseNode):
             raise ValueError("Model must be selected before loading the MLX model.")
         return repo_id
 
+    def _load_key(self) -> str:
+        """Cache key for the loaded model; includes every field that affects loading."""
+        return self._get_model_id()
+
     def _load_model_sync(self) -> Any:
         """Load the enhancement model. Implemented by subclasses."""
         raise NotImplementedError
@@ -94,14 +98,14 @@ class BaseMLXSpeechEnhancement(BaseNode):
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform()
-        model_id = self._get_model_id()
+        load_key = self._load_key()
 
-        if self._model is not None and self._model_id_loaded == model_id:
+        if self._model is not None and self._model_id_loaded == load_key:
             return
 
         loop = asyncio.get_running_loop()
         self._model = await loop.run_in_executor(None, self._load_model_sync)
-        self._model_id_loaded = model_id
+        self._model_id_loaded = load_key
 
     class OutputType(TypedDict):
         audio: AudioRef
@@ -113,7 +117,7 @@ class BaseMLXSpeechEnhancement(BaseNode):
         if self.audio is None or not self.audio.is_set():
             raise ValueError("An input audio asset is required for enhancement.")
 
-        if self._model is None or self._model_id_loaded != self._get_model_id():
+        if self._model is None or self._model_id_loaded != self._load_key():
             await self.preload_model(context)
 
         samples, _, _ = await context.audio_to_numpy(
@@ -130,10 +134,10 @@ class BaseMLXSpeechEnhancement(BaseNode):
 
     @staticmethod
     def _resolve_cached(model_id: str, filename: str) -> str | None:
-        from huggingface_hub import try_to_load_from_cache
+        from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
-        path = try_to_load_from_cache(model_id, filename)
-        return path if isinstance(path, str) else None
+        snapshot = find_cached_snapshot(model_id, filename)
+        return str(snapshot) if snapshot is not None else None
 
 
 class DeepFilterNet(BaseMLXSpeechEnhancement):
@@ -163,6 +167,11 @@ class DeepFilterNet(BaseMLXSpeechEnhancement):
         default=Version.V3,
         description="DeepFilterNet version to use (v1, v2, or v3).",
     )
+
+    def _load_key(self) -> str:
+        # The version selects different weights within the same repo, so it must
+        # invalidate the loaded model too.
+        return f"{self._get_model_id()}#v{self.version.value}"
 
     @classmethod
     def get_basic_fields(cls) -> list[str]:

@@ -161,8 +161,10 @@ class BaseMLXSpeechToText(BaseNode):
 
         assert self._stt_model is not None
 
-        audio_path = await self._export_audio(context)
+        # Build (and validate) kwargs before exporting audio so a validation
+        # error doesn't leak the temp WAV created below.
         kwargs = self._build_generate_kwargs()
+        audio_path = await self._export_audio(context)
 
         def _run_transcription() -> Any:
             generate = self._stt_model.generate
@@ -175,6 +177,15 @@ class BaseMLXSpeechToText(BaseNode):
                 filtered = kwargs
             else:
                 filtered = {k: v for k, v in kwargs.items() if k in sig.parameters}
+                dropped = set(kwargs) - set(filtered)
+                if dropped:
+                    log.warning(
+                        "%s: generate() does not accept %s; these settings are ignored "
+                        "for model %s",
+                        type(self).__name__,
+                        sorted(dropped),
+                        self._get_model_id(),
+                    )
             return generate(audio_path, **filtered)
 
         loop = asyncio.get_running_loop()

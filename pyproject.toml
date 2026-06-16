@@ -12,7 +12,7 @@ requires-python = ">=3.11"
 dependencies = [
     "nodetool-core>=0.7.0",
     "mlx-whisper>=0.4.3",
-    "mlx-audio>=0.4.2",
+    "mlx-audio>=0.4.4",
     "mflux>=0.17.5",
     "huggingface-hub>=0.24.6",
     "numpy>=1.26",

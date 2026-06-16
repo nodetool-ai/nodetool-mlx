@@ -465,6 +465,7 @@ class SesameTTS(BaseMLXTTS):
         description="Sesame/CSM model variant to load.",
     )
     reference_audio: AudioRef = Field(
+        default=AudioRef(),
         description="Reference audio clip used for voice cloning.",
     )
     speed: float = Field(
@@ -510,7 +511,7 @@ class SesameTTS(BaseMLXTTS):
         self, context: ProcessingContext
     ) -> tuple[dict[str, Any], Optional[str]]:
         params, _ = await super()._build_generation_params(context)
-        if self.reference_audio is None:
+        if self.reference_audio is None or not self.reference_audio.is_set():
             raise ValueError("Reference audio is required for Sesame TTS.")
         ref_path = await self._export_reference_audio(context, self.reference_audio)
         params["ref_audio"] = ref_path
@@ -690,11 +691,14 @@ class Qwen3TTS(BaseMLXTTS):
         params, cleanup = await super()._build_generation_params(context)
         params.update(
             {
-                "voice": self.voice or None,
                 "lang_code": self.language or "auto",
                 "temperature": self.temperature,
             }
         )
+        # Omit the key entirely when unset: passing voice=None overrides the
+        # pipeline's default speaker and breaks the speaker lookup.
+        if self.voice:
+            params["voice"] = self.voice
         if self.instruct.strip():
             params["instruct"] = self.instruct.strip()
         return params, cleanup
