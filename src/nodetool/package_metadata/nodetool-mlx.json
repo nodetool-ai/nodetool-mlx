@@ -12,7 +12,6 @@
       "description": "Generate images locally using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image generation, apple-silicon\n\n    Use cases:\n    - Create high quality images on Apple Silicon without external APIs\n    - Prototype prompts locally before running on cloud inference providers\n    - Experiment with quantized FLUX models (schnell/dev/krea-dev variants)\n\n    Recommended models:\n    - schnell: Fastest model, good for quick generations (2-4 steps)\n    - dev: More powerful model, higher quality (20-25 steps)\n    - krea-dev: Enhanced photorealism with distinctive aesthetics\n    - Quantized 4-bit models: Reduced memory usage versions of the official models",
       "namespace": "mlx.text_to_image",
       "node_type": "mlx.text_to_image.MFlux",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -140,8 +139,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 616450,
-          "likes": 4910
+          "downloads": 219759,
+          "likes": 5129
         },
         {
           "id": "black-forest-labs/FLUX.1-dev",
@@ -163,8 +162,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 715351,
-          "likes": 12859
+          "downloads": 586950,
+          "likes": 13202
         },
         {
           "id": "black-forest-labs/FLUX.1-Krea-dev",
@@ -188,8 +187,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 10961,
-          "likes": 860
+          "downloads": 6353,
+          "likes": 867
         }
       ],
       "basic_fields": [
@@ -202,8 +201,597 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt"
+      "expose_as_tool": true
+    },
+    {
+      "title": "MLX Speech To Text",
+      "description": "Generic MLX speech-to-text node.\n    mlx, asr, speech-to-text, transcription\n\n    Run any speech-to-text model supported by the ``mlx-audio`` library by entering\n    its Hugging Face repository id. Useful for models without a dedicated typed node.",
+      "namespace": "mlx.speech_to_text",
+      "node_type": "mlx.speech_to_text.MLXSpeechToText",
+      "properties": [
+        {
+          "name": "audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Audio Input",
+          "description": "The input audio to transcribe."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.automatic_speech_recognition"
+          },
+          "default": {
+            "type": "hf.automatic_speech_recognition",
+            "repo_id": "mlx-community/parakeet-tdt-0.6b-v3",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Any mlx-audio STT model. Pick a recommended model or enter a Hugging Face repo id."
+        },
+        {
+          "name": "language",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Language",
+          "description": "Optional language hint (model dependent). Empty auto-detects."
+        },
+        {
+          "name": "max_tokens",
+          "type": {
+            "type": "int"
+          },
+          "default": 8192,
+          "title": "Max Tokens",
+          "description": "Maximum number of tokens to generate (for autoregressive models).",
+          "min": 1.0,
+          "max": 32768.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "text"
+        },
+        {
+          "type": {
+            "type": "list"
+          },
+          "name": "segments"
+        },
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "language"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/parakeet-tdt-0.6b-v3",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/parakeet-tdt-0.6b-v3",
+          "repo_id": "mlx-community/parakeet-tdt-0.6b-v3",
+          "size_on_disk": 2509044141,
+          "pipeline_tag": "automatic-speech-recognition",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "automatic-speech-recognition",
+            "speech",
+            "audio",
+            "FastConformer",
+            "Conformer",
+            "Parakeet",
+            "en",
+            "es",
+            "fr",
+            "de",
+            "bg",
+            "hr",
+            "cs",
+            "da",
+            "nl",
+            "et",
+            "fi",
+            "el",
+            "hu",
+            "it",
+            "lv",
+            "lt",
+            "mt",
+            "pl",
+            "pt",
+            "ro",
+            "sk",
+            "sl",
+            "sv",
+            "ru",
+            "uk",
+            "base_model:nvidia/parakeet-tdt-0.6b-v3",
+            "base_model:finetune:nvidia/parakeet-tdt-0.6b-v3",
+            "license:cc-by-4.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 793545,
+          "likes": 46
+        },
+        {
+          "id": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "repo_id": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "size_on_disk": 1010773761,
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_asr",
+            "mlx",
+            "speech-to-text",
+            "speech",
+            "transcription",
+            "asr",
+            "stt",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 790,
+          "likes": 3
+        },
+        {
+          "id": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "repo_id": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "size_on_disk": 2467859030,
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_asr",
+            "mlx",
+            "speech-to-text",
+            "speech",
+            "transcription",
+            "asr",
+            "stt",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1695,
+          "likes": 13
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "audio",
+        "language"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "Parakeet",
+      "description": "Transcribe audio using NVIDIA Parakeet via MLX.\n    parakeet, mlx, asr, speech-to-text\n\n    - High-accuracy multilingual transcription with word/sentence alignment\n    - Runs locally on Apple Silicon through mlx-audio",
+      "namespace": "mlx.speech_to_text",
+      "node_type": "mlx.speech_to_text.Parakeet",
+      "properties": [
+        {
+          "name": "audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Audio Input",
+          "description": "The input audio to transcribe."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.automatic_speech_recognition"
+          },
+          "default": {
+            "type": "hf.automatic_speech_recognition",
+            "repo_id": "mlx-community/parakeet-tdt-0.6b-v3",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Parakeet model variant to use for transcription."
+        },
+        {
+          "name": "chunk_duration",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.0,
+          "title": "Chunk Duration",
+          "description": "Chunk length in seconds for long audio. 0 disables chunking.",
+          "min": 0.0,
+          "max": 1800.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "text"
+        },
+        {
+          "type": {
+            "type": "list"
+          },
+          "name": "segments"
+        },
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "language"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/parakeet-tdt-0.6b-v2",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/parakeet-tdt-0.6b-v2",
+          "repo_id": "mlx-community/parakeet-tdt-0.6b-v2",
+          "size_on_disk": 2471865399,
+          "pipeline_tag": "automatic-speech-recognition",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "automatic-speech-recognition",
+            "speech",
+            "audio",
+            "FastConformer",
+            "Conformer",
+            "Parakeet",
+            "base_model:nvidia/parakeet-tdt-0.6b-v2",
+            "base_model:finetune:nvidia/parakeet-tdt-0.6b-v2",
+            "license:cc-by-4.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 547208,
+          "likes": 43
+        },
+        {
+          "id": "mlx-community/parakeet-tdt-0.6b-v3",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/parakeet-tdt-0.6b-v3",
+          "repo_id": "mlx-community/parakeet-tdt-0.6b-v3",
+          "size_on_disk": 2509044141,
+          "pipeline_tag": "automatic-speech-recognition",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "automatic-speech-recognition",
+            "speech",
+            "audio",
+            "FastConformer",
+            "Conformer",
+            "Parakeet",
+            "en",
+            "es",
+            "fr",
+            "de",
+            "bg",
+            "hr",
+            "cs",
+            "da",
+            "nl",
+            "et",
+            "fi",
+            "el",
+            "hu",
+            "it",
+            "lv",
+            "lt",
+            "mt",
+            "pl",
+            "pt",
+            "ro",
+            "sk",
+            "sl",
+            "sv",
+            "ru",
+            "uk",
+            "base_model:nvidia/parakeet-tdt-0.6b-v3",
+            "base_model:finetune:nvidia/parakeet-tdt-0.6b-v3",
+            "license:cc-by-4.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 793545,
+          "likes": 46
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "audio"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "Qwen3 ASR",
+      "description": "Transcribe audio using Qwen3-ASR via MLX.\n    qwen3, mlx, asr, speech-to-text\n\n    - Alibaba's multilingual ASR with long-form chunking\n    - Runs locally on Apple Silicon through mlx-audio",
+      "namespace": "mlx.speech_to_text",
+      "node_type": "mlx.speech_to_text.Qwen3ASR",
+      "properties": [
+        {
+          "name": "audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Audio Input",
+          "description": "The input audio to transcribe."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.automatic_speech_recognition"
+          },
+          "default": {
+            "type": "hf.automatic_speech_recognition",
+            "repo_id": "mlx-community/Qwen3-ASR-0.6B-8bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Qwen3-ASR model variant to use for transcription."
+        },
+        {
+          "name": "language",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Language",
+          "description": "Optional language hint (e.g. English, Chinese). Empty auto-detects."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.0,
+          "title": "Temperature",
+          "description": "Sampling temperature (0 is greedy / deterministic).",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "max_tokens",
+          "type": {
+            "type": "int"
+          },
+          "default": 8192,
+          "title": "Max Tokens",
+          "description": "Maximum number of tokens to generate.",
+          "min": 1.0,
+          "max": 32768.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "text"
+        },
+        {
+          "type": {
+            "type": "list"
+          },
+          "name": "segments"
+        },
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "language"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "repo_id": "mlx-community/Qwen3-ASR-0.6B-8bit",
+          "size_on_disk": 1010773761,
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_asr",
+            "mlx",
+            "speech-to-text",
+            "speech",
+            "transcription",
+            "asr",
+            "stt",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 790,
+          "likes": 3
+        },
+        {
+          "id": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "repo_id": "mlx-community/Qwen3-ASR-1.7B-8bit",
+          "size_on_disk": 2467859030,
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_asr",
+            "mlx",
+            "speech-to-text",
+            "speech",
+            "transcription",
+            "asr",
+            "stt",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1695,
+          "likes": 13
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "audio",
+        "language"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "Qwen3 Forced Aligner",
+      "description": "Align a known transcript to audio using Qwen3-ForcedAligner via MLX.\n    qwen3, mlx, alignment, timestamps\n\n    - Produces word-level start/end timestamps for the provided text\n    - Runs locally on Apple Silicon through mlx-audio",
+      "namespace": "mlx.speech_to_text",
+      "node_type": "mlx.speech_to_text.Qwen3ForcedAligner",
+      "properties": [
+        {
+          "name": "audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Audio Input",
+          "description": "The input audio to transcribe."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.automatic_speech_recognition"
+          },
+          "default": {
+            "type": "hf.automatic_speech_recognition",
+            "repo_id": "mlx-community/Qwen3-ForcedAligner-0.6B-8bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Qwen3-ForcedAligner model variant to use."
+        },
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Text",
+          "description": "Transcript to align against the audio."
+        },
+        {
+          "name": "language",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Language",
+          "description": "Optional language hint (e.g. English). Empty auto-detects."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "text"
+        },
+        {
+          "type": {
+            "type": "list"
+          },
+          "name": "segments"
+        },
+        {
+          "type": {
+            "type": "str"
+          },
+          "name": "language"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Qwen3-ForcedAligner-0.6B-8bit",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/Qwen3-ForcedAligner-0.6B-8bit",
+          "repo_id": "mlx-community/Qwen3-ForcedAligner-0.6B-8bit",
+          "size_on_disk": 1276475979,
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_asr",
+            "mlx",
+            "speech-to-text",
+            "speech",
+            "transcription",
+            "asr",
+            "stt",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 285,
+          "likes": 1
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "audio",
+        "text"
       ],
       "expose_as_tool": true
     },
@@ -212,7 +800,6 @@
       "description": "Generate images with MFlux ControlNet guidance using local MLX acceleration.\n    mlx, flux, controlnet, conditioning, edge-detection\n\n    Use cases:\n    - Apply edge-aware guidance via ControlNet canny models\n    - Leverage local Apple Silicon acceleration for conditioned generations\n    - Upscale images using ControlNet upscaler weights",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxControlNet",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -382,8 +969,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 715351,
-          "likes": 12859
+          "downloads": 586950,
+          "likes": 13202
         },
         {
           "id": "InstantX/FLUX.1-dev-Controlnet-Canny",
@@ -404,7 +991,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 3403,
+          "downloads": 2255,
           "likes": 194
         },
         {
@@ -427,8 +1014,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2022,
-          "likes": 868
+          "downloads": 1511,
+          "likes": 869
         }
       ],
       "basic_fields": [
@@ -444,10 +1031,6 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt",
-        "control_image"
-      ],
       "expose_as_tool": true
     },
     {
@@ -455,7 +1038,6 @@
       "description": "Generate images with depth guidance via the MFlux depth pipeline using local MLX acceleration.\n    mlx, flux, depth, conditioning, structure-preserving\n\n    Use cases:\n    - Use a depth map to control structural composition while keeping prompt-driven appearance\n    - Provide both source image and depth map to transfer scene layout to a new generation\n    - Generate depth-guided outputs when only a depth map is available (source image optional)",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxDepth",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -612,8 +1194,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 2284,
-          "likes": 237
+          "downloads": 1749,
+          "likes": 239
         }
       ],
       "basic_fields": [
@@ -628,11 +1210,6 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt",
-        "image",
-        "depth_image"
-      ],
       "expose_as_tool": true
     },
     {
@@ -640,7 +1217,6 @@
       "description": "Generate images using Bria FIBO via MFLUX.\n    mlx, fibo, text-to-image, apple-silicon\n\n    Use cases:\n    - High-control image generation from structured JSON prompts\n    - Plain-text generation via FIBO's VLM prompt expansion\n    - Fast few-step generation with FIBO Lite",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxFIBO",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -807,8 +1383,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 7677,
-          "likes": 314
+          "downloads": 3440,
+          "likes": 315
         },
         {
           "id": "briaai/Fibo-lite",
@@ -838,7 +1414,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 876,
+          "downloads": 469,
           "likes": 8
         }
       ],
@@ -855,10 +1431,6 @@
         "lora_paths",
         "lora_scales"
       ],
-      "input_fields": [
-        "prompt",
-        "negative_prompt"
-      ],
       "expose_as_tool": true
     },
     {
@@ -866,7 +1438,6 @@
       "description": "Edit images using Bria FIBO Edit via MFLUX.\n    mlx, fibo, image-editing, apple-silicon\n\n    Use cases:\n    - Instruction-based image editing from plain text or structured JSON\n    - Mask-free and maskless localized edit workflows through FIBO Edit\n    - Background matting via the FIBO Edit RMBG variant",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxFIBOEdit",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1050,7 +1621,7 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 2275,
+          "downloads": 3074,
           "likes": 67
         },
         {
@@ -1076,8 +1647,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 32,
-          "likes": 43
+          "downloads": 20,
+          "likes": 42
         }
       ],
       "basic_fields": [
@@ -1094,11 +1665,6 @@
         "lora_paths",
         "lora_scales"
       ],
-      "input_fields": [
-        "prompt",
-        "negative_prompt",
-        "image"
-      ],
       "expose_as_tool": true
     },
     {
@@ -1106,7 +1672,6 @@
       "description": "Generate images using the FLUX.2 Klein models via MFLUX.\n    mlx, flux2, text-to-image, apple-silicon\n\n    Use cases:\n    - Fast FLUX.2 generation with distilled 4B/9B variants\n    - Higher-quality base FLUX.2 generation with more steps\n    - LoRA-enabled FLUX.2 generation on Apple Silicon",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxFlux2",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1255,8 +1820,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 259816,
-          "likes": 684
+          "downloads": 330991,
+          "likes": 731
         },
         {
           "id": "black-forest-labs/FLUX.2-klein-9B",
@@ -1279,8 +1844,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 129354,
-          "likes": 760
+          "downloads": 92807,
+          "likes": 884
         },
         {
           "id": "black-forest-labs/FLUX.2-klein-base-4B",
@@ -1303,8 +1868,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 195180,
-          "likes": 137
+          "downloads": 75702,
+          "likes": 143
         },
         {
           "id": "black-forest-labs/FLUX.2-klein-base-9B",
@@ -1327,8 +1892,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 89184,
-          "likes": 229
+          "downloads": 50791,
+          "likes": 244
         }
       ],
       "basic_fields": [
@@ -1343,9 +1908,6 @@
         "lora_path",
         "lora_scale"
       ],
-      "input_fields": [
-        "prompt"
-      ],
       "expose_as_tool": true
     },
     {
@@ -1353,7 +1915,6 @@
       "description": "Edit images using FLUX.2 Klein image-conditioned editing.\n    mlx, flux2, image-editing, apple-silicon\n\n    Use cases:\n    - Edit images with one or more reference images using FLUX.2\n    - Fast distilled FLUX.2 editing on Apple Silicon\n    - LoRA-enabled FLUX.2 edit workflows",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxFlux2Edit",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1517,8 +2078,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 259816,
-          "likes": 684
+          "downloads": 330991,
+          "likes": 731
         },
         {
           "id": "black-forest-labs/FLUX.2-klein-9B",
@@ -1541,8 +2102,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 129354,
-          "likes": 760
+          "downloads": 92807,
+          "likes": 884
         }
       ],
       "basic_fields": [
@@ -1558,10 +2119,6 @@
         "lora_path",
         "lora_scale"
       ],
-      "input_fields": [
-        "prompt",
-        "images"
-      ],
       "expose_as_tool": true
     },
     {
@@ -1569,7 +2126,6 @@
       "description": "Transform an existing image using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image-to-image, apple-silicon\n\n    Use cases:\n    - Apply prompt-based edits to an existing image without relying on external APIs\n    - Experiment with strength-controlled transformations locally",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxImageToImage",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1723,8 +2279,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 715351,
-          "likes": 12859
+          "downloads": 586950,
+          "likes": 13202
         },
         {
           "id": "black-forest-labs/FLUX.1-schnell",
@@ -1747,8 +2303,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 616450,
-          "likes": 4910
+          "downloads": 219759,
+          "likes": 5129
         },
         {
           "id": "black-forest-labs/FLUX.1-Krea-dev",
@@ -1772,8 +2328,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 10961,
-          "likes": 860
+          "downloads": 6353,
+          "likes": 867
         }
       ],
       "basic_fields": [
@@ -1788,10 +2344,6 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt",
-        "image"
-      ],
       "expose_as_tool": true
     },
     {
@@ -1799,7 +2351,6 @@
       "description": "Generate style-consistent images using In-Context LoRA via MFLUX.\n    mlx, flux, in-context, style-transfer, apple-silicon\n\n    Use cases:\n    - Generate images following a specific style from a reference image\n    - Apply various pre-defined style LoRAs (illustration, portrait, storyboard, etc.)\n    - Create consistent visual identity across multiple generations",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxInContext",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -1964,8 +2515,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 715351,
-          "likes": 12859
+          "downloads": 586950,
+          "likes": 13202
         }
       ],
       "basic_fields": [
@@ -1980,10 +2531,6 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt",
-        "reference_image"
-      ],
       "expose_as_tool": true
     },
     {
@@ -1991,7 +2538,6 @@
       "description": "Inpaint portions of an image locally using the MFLUX MLX implementation of FLUX.1 Fill.\n    mlx, flux, inpainting, mask editing\n\n    Use cases:\n    - Restore masked regions with prompt-guided content\n    - Blend new elements into an existing composition while preserving unmasked areas",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxInpaint",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2147,8 +2693,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 279058,
-          "likes": 1034
+          "downloads": 99823,
+          "likes": 1068
         }
       ],
       "basic_fields": [
@@ -2163,11 +2709,6 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt",
-        "image",
-        "mask"
-      ],
       "expose_as_tool": true
     },
     {
@@ -2175,7 +2716,6 @@
       "description": "Generate images using Kontext reference image fusion on Apple Silicon.\n    mlx, flux, kontext, reference guidance\n\n    Use cases:\n    - Leverage a reference image and prompt to produce stylistically consistent outputs\n    - Perform context-aware edits without external services\n    - Prototype Kontext-driven workflows locally",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxKontext",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2319,8 +2859,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 77813,
-          "likes": 2630
+          "downloads": 71673,
+          "likes": 2661
         }
       ],
       "basic_fields": [
@@ -2334,10 +2874,6 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt",
-        "reference_image"
-      ],
       "expose_as_tool": true
     },
     {
@@ -2345,7 +2881,6 @@
       "description": "Outpaint an existing image by extending the canvas using the MFLUX Fill pipeline.\n    mlx, flux, outpainting, canvas extension\n\n    Use cases:\n    - Expand scene borders while maintaining continuity with the original image\n    - Add sky, foreground elements, or contextual scenery around a provided image",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxOutpaint",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2511,8 +3046,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 279058,
-          "likes": 1034
+          "downloads": 99823,
+          "likes": 1068
         }
       ],
       "basic_fields": [
@@ -2528,11 +3063,6 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt",
-        "image",
-        "mask"
-      ],
       "expose_as_tool": true
     },
     {
@@ -2540,7 +3070,6 @@
       "description": "Generate images using the Qwen Image model via MFLUX on Apple Silicon.\n    mlx, qwen, text-to-image, apple-silicon\n\n    Use cases:\n    - Generate high-quality images with multilingual prompt support including Chinese\n    - Create images with rendered Chinese text content (signs, calligraphy, menus)\n    - Leverage Qwen's 20B parameter vision-language model for detailed generation",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxQwenImage",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2706,8 +3235,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 168863,
-          "likes": 2491
+          "downloads": 129414,
+          "likes": 2511
         }
       ],
       "basic_fields": [
@@ -2723,10 +3252,6 @@
         "lora_paths",
         "lora_scales"
       ],
-      "input_fields": [
-        "prompt",
-        "negative_prompt"
-      ],
       "expose_as_tool": true
     },
     {
@@ -2734,7 +3259,6 @@
       "description": "Edit images using natural language instructions with the Qwen Image Edit model.\n    mlx, qwen, image-editing, apple-silicon\n\n    Use cases:\n    - Modify images using natural language descriptions\n    - Combine elements from multiple reference images\n    - Apply transformations while maintaining original poses and positions",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxQwenImageEdit",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -2916,8 +3440,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 259425,
-          "likes": 1140
+          "downloads": 301677,
+          "likes": 1169
         }
       ],
       "basic_fields": [
@@ -2934,11 +3458,6 @@
         "lora_paths",
         "lora_scales"
       ],
-      "input_fields": [
-        "prompt",
-        "negative_prompt",
-        "images"
-      ],
       "expose_as_tool": true
     },
     {
@@ -2946,7 +3465,6 @@
       "description": "Generate images using reference images with Flux Redux guidance on Apple Silicon.\n    mlx, flux, redux, reference fusion\n\n    Use cases:\n    - Blend multiple reference images with a text prompt to steer style and content\n    - Reinterpret a photo collection into a coherent output while keeping structure from the references\n    - Experiment locally with the Flux Redux pipeline without external APIs",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxRedux",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -3099,8 +3617,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 8374,
-          "likes": 612
+          "downloads": 4878,
+          "likes": 621
         }
       ],
       "basic_fields": [
@@ -3115,10 +3633,6 @@
         "width",
         "seed"
       ],
-      "input_fields": [
-        "prompt",
-        "redux_image"
-      ],
       "expose_as_tool": true
     },
     {
@@ -3126,7 +3640,6 @@
       "description": "Upscale images using the SeedVR2 super-resolution model via MFLUX.\n    mlx, seedvr2, upscaling, super-resolution, apple-silicon\n\n    Use cases:\n    - Fast and faithful image upscaling (typically 1 step)\n    - High-fidelity super-resolution without text prompts\n    - Upscale by target resolution or scale factor",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxSeedVR2Upscale",
-      "body": "content_card",
       "properties": [
         {
           "name": "image",
@@ -3233,8 +3746,8 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 184829,
-          "likes": 269
+          "downloads": 158401,
+          "likes": 275
         },
         {
           "id": "numz/SeedVR2-7B",
@@ -3251,9 +3764,6 @@
         "softness",
         "seed"
       ],
-      "input_fields": [
-        "image"
-      ],
       "expose_as_tool": true
     },
     {
@@ -3261,7 +3771,6 @@
       "description": "Generate images using the base Z-Image model via MFLUX.\n    mlx, z-image, text-to-image, apple-silicon\n\n    Use cases:\n    - Higher-quality base Z-Image generation for detailed prompts\n    - Training-oriented or non-turbo Z-Image workflows\n    - LoRA-enabled Z-Image generation on Apple Silicon",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxZImage",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -3417,8 +3926,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 32068,
-          "likes": 1109
+          "downloads": 16862,
+          "likes": 1147
         }
       ],
       "basic_fields": [
@@ -3434,10 +3943,6 @@
         "lora_path",
         "lora_scale"
       ],
-      "input_fields": [
-        "prompt",
-        "negative_prompt"
-      ],
       "expose_as_tool": true
     },
     {
@@ -3445,7 +3950,6 @@
       "description": "Generate images quickly using the Z-Image Turbo model via MFLUX.\n    mlx, z-image, text-to-image, fast-generation, apple-silicon\n\n    Use cases:\n    - Fast image generation (typically 9 steps)\n    - Efficient 6B parameter model for quick iterations\n    - Support for LoRA adapters for style customization",
       "namespace": "mlx.image_to_image",
       "node_type": "mlx.image_to_image.MFluxZImageTurbo",
-      "body": "content_card",
       "properties": [
         {
           "name": "prompt",
@@ -3584,8 +4088,8 @@
             "region:us"
           ],
           "has_model_index": true,
-          "downloads": 1229497,
-          "likes": 4664
+          "downloads": 637254,
+          "likes": 4807
         }
       ],
       "basic_fields": [
@@ -3599,9 +4103,657 @@
         "lora_path",
         "lora_scale"
       ],
-      "input_fields": [
-        "prompt"
+      "expose_as_tool": true
+    },
+    {
+      "title": "Chatterbox TTS",
+      "description": "MLX Chatterbox expressive multilingual text-to-speech with voice cloning.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.ChatterboxTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Playback speed multiplier.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/chatterbox-fp16",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Chatterbox model variant to load."
+        },
+        {
+          "name": "exaggeration",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.5,
+          "title": "Exaggeration",
+          "description": "Emotional exaggeration intensity.",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
+          "name": "cfg_weight",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.5,
+          "title": "Cfg Weight",
+          "description": "Classifier-free guidance weight (pacing / fidelity).",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.8,
+          "title": "Temperature",
+          "description": "Sampling temperature.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "reference_audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Reference Audio",
+          "description": "Optional reference audio for voice cloning."
+        }
       ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/chatterbox-fp16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/chatterbox-fp16",
+          "repo_id": "mlx-community/chatterbox-fp16",
+          "size_on_disk": 2576567676,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "chatterbox",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "mlx",
+            "tts",
+            "ar",
+            "da",
+            "de",
+            "el",
+            "en",
+            "es",
+            "fi",
+            "fr",
+            "he",
+            "hi",
+            "it",
+            "ja",
+            "ko",
+            "ms",
+            "nl",
+            "no",
+            "pl",
+            "pt",
+            "ru",
+            "sv",
+            "sw",
+            "tr",
+            "zh",
+            "base_model:ResembleAI/chatterbox",
+            "base_model:finetune:ResembleAI/chatterbox",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 473,
+          "likes": 5
+        },
+        {
+          "id": "mlx-community/Chatterbox-TTS-fp16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Chatterbox-TTS-fp16",
+          "repo_id": "mlx-community/Chatterbox-TTS-fp16",
+          "size_on_disk": 2696740491,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio-plus",
+            "safetensors",
+            "chatterbox",
+            "mlx",
+            "text-to-speech",
+            "base_model:ResembleAI/chatterbox",
+            "base_model:finetune:ResembleAI/chatterbox",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 131,
+          "likes": 0
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "exaggeration",
+        "cfg_weight",
+        "temperature"
+      ],
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "Dia TTS",
+      "description": "MLX Dia dialogue text-to-speech.\n\n    Use the ``[S1]`` and ``[S2]`` speaker tags inside the text to script multi-turn\n    dialogue. Optionally provide reference audio to clone a voice.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.DiaTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "[S1] Hello, how are you? [S2] I'm doing great, thanks for asking!",
+          "title": "Text",
+          "description": "Dialogue script. Use [S1] and [S2] to tag speaker turns."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Playback speed multiplier.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/Dia-1.6B-fp16",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Dia model variant to load."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.3,
+          "title": "Temperature",
+          "description": "Sampling temperature.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "top_p",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.95,
+          "title": "Top P",
+          "description": "Nucleus sampling probability mass.",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
+          "name": "reference_audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Reference Audio",
+          "description": "Optional reference audio for voice cloning."
+        },
+        {
+          "name": "reference_text",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Reference Text",
+          "description": "Transcript of the reference audio (required when cloning a voice)."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Dia-1.6B",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Dia-1.6B",
+          "repo_id": "mlx-community/Dia-1.6B",
+          "size_on_disk": 6444686121,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "text-to-speech",
+            "en",
+            "base_model:nari-labs/Dia-1.6B",
+            "base_model:finetune:nari-labs/Dia-1.6B",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 168,
+          "likes": 24
+        },
+        {
+          "id": "mlx-community/Dia-1.6B-fp16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Dia-1.6B-fp16",
+          "repo_id": "mlx-community/Dia-1.6B-fp16",
+          "size_on_disk": 3222365078,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "text-to-speech",
+            "en",
+            "base_model:nari-labs/Dia-1.6B",
+            "base_model:finetune:nari-labs/Dia-1.6B",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 57,
+          "likes": 3
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "temperature",
+        "top_p"
+      ],
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "Higgs Audio TTS",
+      "description": "MLX Higgs Audio conversational text-to-speech with zero-shot voice cloning.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.HiggsAudioTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Playback speed multiplier.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/higgs-audio-v2-3B-mlx-q8",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Higgs Audio model variant to load."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Temperature",
+          "description": "Sampling temperature.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "reference_audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Reference Audio",
+          "description": "Optional reference audio for zero-shot voice cloning."
+        },
+        {
+          "name": "reference_text",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Reference Text",
+          "description": "Transcript of the reference audio (used when cloning a voice)."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/higgs-audio-v2-3B-mlx-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/higgs-audio-v2-3B-mlx-bf16",
+          "repo_id": "mlx-community/higgs-audio-v2-3B-mlx-bf16"
+        },
+        {
+          "id": "mlx-community/higgs-audio-v2-3B-mlx-q6",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/higgs-audio-v2-3B-mlx-q6",
+          "repo_id": "mlx-community/higgs-audio-v2-3B-mlx-q6",
+          "size_on_disk": 4766840879,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "higgs_audio",
+            "text-to-speech",
+            "voice-cloning",
+            "mlx",
+            "higgs-audio",
+            "en",
+            "zh",
+            "ko",
+            "de",
+            "es",
+            "base_model:bosonai/higgs-audio-v2-generation-3B-base",
+            "base_model:finetune:bosonai/higgs-audio-v2-generation-3B-base",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 84,
+          "likes": 2
+        },
+        {
+          "id": "mlx-community/higgs-audio-v2-3B-mlx-q8",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/higgs-audio-v2-3B-mlx-q8",
+          "repo_id": "mlx-community/higgs-audio-v2-3B-mlx-q8",
+          "size_on_disk": 6196967559,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "higgs_audio",
+            "text-to-speech",
+            "voice-cloning",
+            "mlx",
+            "higgs-audio",
+            "en",
+            "zh",
+            "ko",
+            "de",
+            "es",
+            "base_model:bosonai/higgs-audio-v2-generation-3B-base",
+            "base_model:finetune:bosonai/higgs-audio-v2-generation-3B-base",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 87,
+          "likes": 2
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "temperature"
+      ],
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "Kitten TTS",
+      "description": "MLX KittenTTS compact, edge-friendly English text-to-speech.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.KittenTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Speech speed multiplier (0.5-2.0).",
+          "min": 0.5,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/kitten-tts-nano-0.8",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "KittenTTS model variant to load."
+        },
+        {
+          "name": "voice",
+          "type": {
+            "type": "enum",
+            "values": [
+              "expr-voice-2-m",
+              "expr-voice-2-f",
+              "expr-voice-3-m",
+              "expr-voice-3-f",
+              "expr-voice-4-m",
+              "expr-voice-4-f",
+              "expr-voice-5-m",
+              "expr-voice-5-f"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_speech.KittenTTS.Voice"
+          },
+          "default": "expr-voice-5-m",
+          "title": "Voice",
+          "description": "Voice preset supported by KittenTTS."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/kitten-tts-nano-0.8",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/kitten-tts-nano-0.8",
+          "repo_id": "mlx-community/kitten-tts-nano-0.8",
+          "size_on_disk": 61731543,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "kitten_tts",
+            "text-to-speech",
+            "kitten-tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 23,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/kitten-tts-micro-0.8",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/kitten-tts-micro-0.8",
+          "repo_id": "mlx-community/kitten-tts-micro-0.8",
+          "size_on_disk": 136571640,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "kitten_tts",
+            "text-to-speech",
+            "kitten-tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 5,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/kitten-tts-mini-0.8",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/kitten-tts-mini-0.8",
+          "repo_id": "mlx-community/kitten-tts-mini-0.8",
+          "size_on_disk": 292427770,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "kitten_tts",
+            "text-to-speech",
+            "kitten-tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 27,
+          "likes": 0
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "voice",
+        "speed"
+      ],
+      "is_streaming_output": true,
       "expose_as_tool": true
     },
     {
@@ -3609,7 +4761,6 @@
       "description": "MLX Kokoro text-to-speech.",
       "namespace": "mlx.text_to_speech",
       "node_type": "mlx.text_to_speech.KokoroTTS",
-      "body": "content_card",
       "properties": [
         {
           "name": "text",
@@ -3634,17 +4785,16 @@
         {
           "name": "model",
           "type": {
-            "type": "enum",
-            "values": [
-              "prince-canuma/Kokoro-82M",
-              "mlx-community/Kokoro-82M-bf16",
-              "mlx-community/Kokoro-82M-4bit",
-              "mlx-community/Kokoro-82M-6bit",
-              "mlx-community/Kokoro-82M-8bit"
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_speech.KokoroTTS.Model"
+            "type": "hf.text_to_speech"
           },
-          "default": "prince-canuma/Kokoro-82M",
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "prince-canuma/Kokoro-82M",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
           "title": "Model",
           "description": "Kokoro model variant to load."
         },
@@ -3769,7 +4919,7 @@
       "recommended_models": [
         {
           "id": "prince-canuma/Kokoro-82M",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "prince-canuma/Kokoro-82M",
           "repo_id": "prince-canuma/Kokoro-82M",
           "size_on_disk": 389420170,
@@ -3785,12 +4935,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 588,
+          "downloads": 1119,
           "likes": 5
         },
         {
           "id": "mlx-community/Kokoro-82M-bf16",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "mlx-community/Kokoro-82M-bf16",
           "repo_id": "mlx-community/Kokoro-82M-bf16",
           "size_on_disk": 389410807,
@@ -3805,12 +4955,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 673558,
+          "downloads": 9703,
           "likes": 52
         },
         {
           "id": "mlx-community/Kokoro-82M-4bit",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "mlx-community/Kokoro-82M-4bit",
           "repo_id": "mlx-community/Kokoro-82M-4bit",
           "size_on_disk": 672257992,
@@ -3825,12 +4975,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 526,
+          "downloads": 366,
           "likes": 8
         },
         {
           "id": "mlx-community/Kokoro-82M-6bit",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "mlx-community/Kokoro-82M-6bit",
           "repo_id": "mlx-community/Kokoro-82M-6bit",
           "size_on_disk": 348333267,
@@ -3845,12 +4995,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 110,
+          "downloads": 57,
           "likes": 2
         },
         {
           "id": "mlx-community/Kokoro-82M-8bit",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "mlx-community/Kokoro-82M-8bit",
           "repo_id": "mlx-community/Kokoro-82M-8bit",
           "size_on_disk": 351621068,
@@ -3865,7 +5015,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 518,
+          "downloads": 229,
           "likes": 7
         }
       ],
@@ -3876,8 +5026,1214 @@
         "temperature",
         "speed"
       ],
-      "input_fields": [
-        "text"
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "LongCat Audio TTS",
+      "description": "MLX LongCat-AudioDiT diffusion text-to-speech with zero-shot voice cloning.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.LongCatAudioTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Playback speed multiplier.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/LongCat-AudioDiT-1B-4bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "LongCat-AudioDiT model variant to load."
+        },
+        {
+          "name": "language",
+          "type": {
+            "type": "str"
+          },
+          "default": "en",
+          "title": "Language",
+          "description": "Language code (e.g. en, zh)."
+        },
+        {
+          "name": "steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 16,
+          "title": "Steps",
+          "description": "Number of diffusion sampling steps.",
+          "min": 1.0,
+          "max": 128.0
+        },
+        {
+          "name": "cfg_strength",
+          "type": {
+            "type": "float"
+          },
+          "default": 4.0,
+          "title": "Cfg Strength",
+          "description": "Classifier-free guidance strength.",
+          "min": 0.0,
+          "max": 10.0
+        },
+        {
+          "name": "reference_audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Reference Audio",
+          "description": "Optional reference audio for zero-shot voice cloning."
+        },
+        {
+          "name": "reference_text",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Reference Text",
+          "description": "Transcript of the reference audio (used when cloning a voice)."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/LongCat-AudioDiT-1B-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/LongCat-AudioDiT-1B-bf16",
+          "repo_id": "mlx-community/LongCat-AudioDiT-1B-bf16",
+          "size_on_disk": 5679784362,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "longcat_audiodit",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 23,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/LongCat-AudioDiT-1B-4bit",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/LongCat-AudioDiT-1B-4bit",
+          "repo_id": "mlx-community/LongCat-AudioDiT-1B-4bit",
+          "size_on_disk": 1417906487,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "longcat_audiodit",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 6,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/LongCat-AudioDiT-1B-8bit",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/LongCat-AudioDiT-1B-8bit",
+          "repo_id": "mlx-community/LongCat-AudioDiT-1B-8bit",
+          "size_on_disk": 2049313997,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "longcat_audiodit",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 3,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/LongCat-AudioDiT-3.5B-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/LongCat-AudioDiT-3.5B-bf16",
+          "repo_id": "mlx-community/LongCat-AudioDiT-3.5B-bf16",
+          "size_on_disk": 15336072172,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "longcat_audiodit",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 10,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/LongCat-AudioDiT-3.5B-4bit",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/LongCat-AudioDiT-3.5B-4bit",
+          "repo_id": "mlx-community/LongCat-AudioDiT-3.5B-4bit",
+          "size_on_disk": 2930449405,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "longcat_audiodit",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 20,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/LongCat-AudioDiT-3.5B-8bit",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/LongCat-AudioDiT-3.5B-8bit",
+          "repo_id": "mlx-community/LongCat-AudioDiT-3.5B-8bit",
+          "size_on_disk": 4768341480,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "longcat_audiodit",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 6,
+          "likes": 0
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "language",
+        "steps",
+        "cfg_strength"
+      ],
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "MLX Text To Speech",
+      "description": "Generic MLX text-to-speech node.\n\n    Run any text-to-speech model supported by the ``mlx-audio`` library by entering\n    its Hugging Face repository id. Useful for models that do not have a dedicated\n    typed node yet.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.MLXTextToSpeech",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Speech speed multiplier (0.5-2.0).",
+          "min": 0.5,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/Kokoro-82M-bf16",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Any mlx-audio TTS model. Pick a recommended model or enter a Hugging Face repo id."
+        },
+        {
+          "name": "voice",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Voice",
+          "description": "Optional voice / speaker preset (model dependent)."
+        },
+        {
+          "name": "language",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Language",
+          "description": "Optional language code (model dependent, e.g. 'a', 'en', 'auto')."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.0,
+          "title": "Temperature",
+          "description": "Optional sampling temperature. 0 uses the model default.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "reference_audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Reference Audio",
+          "description": "Optional reference audio for models that support voice cloning."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Kokoro-82M-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Kokoro-82M-bf16",
+          "repo_id": "mlx-community/Kokoro-82M-bf16",
+          "size_on_disk": 389410807,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "text-to-speech",
+            "en",
+            "base_model:yl4579/StyleTTS2-LJSpeech",
+            "base_model:finetune:yl4579/StyleTTS2-LJSpeech",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 9703,
+          "likes": 52
+        },
+        {
+          "id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "size_on_disk": 3104158788,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1529,
+          "likes": 7
+        },
+        {
+          "id": "mlx-community/kitten-tts-nano-0.8",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/kitten-tts-nano-0.8",
+          "repo_id": "mlx-community/kitten-tts-nano-0.8",
+          "size_on_disk": 61731543,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "kitten_tts",
+            "text-to-speech",
+            "kitten-tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 23,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/Dia-1.6B-fp16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Dia-1.6B-fp16",
+          "repo_id": "mlx-community/Dia-1.6B-fp16",
+          "size_on_disk": 3222365078,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "text-to-speech",
+            "en",
+            "base_model:nari-labs/Dia-1.6B",
+            "base_model:finetune:nari-labs/Dia-1.6B",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 57,
+          "likes": 3
+        },
+        {
+          "id": "mlx-community/csm-1b",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/csm-1b",
+          "repo_id": "mlx-community/csm-1b",
+          "size_on_disk": 6218711994,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "sesame",
+            "text-to-speech",
+            "en",
+            "base_model:sesame/csm-1b",
+            "base_model:finetune:sesame/csm-1b",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 184,
+          "likes": 28
+        },
+        {
+          "id": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "repo_id": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "size_on_disk": 1220980213,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "outetts",
+            "safetensors",
+            "qwen3",
+            "mlx",
+            "text-to-speech",
+            "en",
+            "zh",
+            "nl",
+            "fr",
+            "ka",
+            "de",
+            "hu",
+            "it",
+            "ja",
+            "ko",
+            "lv",
+            "pl",
+            "ru",
+            "es",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 23,
+          "likes": 0
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "voice",
+        "language",
+        "speed"
+      ],
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "Melo TTS",
+      "description": "MLX MeloTTS lightweight VITS2-based multilingual text-to-speech.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.MeloTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Speech speed multiplier (0.5-2.0).",
+          "min": 0.5,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/MeloTTS-English-MLX",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "MeloTTS model variant to load."
+        },
+        {
+          "name": "language",
+          "type": {
+            "type": "enum",
+            "values": [
+              "EN-US",
+              "EN-BR",
+              "EN_INDIA",
+              "EN-AU",
+              "EN-Default"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_speech.MeloTTS.LanguageCode"
+          },
+          "default": "EN-US",
+          "title": "Language",
+          "description": "Accent / language code for the speaker."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/MeloTTS-English-MLX",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/MeloTTS-English-MLX",
+          "repo_id": "mlx-community/MeloTTS-English-MLX",
+          "size_on_disk": 645792801,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "melotts",
+            "mlx",
+            "text-to-speech",
+            "tts",
+            "vits",
+            "en",
+            "base_model:myshell-ai/MeloTTS-English",
+            "base_model:finetune:myshell-ai/MeloTTS-English",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 42,
+          "likes": 2
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "language",
+        "speed"
+      ],
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "OmniVoice TTS",
+      "description": "MLX OmniVoice zero-shot multilingual text-to-speech (646+ languages).",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.OmniVoiceTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Playback speed multiplier.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/OmniVoice-bf16",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "OmniVoice model variant to load."
+        },
+        {
+          "name": "language",
+          "type": {
+            "type": "str"
+          },
+          "default": "english",
+          "title": "Language",
+          "description": "Target language name (e.g. english, spanish, french, chinese)."
+        },
+        {
+          "name": "duration_s",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.0,
+          "title": "Duration S",
+          "description": "Target duration in seconds. 0 lets the model decide automatically.",
+          "min": 0.0,
+          "max": 60.0
+        },
+        {
+          "name": "num_steps",
+          "type": {
+            "type": "int"
+          },
+          "default": 32,
+          "title": "Num Steps",
+          "description": "Number of diffusion sampling steps.",
+          "min": 1.0,
+          "max": 128.0
+        },
+        {
+          "name": "guidance_scale",
+          "type": {
+            "type": "float"
+          },
+          "default": 2.0,
+          "title": "Guidance Scale",
+          "description": "Classifier-free guidance scale.",
+          "min": 0.0,
+          "max": 10.0
+        },
+        {
+          "name": "reference_audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Reference Audio",
+          "description": "Optional reference audio for voice cloning."
+        },
+        {
+          "name": "reference_text",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Reference Text",
+          "description": "Transcript of the reference audio (used when cloning a voice)."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/OmniVoice-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/OmniVoice-bf16",
+          "repo_id": "mlx-community/OmniVoice-bf16",
+          "size_on_disk": 1383450847,
+          "tags": [
+            "safetensors",
+            "omnivoice",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 130,
+          "likes": 4
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "language",
+        "duration_s",
+        "num_steps",
+        "guidance_scale"
+      ],
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "Oute TTS",
+      "description": "MLX OuteTTS efficient multilingual text-to-speech with optional voice cloning.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.OuteTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Playback speed multiplier.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "OuteTTS model variant to load."
+        },
+        {
+          "name": "voice",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Voice",
+          "description": "Optional built-in speaker name. Leave empty to use a default voice."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.4,
+          "title": "Temperature",
+          "description": "Sampling temperature.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "top_p",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.9,
+          "title": "Top P",
+          "description": "Nucleus sampling probability mass.",
+          "min": 0.0,
+          "max": 1.0
+        },
+        {
+          "name": "reference_audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Reference Audio",
+          "description": "Optional reference audio for voice cloning."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "repo_id": "mlx-community/OuteTTS-1.0-0.6B-fp16",
+          "size_on_disk": 1220980213,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "outetts",
+            "safetensors",
+            "qwen3",
+            "mlx",
+            "text-to-speech",
+            "en",
+            "zh",
+            "nl",
+            "fr",
+            "ka",
+            "de",
+            "hu",
+            "it",
+            "ja",
+            "ko",
+            "lv",
+            "pl",
+            "ru",
+            "es",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 23,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/outetts-0.3-500M-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/outetts-0.3-500M-bf16",
+          "repo_id": "mlx-community/outetts-0.3-500M-bf16"
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "voice",
+        "temperature",
+        "top_p"
+      ],
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "Qwen3 TTS",
+      "description": "MLX Qwen3-TTS multilingual text-to-speech with speaker voices and voice design.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.Qwen3TTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Speech speed multiplier (0.5-2.0).",
+          "min": 0.5,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Qwen3-TTS model variant to load."
+        },
+        {
+          "name": "voice",
+          "type": {
+            "type": "str"
+          },
+          "default": "Chelsie",
+          "title": "Voice",
+          "description": "Speaker name for multi-speaker models (e.g. Chelsie, Ethan, Vivian)."
+        },
+        {
+          "name": "language",
+          "type": {
+            "type": "str"
+          },
+          "default": "auto",
+          "title": "Language",
+          "description": "Language code (e.g. auto, English, Chinese, Japanese, Korean)."
+        },
+        {
+          "name": "instruct",
+          "type": {
+            "type": "str"
+          },
+          "default": "",
+          "title": "Instruct",
+          "description": "Optional voice-design instruction describing the target voice (VoiceDesign models)."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.9,
+          "title": "Temperature",
+          "description": "Sampling temperature for the talker model.",
+          "min": 0.0,
+          "max": 2.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-0.6B-Base-bf16",
+          "size_on_disk": 2516143009,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 2312,
+          "likes": 3
+        },
+        {
+          "id": "mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-bf16",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-bf16",
+          "size_on_disk": 2498419405,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 326,
+          "likes": 2
+        },
+        {
+          "id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-bf16",
+          "size_on_disk": 4544212739,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 6975,
+          "likes": 14
+        },
+        {
+          "id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit",
+          "size_on_disk": 3104158788,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1529,
+          "likes": 7
+        },
+        {
+          "id": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-bf16",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-bf16",
+          "size_on_disk": 4520195613,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 583,
+          "likes": 5
+        },
+        {
+          "id": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-6bit",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-6bit",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-6bit",
+          "size_on_disk": 2696100432,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "6-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 179,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16",
+          "repo_id": "mlx-community/Qwen3-TTS-12Hz-1.7B-VoiceDesign-bf16",
+          "size_on_disk": 4520194992,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx-audio",
+            "safetensors",
+            "qwen3_tts",
+            "mlx",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "voice cloning",
+            "tts",
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 960,
+          "likes": 13
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "voice",
+        "language",
+        "temperature",
+        "speed"
       ],
       "is_streaming_output": true,
       "expose_as_tool": true
@@ -3887,7 +6243,6 @@
       "description": "MLX Sesame / CSM text-to-speech with reference audio cloning.",
       "namespace": "mlx.text_to_speech",
       "node_type": "mlx.text_to_speech.SesameTTS",
-      "body": "content_card",
       "properties": [
         {
           "name": "text",
@@ -3912,14 +6267,16 @@
         {
           "name": "model",
           "type": {
-            "type": "enum",
-            "values": [
-              "mlx-community/csm-1b",
-              "mlx-community/csm-1b-8bit"
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_speech.SesameTTS.Model"
+            "type": "hf.text_to_speech"
           },
-          "default": "mlx-community/csm-1b",
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/csm-1b",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
           "title": "Model",
           "description": "Sesame/CSM model variant to load."
         },
@@ -3928,10 +6285,15 @@
           "type": {
             "type": "audio"
           },
-          "default": null,
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
           "title": "Reference Audio",
-          "description": "Reference audio clip used for voice cloning.",
-          "required": true
+          "description": "Reference audio clip used for voice cloning."
         }
       ],
       "outputs": [
@@ -3951,7 +6313,7 @@
       "recommended_models": [
         {
           "id": "mlx-community/csm-1b",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "mlx-community/csm-1b",
           "repo_id": "mlx-community/csm-1b",
           "size_on_disk": 6218711994,
@@ -3968,12 +6330,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 264,
+          "downloads": 184,
           "likes": 28
         },
         {
           "id": "mlx-community/csm-1b-8bit",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "mlx-community/csm-1b-8bit",
           "repo_id": "mlx-community/csm-1b-8bit",
           "size_on_disk": 1711114573,
@@ -3991,7 +6353,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 119,
+          "downloads": 106,
           "likes": 2
         }
       ],
@@ -3999,10 +6361,6 @@
         "model",
         "reference_audio",
         "speed"
-      ],
-      "input_fields": [
-        "text",
-        "reference_audio"
       ],
       "is_streaming_output": true,
       "expose_as_tool": true
@@ -4012,7 +6370,6 @@
       "description": "MLX Spark text-to-speech.",
       "namespace": "mlx.text_to_speech",
       "node_type": "mlx.text_to_speech.SparkTTS",
-      "body": "content_card",
       "properties": [
         {
           "name": "text",
@@ -4043,14 +6400,16 @@
         {
           "name": "model",
           "type": {
-            "type": "enum",
-            "values": [
-              "mlx-community/Spark-TTS-0.5B-bf16",
-              "mlx-community/Spark-TTS-0.5B-8bit"
-            ],
-            "type_name": "nodetool.nodes.mlx.text_to_speech.SparkTTS.Model"
+            "type": "hf.text_to_speech"
           },
-          "default": "mlx-community/Spark-TTS-0.5B-bf16",
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/Spark-TTS-0.5B-bf16",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
           "title": "Model",
           "description": "Spark model variant to load."
         },
@@ -4113,7 +6472,7 @@
       "recommended_models": [
         {
           "id": "mlx-community/Spark-TTS-0.5B-bf16",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "mlx-community/Spark-TTS-0.5B-bf16",
           "repo_id": "mlx-community/Spark-TTS-0.5B-bf16",
           "size_on_disk": 2920645801,
@@ -4129,12 +6488,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 169,
+          "downloads": 121,
           "likes": 4
         },
         {
           "id": "mlx-community/Spark-TTS-0.5B-8bit",
-          "type": "hf.model",
+          "type": "hf.text_to_speech",
           "name": "mlx-community/Spark-TTS-0.5B-8bit",
           "repo_id": "mlx-community/Spark-TTS-0.5B-8bit",
           "size_on_disk": 2445831009,
@@ -4151,7 +6510,7 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 28,
+          "downloads": 27,
           "likes": 3
         }
       ],
@@ -4162,8 +6521,147 @@
         "pitch",
         "gender"
       ],
-      "input_fields": [
-        "text"
+      "is_streaming_output": true,
+      "expose_as_tool": true
+    },
+    {
+      "title": "Voxtral TTS",
+      "description": "MLX Voxtral TTS \u2014 Mistral's multilingual text-to-speech with voice presets.",
+      "namespace": "mlx.text_to_speech",
+      "node_type": "mlx.text_to_speech.VoxtralTTS",
+      "properties": [
+        {
+          "name": "text",
+          "type": {
+            "type": "str"
+          },
+          "default": "Hello from MLX TTS.",
+          "title": "Text",
+          "description": "Text content to synthesize into speech."
+        },
+        {
+          "name": "speed",
+          "type": {
+            "type": "float"
+          },
+          "default": 1.0,
+          "title": "Speed",
+          "description": "Playback speed multiplier.",
+          "min": 0.0,
+          "max": 2.0
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.text_to_speech"
+          },
+          "default": {
+            "type": "hf.text_to_speech",
+            "repo_id": "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "Voxtral TTS model variant to load."
+        },
+        {
+          "name": "voice",
+          "type": {
+            "type": "enum",
+            "values": [
+              "neutral_female",
+              "neutral_male",
+              "casual_female",
+              "casual_male",
+              "cheerful_female",
+              "ar_male",
+              "de_female",
+              "de_male",
+              "es_female",
+              "es_male",
+              "fr_female",
+              "fr_male",
+              "hi_female",
+              "hi_male",
+              "it_female",
+              "it_male",
+              "nl_female",
+              "nl_male",
+              "pt_female",
+              "pt_male"
+            ],
+            "type_name": "nodetool.nodes.mlx.text_to_speech.VoxtralTTS.Voice"
+          },
+          "default": "neutral_female",
+          "title": "Voice",
+          "description": "Voice preset supported by Voxtral TTS."
+        },
+        {
+          "name": "temperature",
+          "type": {
+            "type": "float"
+          },
+          "default": 0.7,
+          "title": "Temperature",
+          "description": "Sampling temperature.",
+          "min": 0.0,
+          "max": 2.0
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        },
+        {
+          "type": {
+            "type": "chunk"
+          },
+          "name": "chunk"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
+          "type": "hf.text_to_speech",
+          "name": "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
+          "repo_id": "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
+          "size_on_disk": 8037606951,
+          "pipeline_tag": "text-to-speech",
+          "tags": [
+            "mlx",
+            "voxtral_tts",
+            "text-to-speech",
+            "speech",
+            "speech generation",
+            "tts",
+            "en",
+            "fr",
+            "es",
+            "de",
+            "it",
+            "pt",
+            "nl",
+            "ar",
+            "hi",
+            "base_model:mistralai/Voxtral-4B-TTS-2603",
+            "base_model:finetune:mistralai/Voxtral-4B-TTS-2603",
+            "license:cc-by-nc-4.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 379,
+          "likes": 1
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "voice",
+        "temperature"
       ],
       "is_streaming_output": true,
       "expose_as_tool": true
@@ -4173,7 +6671,6 @@
       "description": "Generate text using locally cached MLX models on Apple Silicon.\n    text, generation, mlx, local-llm\n\n    Use cases:\n    - Fast local iteration with MLX-converted instruction models\n    - Privacy-preserving summarization, drafting, or Q&A\n    - Building multi-node agent workflows without external APIs",
       "namespace": "mlx.text_generation",
       "node_type": "mlx.text_generation.TextGeneration",
-      "body": "content_card",
       "properties": [
         {
           "name": "model",
@@ -4183,8 +6680,8 @@
           "default": {
             "type": "language_model",
             "provider": "mlx",
-            "id": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
-            "name": "Qwen3.5 0.8B OptiQ (4-bit)",
+            "id": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+            "name": "Gemma 4 e4b IT OptiQ (4-bit)",
             "path": null,
             "supported_tasks": []
           },
@@ -4292,220 +6789,23 @@
       ],
       "recommended_models": [
         {
-          "id": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
+          "id": "mlx-community/gemma-4-e2b-it-4bit",
           "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
-          "repo_id": "mlx-community/Qwen3.5-0.8B-OptiQ-4bit",
-          "size_on_disk": 670390492,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_5",
-            "quantized",
-            "mixed-precision",
-            "4bit",
-            "8bit",
-            "optiq",
-            "apple-silicon",
-            "text-generation",
-            "qwen3.5",
-            "conversational",
-            "base_model:Qwen/Qwen3.5-0.8B",
-            "base_model:quantized:Qwen/Qwen3.5-0.8B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 6731,
-          "likes": 19
-        },
-        {
-          "id": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
-          "repo_id": "mlx-community/Qwen3.5-2B-OptiQ-4bit",
-          "size_on_disk": 1554019037,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_5",
-            "quantized",
-            "mixed-precision",
-            "4bit",
-            "8bit",
-            "optiq",
-            "apple-silicon",
-            "text-generation",
-            "qwen3.5",
-            "conversational",
-            "base_model:Qwen/Qwen3.5-2B",
-            "base_model:quantized:Qwen/Qwen3.5-2B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 4260,
-          "likes": 8
-        },
-        {
-          "id": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
-          "repo_id": "mlx-community/Qwen3.5-4B-OptiQ-4bit",
-          "size_on_disk": 3289845345,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_5",
-            "quantized",
-            "mixed-precision",
-            "4bit",
-            "8bit",
-            "optiq",
-            "apple-silicon",
-            "text-generation",
-            "qwen3.5",
-            "conversational",
-            "base_model:Qwen/Qwen3.5-4B",
-            "base_model:quantized:Qwen/Qwen3.5-4B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 5158,
-          "likes": 15
-        },
-        {
-          "id": "mlx-community/Qwen3.5-27B-4bit-DWQ",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3.5-27B-4bit-DWQ",
-          "repo_id": "mlx-community/Qwen3.5-27B-4bit-DWQ",
-          "size_on_disk": 15229956981,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_5",
-            "text-generation",
-            "conversational",
-            "en",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 355,
-          "likes": 6
-        },
-        {
-          "id": "mlx-community/Qwen3.5-REAP-97B-A10B-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3.5-REAP-97B-A10B-4bit",
-          "repo_id": "mlx-community/Qwen3.5-REAP-97B-A10B-4bit",
-          "size_on_disk": 54452420315,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_5_moe",
-            "4-bit",
-            "quantized",
-            "moe",
-            "text-generation",
-            "conversational",
-            "base_model:OpenMOSE/Qwen3.5-REAP-97B-A10B",
-            "base_model:quantized:OpenMOSE/Qwen3.5-REAP-97B-A10B",
-            "license:apache-2.0",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 165,
-          "likes": 3
-        },
-        {
-          "id": "mlx-community/Qwen3.5-397B-A17B-nvfp4",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3.5-397B-A17B-nvfp4",
-          "repo_id": "mlx-community/Qwen3.5-397B-A17B-nvfp4",
-          "size_on_disk": 223032302630,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_5_moe",
-            "4bit",
-            "nvfp4",
-            "quantized",
-            "moe",
-            "mixture-of-experts",
-            "text-generation",
-            "conversational",
-            "apple-silicon",
-            "multilingual",
-            "base_model:Qwen/Qwen3.5-397B-A17B",
-            "base_model:quantized:Qwen/Qwen3.5-397B-A17B",
-            "license:apache-2.0",
-            "4-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 475,
-          "likes": 4
-        },
-        {
-          "id": "mlx-community/Qwen3.5-397B-A17B-8bit-gs32",
-          "type": "hf.text_generation",
-          "name": "mlx-community/Qwen3.5-397B-A17B-8bit-gs32",
-          "repo_id": "mlx-community/Qwen3.5-397B-A17B-8bit-gs32",
-          "size_on_disk": 445904828350,
-          "pipeline_tag": "text-generation",
-          "tags": [
-            "mlx",
-            "safetensors",
-            "qwen3_5_moe",
-            "text-generation",
-            "conversational",
-            "base_model:Qwen/Qwen3.5-397B-A17B",
-            "base_model:quantized:Qwen/Qwen3.5-397B-A17B",
-            "license:apache-2.0",
-            "8-bit",
-            "region:us"
-          ],
-          "has_model_index": false,
-          "downloads": 87,
-          "likes": 0
-        },
-        {
-          "id": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
-          "type": "hf.text_generation",
-          "name": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
-          "repo_id": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
-          "size_on_disk": 6566567261,
-          "pipeline_tag": "text-generation",
+          "name": "mlx-community/gemma-4-e2b-it-4bit",
+          "repo_id": "mlx-community/gemma-4-e2b-it-4bit",
+          "size_on_disk": 3613530663,
+          "pipeline_tag": "any-to-any",
           "tags": [
             "mlx",
             "safetensors",
             "gemma4",
-            "quantized",
-            "mixed-precision",
-            "4bit",
-            "8bit",
-            "optiq",
-            "apple-silicon",
-            "text-generation",
-            "gemma-4",
-            "conversational",
-            "license:gemma",
+            "any-to-any",
+            "license:apache-2.0",
             "4-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10935,
+          "downloads": 44549,
           "likes": 18
         },
         {
@@ -4513,7 +6813,7 @@
           "type": "hf.text_generation",
           "name": "mlx-community/gemma-4-e2b-it-OptiQ-4bit",
           "repo_id": "mlx-community/gemma-4-e2b-it-OptiQ-4bit",
-          "size_on_disk": 4329221857,
+          "size_on_disk": 5258980710,
           "pipeline_tag": "text-generation",
           "tags": [
             "mlx",
@@ -4533,37 +6833,552 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2980,
-          "likes": 2
+          "downloads": 2060,
+          "likes": 3
         },
         {
-          "id": "mlx-community/Gemma4-E2B-IT-Text-int4",
+          "id": "mlx-community/gemma-4-e4b-it-4bit",
           "type": "hf.text_generation",
-          "name": "mlx-community/Gemma4-E2B-IT-Text-int4",
-          "repo_id": "mlx-community/Gemma4-E2B-IT-Text-int4",
-          "size_on_disk": 2671102856,
-          "pipeline_tag": "text-generation",
+          "name": "mlx-community/gemma-4-e4b-it-4bit",
+          "repo_id": "mlx-community/gemma-4-e4b-it-4bit",
+          "size_on_disk": 5249811602,
+          "pipeline_tag": "any-to-any",
           "tags": [
+            "mlx",
             "safetensors",
-            "gemma4_text",
-            "text-generation",
-            "conversational",
-            "base_model:google/gemma-4-E2B-it",
-            "base_model:finetune:google/gemma-4-E2B-it",
+            "gemma4",
+            "any-to-any",
             "license:apache-2.0",
+            "4-bit",
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 434,
+          "downloads": 28475,
+          "likes": 27
+        },
+        {
+          "id": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+          "repo_id": "mlx-community/gemma-4-e4b-it-OptiQ-4bit",
+          "size_on_disk": 7518776597,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4",
+            "quantized",
+            "mixed-precision",
+            "4bit",
+            "8bit",
+            "optiq",
+            "apple-silicon",
+            "text-generation",
+            "gemma-4",
+            "conversational",
+            "license:gemma",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 8107,
+          "likes": 26
+        },
+        {
+          "id": "mlx-community/gemma-4-e4b-it-6bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-e4b-it-6bit",
+          "repo_id": "mlx-community/gemma-4-e4b-it-6bit",
+          "size_on_disk": 7123823183,
+          "pipeline_tag": "any-to-any",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4",
+            "any-to-any",
+            "license:apache-2.0",
+            "6-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 697,
           "likes": 2
+        },
+        {
+          "id": "mlx-community/gemma-4-e4b-it-8bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-e4b-it-8bit",
+          "repo_id": "mlx-community/gemma-4-e4b-it-8bit",
+          "size_on_disk": 8997792562,
+          "pipeline_tag": "any-to-any",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4",
+            "any-to-any",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 3878,
+          "likes": 23
+        },
+        {
+          "id": "mlx-community/gemma-4-26b-a4b-it-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-26b-a4b-it-4bit",
+          "repo_id": "mlx-community/gemma-4-26b-a4b-it-4bit",
+          "size_on_disk": 15641241224,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4",
+            "image-text-to-text",
+            "conversational",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 21181,
+          "likes": 64
+        },
+        {
+          "id": "mlx-community/gemma-4-26b-a4b-it-8bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-26b-a4b-it-8bit",
+          "repo_id": "mlx-community/gemma-4-26b-a4b-it-8bit",
+          "size_on_disk": 27986043831,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4",
+            "image-text-to-text",
+            "conversational",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 2688,
+          "likes": 10
+        },
+        {
+          "id": "mlx-community/gemma-4-26B-A4B-it-qat-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-26B-A4B-it-qat-4bit",
+          "repo_id": "mlx-community/gemma-4-26B-A4B-it-qat-4bit",
+          "size_on_disk": 15641241228,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4",
+            "image-text-to-text",
+            "conversational",
+            "en",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1609,
+          "likes": 1
+        },
+        {
+          "id": "mlx-community/gemma-4-26B-A4B-it-qat-8bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/gemma-4-26B-A4B-it-qat-8bit",
+          "repo_id": "mlx-community/gemma-4-26B-A4B-it-qat-8bit",
+          "size_on_disk": 27986043835,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "gemma4",
+            "image-text-to-text",
+            "conversational",
+            "en",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 596,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/Qwen3.6-35B-A3B-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.6-35B-A3B-4bit",
+          "repo_id": "mlx-community/Qwen3.6-35B-A3B-4bit",
+          "size_on_disk": 20429169263,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5_moe",
+            "image-text-to-text",
+            "conversational",
+            "base_model:Qwen/Qwen3.6-35B-A3B",
+            "base_model:quantized:Qwen/Qwen3.6-35B-A3B",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 48291,
+          "likes": 72
+        },
+        {
+          "id": "mlx-community/Qwen3.6-35B-A3B-4bit-DWQ",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.6-35B-A3B-4bit-DWQ",
+          "repo_id": "mlx-community/Qwen3.6-35B-A3B-4bit-DWQ",
+          "size_on_disk": 20679534668,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5_moe",
+            "text-generation",
+            "conversational",
+            "en",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 3545,
+          "likes": 14
+        },
+        {
+          "id": "mlx-community/Qwen3.6-35B-A3B-nvfp4",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.6-35B-A3B-nvfp4",
+          "repo_id": "mlx-community/Qwen3.6-35B-A3B-nvfp4",
+          "size_on_disk": 20429062481,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5_moe",
+            "image-text-to-text",
+            "conversational",
+            "base_model:Qwen/Qwen3.6-35B-A3B",
+            "base_model:quantized:Qwen/Qwen3.6-35B-A3B",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 3395,
+          "likes": 15
+        },
+        {
+          "id": "mlx-community/Qwen3.6-35B-A3B-8bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.6-35B-A3B-8bit",
+          "repo_id": "mlx-community/Qwen3.6-35B-A3B-8bit",
+          "size_on_disk": 37748367994,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5_moe",
+            "image-text-to-text",
+            "conversational",
+            "base_model:Qwen/Qwen3.6-35B-A3B",
+            "base_model:quantized:Qwen/Qwen3.6-35B-A3B",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 41709,
+          "likes": 18
+        },
+        {
+          "id": "mlx-community/Qwen3.6-27B-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.6-27B-4bit",
+          "repo_id": "mlx-community/Qwen3.6-27B-4bit",
+          "size_on_disk": 16081490064,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5",
+            "image-text-to-text",
+            "conversational",
+            "base_model:Qwen/Qwen3.6-27B",
+            "base_model:quantized:Qwen/Qwen3.6-27B",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 20863,
+          "likes": 31
+        },
+        {
+          "id": "mlx-community/Qwen3.6-27B-6bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.6-27B-6bit",
+          "repo_id": "mlx-community/Qwen3.6-27B-6bit",
+          "size_on_disk": 22804828230,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5",
+            "image-text-to-text",
+            "conversational",
+            "base_model:Qwen/Qwen3.6-27B",
+            "base_model:quantized:Qwen/Qwen3.6-27B",
+            "license:apache-2.0",
+            "6-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1839,
+          "likes": 6
+        },
+        {
+          "id": "mlx-community/Qwen3.6-27B-8bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.6-27B-8bit",
+          "repo_id": "mlx-community/Qwen3.6-27B-8bit",
+          "size_on_disk": 29528166726,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5",
+            "image-text-to-text",
+            "conversational",
+            "base_model:Qwen/Qwen3.6-27B",
+            "base_model:quantized:Qwen/Qwen3.6-27B",
+            "license:apache-2.0",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 5320,
+          "likes": 15
+        },
+        {
+          "id": "mlx-community/Qwen3.6-27B-nvfp4",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.6-27B-nvfp4",
+          "repo_id": "mlx-community/Qwen3.6-27B-nvfp4",
+          "size_on_disk": 16081372828,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "qwen3_5",
+            "image-text-to-text",
+            "conversational",
+            "base_model:Qwen/Qwen3.6-27B",
+            "base_model:quantized:Qwen/Qwen3.6-27B",
+            "license:apache-2.0",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1833,
+          "likes": 9
+        },
+        {
+          "id": "mlx-community/Qwen3.5-9B-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.5-9B-4bit",
+          "repo_id": "mlx-community/Qwen3.5-9B-4bit",
+          "size_on_disk": 5977073303,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "qwen3_5",
+            "image-text-to-text",
+            "mlx",
+            "conversational",
+            "base_model:Qwen/Qwen3.5-9B-Base",
+            "base_model:quantized:Qwen/Qwen3.5-9B-Base",
+            "license:apache-2.0",
+            "endpoints_compatible",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 8681,
+          "likes": 10
+        },
+        {
+          "id": "mlx-community/Qwen3.5-9B-6bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.5-9B-6bit",
+          "repo_id": "mlx-community/Qwen3.5-9B-6bit",
+          "size_on_disk": 8215258652,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "qwen3_5",
+            "image-text-to-text",
+            "mlx",
+            "conversational",
+            "base_model:Qwen/Qwen3.5-9B-Base",
+            "base_model:quantized:Qwen/Qwen3.5-9B-Base",
+            "license:apache-2.0",
+            "endpoints_compatible",
+            "6-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 642,
+          "likes": 4
+        },
+        {
+          "id": "mlx-community/Qwen3.5-9B-8bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/Qwen3.5-9B-8bit",
+          "repo_id": "mlx-community/Qwen3.5-9B-8bit",
+          "size_on_disk": 10453444655,
+          "pipeline_tag": "image-text-to-text",
+          "tags": [
+            "transformers",
+            "safetensors",
+            "qwen3_5",
+            "image-text-to-text",
+            "mlx",
+            "conversational",
+            "base_model:Qwen/Qwen3.5-9B-Base",
+            "base_model:quantized:Qwen/Qwen3.5-9B-Base",
+            "license:apache-2.0",
+            "endpoints_compatible",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 3283,
+          "likes": 15
+        },
+        {
+          "id": "mlx-community/LFM2-24B-A2B-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/LFM2-24B-A2B-4bit",
+          "repo_id": "mlx-community/LFM2-24B-A2B-4bit",
+          "size_on_disk": 13420013665,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "lfm2_moe",
+            "liquid",
+            "lfm2",
+            "edge",
+            "llm",
+            "text-generation",
+            "conversational",
+            "en",
+            "ar",
+            "zh",
+            "fr",
+            "de",
+            "ja",
+            "ko",
+            "es",
+            "pt",
+            "base_model:LiquidAI/LFM2-24B-A2B",
+            "base_model:quantized:LiquidAI/LFM2-24B-A2B",
+            "license:other",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 82,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/GLM-4.7-Flash-4bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/GLM-4.7-Flash-4bit",
+          "repo_id": "mlx-community/GLM-4.7-Flash-4bit",
+          "size_on_disk": 16872850407,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "glm4_moe_lite",
+            "text-generation",
+            "conversational",
+            "en",
+            "zh",
+            "base_model:zai-org/GLM-4.7-Flash",
+            "base_model:quantized:zai-org/GLM-4.7-Flash",
+            "license:mit",
+            "4-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 5459,
+          "likes": 64
+        },
+        {
+          "id": "mlx-community/GLM-4.7-Flash-6bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/GLM-4.7-Flash-6bit",
+          "repo_id": "mlx-community/GLM-4.7-Flash-6bit",
+          "size_on_disk": 24357127217,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "glm4_moe_lite",
+            "text-generation",
+            "conversational",
+            "en",
+            "zh",
+            "base_model:zai-org/GLM-4.7-Flash",
+            "base_model:quantized:zai-org/GLM-4.7-Flash",
+            "license:mit",
+            "6-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 3488,
+          "likes": 6
+        },
+        {
+          "id": "mlx-community/GLM-4.7-Flash-8bit",
+          "type": "hf.text_generation",
+          "name": "mlx-community/GLM-4.7-Flash-8bit",
+          "repo_id": "mlx-community/GLM-4.7-Flash-8bit",
+          "size_on_disk": 31841404262,
+          "pipeline_tag": "text-generation",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "glm4_moe_lite",
+            "text-generation",
+            "conversational",
+            "en",
+            "zh",
+            "base_model:zai-org/GLM-4.7-Flash",
+            "base_model:quantized:zai-org/GLM-4.7-Flash",
+            "license:mit",
+            "8-bit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 3873,
+          "likes": 23
         }
       ],
       "basic_fields": [
         "model",
-        "prompt"
-      ],
-      "input_fields": [
-        "system_prompt",
         "prompt"
       ],
       "is_streaming_output": true
@@ -4573,26 +7388,20 @@
       "description": "Transcribe an audio asset using MLX Whisper.\n    whisper, mlx, asr, speech-to-text\n\n    - Uses MLX for efficient Apple Silicon acceleration\n    - Returns transcript and segments with optional word-level timestamps",
       "namespace": "mlx.automatic_speech_recognition",
       "node_type": "mlx.automatic_speech_recognition.Whisper",
-      "body": "content_card",
       "properties": [
         {
           "name": "model",
           "type": {
-            "type": "enum",
-            "values": [
-              "mlx-community/whisper-tiny-mlx",
-              "mlx-community/whisper-tiny.en-mlx",
-              "mlx-community/whisper-base-mlx",
-              "mlx-community/whisper-base.en-mlx",
-              "mlx-community/whisper-small-mlx",
-              "mlx-community/whisper-small.en-mlx",
-              "mlx-community/whisper-medium-mlx",
-              "mlx-community/whisper-medium.en-mlx",
-              "mlx-community/whisper-large-v3-mlx"
-            ],
-            "type_name": "nodetool.nodes.mlx.automatic_speech_recognition.Whisper.Model"
+            "type": "hf.automatic_speech_recognition"
           },
-          "default": "mlx-community/whisper-tiny.en-mlx",
+          "default": {
+            "type": "hf.automatic_speech_recognition",
+            "repo_id": "mlx-community/whisper-tiny.en-mlx",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
           "title": "Model",
           "description": "Model to use for transcription"
         },
@@ -4677,7 +7486,7 @@
       "recommended_models": [
         {
           "id": "mlx-community/whisper-tiny-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-tiny-mlx",
           "repo_id": "mlx-community/whisper-tiny-mlx",
           "size_on_disk": 74420620,
@@ -4687,12 +7496,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 1358,
+          "downloads": 1104,
           "likes": 2
         },
         {
           "id": "mlx-community/whisper-tiny.en-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-tiny.en-mlx",
           "repo_id": "mlx-community/whisper-tiny.en-mlx",
           "size_on_disk": 74419890,
@@ -4702,12 +7511,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 298,
+          "downloads": 233,
           "likes": 0
         },
         {
           "id": "mlx-community/whisper-base-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-base-mlx",
           "repo_id": "mlx-community/whisper-base-mlx",
           "size_on_disk": 143726326,
@@ -4719,12 +7528,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 2766,
+          "downloads": 44016,
           "likes": 1
         },
         {
           "id": "mlx-community/whisper-base.en-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-base.en-mlx",
           "repo_id": "mlx-community/whisper-base.en-mlx",
           "size_on_disk": 143725218,
@@ -4734,12 +7543,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 618,
+          "downloads": 512,
           "likes": 0
         },
         {
           "id": "mlx-community/whisper-small-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-small-mlx",
           "repo_id": "mlx-community/whisper-small-mlx",
           "size_on_disk": 481309720,
@@ -4751,12 +7560,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 10779,
+          "downloads": 10575,
           "likes": 5
         },
         {
           "id": "mlx-community/whisper-small.en-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-small.en-mlx",
           "repo_id": "mlx-community/whisper-small.en-mlx",
           "size_on_disk": 481308292,
@@ -4766,12 +7575,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 989,
+          "downloads": 828,
           "likes": 0
         },
         {
           "id": "mlx-community/whisper-medium-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-medium-mlx",
           "repo_id": "mlx-community/whisper-medium-mlx",
           "size_on_disk": 1524927044,
@@ -4783,12 +7592,12 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 6018,
+          "downloads": 3006,
           "likes": 3
         },
         {
           "id": "mlx-community/whisper-medium.en-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-medium.en-mlx",
           "repo_id": "mlx-community/whisper-medium.en-mlx",
           "size_on_disk": 1524925152,
@@ -4798,12 +7607,27 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 359,
+          "downloads": 215,
+          "likes": 1
+        },
+        {
+          "id": "mlx-community/whisper-large-v2-mlx",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/whisper-large-v2-mlx",
+          "repo_id": "mlx-community/whisper-large-v2-mlx",
+          "size_on_disk": 3083151518,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 159,
           "likes": 1
         },
         {
           "id": "mlx-community/whisper-large-v3-mlx",
-          "type": "hf.model",
+          "type": "hf.automatic_speech_recognition",
           "name": "mlx-community/whisper-large-v3-mlx",
           "repo_id": "mlx-community/whisper-large-v3-mlx",
           "size_on_disk": 3083522487,
@@ -4816,17 +7640,258 @@
             "region:us"
           ],
           "has_model_index": false,
-          "downloads": 182905,
-          "likes": 82
+          "downloads": 125271,
+          "likes": 91
+        },
+        {
+          "id": "mlx-community/whisper-large-v3-turbo",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/whisper-large-v3-turbo",
+          "repo_id": "mlx-community/whisper-large-v3-turbo",
+          "size_on_disk": 1613979758,
+          "pipeline_tag": "automatic-speech-recognition",
+          "tags": [
+            "mlx",
+            "whisper",
+            "automatic-speech-recognition",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 25537,
+          "likes": 93
+        },
+        {
+          "id": "mlx-community/whisper-large-v3-turbo-q4",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/whisper-large-v3-turbo-q4",
+          "repo_id": "mlx-community/whisper-large-v3-turbo-q4",
+          "size_on_disk": 463666861,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 1261,
+          "likes": 7
+        },
+        {
+          "id": "mlx-community/distil-whisper-large-v3",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/distil-whisper-large-v3",
+          "repo_id": "mlx-community/distil-whisper-large-v3",
+          "size_on_disk": 1509132231,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 725,
+          "likes": 15
+        },
+        {
+          "id": "mlx-community/distil-whisper-medium.en",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/distil-whisper-medium.en",
+          "repo_id": "mlx-community/distil-whisper-medium.en",
+          "size_on_disk": 785803672,
+          "tags": [
+            "mlx",
+            "whisper",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 23,
+          "likes": 0
+        },
+        {
+          "id": "mlx-community/distil-whisper-small.en",
+          "type": "hf.automatic_speech_recognition",
+          "name": "mlx-community/distil-whisper-small.en",
+          "repo_id": "mlx-community/distil-whisper-small.en"
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "audio"
+      ]
+    },
+    {
+      "title": "DeepFilterNet",
+      "description": "Suppress background noise using DeepFilterNet via MLX.\n    deepfilternet, mlx, denoise, speech enhancement\n\n    - Real-time capable noise suppression at 48 kHz\n    - Runs locally on Apple Silicon through mlx-audio",
+      "namespace": "mlx.speech_enhancement",
+      "node_type": "mlx.speech_enhancement.DeepFilterNet",
+      "properties": [
+        {
+          "name": "audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Audio Input",
+          "description": "The noisy input audio to enhance."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.audio_to_audio"
+          },
+          "default": {
+            "type": "hf.audio_to_audio",
+            "repo_id": "mlx-community/DeepFilterNet-mlx",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "DeepFilterNet model repository."
+        },
+        {
+          "name": "version",
+          "type": {
+            "type": "enum",
+            "values": [
+              "1",
+              "2",
+              "3"
+            ],
+            "type_name": "nodetool.nodes.mlx.speech_enhancement.DeepFilterNet.Version"
+          },
+          "default": "3",
+          "title": "Version",
+          "description": "DeepFilterNet version to use (v1, v2, or v3)."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mlx-community/DeepFilterNet-mlx",
+          "type": "hf.audio_to_audio",
+          "name": "mlx-community/DeepFilterNet-mlx",
+          "repo_id": "mlx-community/DeepFilterNet-mlx",
+          "size_on_disk": 25602696,
+          "pipeline_tag": "audio-to-audio",
+          "tags": [
+            "mlx",
+            "safetensors",
+            "audio",
+            "speech-enhancement",
+            "noise-suppression",
+            "deepfilternet",
+            "apple-silicon",
+            "audio-to-audio",
+            "arxiv:2110.05588",
+            "arxiv:2205.05474",
+            "arxiv:2305.08227",
+            "license:mit",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 7
+        }
+      ],
+      "basic_fields": [
+        "model",
+        "version",
+        "audio"
+      ],
+      "expose_as_tool": true
+    },
+    {
+      "title": "MossFormer2",
+      "description": "Enhance speech using MossFormer2 via MLX.\n    mossformer2, mlx, denoise, speech enhancement\n\n    - High-quality 48 kHz speech enhancement\n    - Runs locally on Apple Silicon through mlx-audio",
+      "namespace": "mlx.speech_enhancement",
+      "node_type": "mlx.speech_enhancement.MossFormer2",
+      "properties": [
+        {
+          "name": "audio",
+          "type": {
+            "type": "audio"
+          },
+          "default": {
+            "type": "audio",
+            "uri": "",
+            "asset_id": null,
+            "data": null,
+            "metadata": null
+          },
+          "title": "Audio Input",
+          "description": "The noisy input audio to enhance."
+        },
+        {
+          "name": "model",
+          "type": {
+            "type": "hf.audio_to_audio"
+          },
+          "default": {
+            "type": "hf.audio_to_audio",
+            "repo_id": "starkdmi/MossFormer2_SE_48K_MLX",
+            "path": null,
+            "variant": null,
+            "allow_patterns": null,
+            "ignore_patterns": null
+          },
+          "title": "Model",
+          "description": "MossFormer2 speech enhancement model variant."
+        }
+      ],
+      "outputs": [
+        {
+          "type": {
+            "type": "audio"
+          },
+          "name": "audio"
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "starkdmi/MossFormer2_SE_48K_MLX",
+          "type": "hf.audio_to_audio",
+          "name": "starkdmi/MossFormer2_SE_48K_MLX",
+          "repo_id": "starkdmi/MossFormer2_SE_48K_MLX",
+          "size_on_disk": 567890658,
+          "tags": [
+            "license:apache-2.0",
+            "region:us"
+          ],
+          "has_model_index": false,
+          "downloads": 0,
+          "likes": 2
+        },
+        {
+          "id": "starkdmi/MossFormer2_SE_48K_MLX-8bit",
+          "type": "hf.audio_to_audio",
+          "name": "starkdmi/MossFormer2_SE_48K_MLX-8bit",
+          "repo_id": "starkdmi/MossFormer2_SE_48K_MLX-8bit"
+        },
+        {
+          "id": "starkdmi/MossFormer2_SE_48K_MLX-4bit",
+          "type": "hf.audio_to_audio",
+          "name": "starkdmi/MossFormer2_SE_48K_MLX-4bit",
+          "repo_id": "starkdmi/MossFormer2_SE_48K_MLX-4bit"
         }
       ],
       "basic_fields": [
         "model",
         "audio"
       ],
-      "input_fields": [
-        "audio"
-      ]
+      "expose_as_tool": true
     }
   ]
 }
