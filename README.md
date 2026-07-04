@@ -58,6 +58,11 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 - `StableAudio3AudioToAudio` – prompt-guided variations of an input clip
 - `StableAudio3Inpaint` – regenerate a time range inside an audio clip
 
+### Text-to-Music (`mlx.text_to_music`)
+
+- `ACEStepMusicGeneration` – local text-to-music generation with [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) (prompt + lyrics → full songs)
+- `ACEStepSongPlanner` – use the ACE-Step 5Hz language model to turn an idea into a caption, lyrics and musical metadata
+
 ### Text (`mlx.text_generation`)
 
 - `TextGeneration` – local LLM text generation via `mlx-lm`
@@ -76,6 +81,28 @@ Weights are pulled on demand from the Hugging Face repo
 [`stabilityai/stable-audio-3-optimized`](https://huggingface.co/stabilityai/stable-audio-3-optimized)
 (only the `MLX/*` files) and cached locally; you can also pre-download them from the
 Models Manager.
+
+### ACE-Step 1.5 (music generation)
+
+The ACE-Step nodes wrap the official [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5)
+project, which uses MLX for the diffusion transformer, VAE and language model on
+Apple Silicon. ACE-Step 1.5 is **not** distributed on PyPI (the `ace-step` package
+there is the older 1.0 release), so it must be installed separately:
+
+```bash
+git clone https://github.com/ace-step/ACE-Step-1.5.git
+cd ACE-Step-1.5
+uv sync   # installs the macOS/MLX dependencies
+```
+
+Install it into the same environment as `nodetool-mlx`. If the package is missing,
+the nodes raise a clear error pointing back to the repository.
+
+Checkpoints are downloaded automatically from HuggingFace on first use into
+`~/.cache/nodetool/acestep/checkpoints` (override with the `ACESTEP_CHECKPOINTS_DIR`
+environment variable). The main bundle `ACE-Step/Ace-Step1.5` includes the VAE, the
+turbo DiT and the 1.7B planner LM; additional DiT and LM checkpoints are listed as
+recommended models on each node.
 
 
 ## Requirements
