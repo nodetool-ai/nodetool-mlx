@@ -48,6 +48,10 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 - `MFlux` and the `MFlux*` family – FLUX.1 / Qwen-Image / Z-Image / FIBO generation
   and editing via the MFlux project (supports quantized models)
 
+### Image-to-Text (`mlx.image_to_text`)
+
+- `MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen-VL, LLaVA)
+
 ### Text (`mlx.text_generation`)
 
 - `TextGeneration` – local LLM text generation via `mlx-lm`
