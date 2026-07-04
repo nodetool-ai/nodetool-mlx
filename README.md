@@ -1,6 +1,6 @@
 # nodetool-mlx
 
-High-performance MLX-native nodes for [Nodetool](https://github.com/nodetool-ai/nodetool) on Apple Silicon. This package wraps the community MLX implementations of Whisper, Kokoro/Sesame TTS, and MFlux FLUX.1 image generation so you can run state-of-the-art audio and vision workflows locally on macOS.
+High-performance MLX-native nodes for [Nodetool](https://github.com/nodetool-ai/nodetool) on Apple Silicon. This package wraps the community MLX implementations of Whisper, Kokoro/Sesame TTS, MFlux FLUX.1 image generation, and Stability AI's Stable Audio 3 so you can run state-of-the-art audio and vision workflows locally on macOS.
 
 ## Why nodetool-mlx?
 
@@ -52,9 +52,30 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 
 - `MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen-VL, LLaVA)
 
+### Text-to-Audio (`mlx.text_to_audio`)
+
+- `StableAudio3` – text-to-audio music & sound effects with [Stable Audio 3](https://github.com/Stability-AI/stable-audio-3) (44.1 kHz stereo)
+- `StableAudio3AudioToAudio` – prompt-guided variations of an input clip
+- `StableAudio3Inpaint` – regenerate a time range inside an audio clip
+
 ### Text (`mlx.text_generation`)
 
 - `TextGeneration` – local LLM text generation via `mlx-lm`
+
+### Stable Audio 3
+
+The Stable Audio 3 nodes run Stability AI's optimized MLX implementation (no PyTorch at
+runtime), vendored under `nodetool.mlx.stable_audio_3` (MIT licensed — see that folder's
+`LICENSE` and `NOTICE.md`). Three DiT variants are available via the **model** field:
+
+- `sm-music` (50M) – fast music generation
+- `sm-sfx` (50M) – sound effects
+- `medium` (1.4B) – higher-fidelity music
+
+Weights are pulled on demand from the Hugging Face repo
+[`stabilityai/stable-audio-3-optimized`](https://huggingface.co/stabilityai/stable-audio-3-optimized)
+(only the `MLX/*` files) and cached locally; you can also pre-download them from the
+Models Manager.
 
 
 ## Requirements

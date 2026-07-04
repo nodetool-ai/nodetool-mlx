@@ -11,6 +11,7 @@ authors = [{ name = "Matthias Georgi", email = "matti.georgi@gmail.com" }]
 requires-python = ">=3.11"
 dependencies = [
     "nodetool-core>=0.7.0",
+    "mlx>=0.30",
     "mlx-whisper>=0.4.3",
     "mlx-audio>=0.4.4",
     "mflux>=0.17.5",
@@ -18,6 +19,8 @@ dependencies = [
     "numpy>=1.26",
     "mlx-lm>=0.31.1",
     "mlx-vlm>=0.4.4",
+    # Stable Audio 3 T5Gemma tokenizer
+    "sentencepiece>=0.2",
     # Pin numba to Python 3.11+ compatible version to override mlx-whisper's old dependency
     "numba>=0.62.1",
 ]
@@ -46,5 +49,16 @@ packages = ["src/nodetool"]
 include = [
     "src/nodetool/package_metadata/*.json",
     "src/nodetool/assets/**/*.jpg",
+    "src/nodetool/mlx/stable_audio_3/LICENSE",
+    "src/nodetool/mlx/stable_audio_3/NOTICE.md",
 ]
 artifacts = ["package_metadata/nodetool-mlx.json"]
+
+# The Stable Audio 3 model definitions under stable_audio_3/defs are vendored
+# verbatim from Stability AI's MIT-licensed MLX implementation. Keep them out of
+# our linters/formatters so they stay byte-for-byte diffable against upstream.
+[tool.ruff]
+extend-exclude = ["src/nodetool/mlx/stable_audio_3/defs"]
+
+[tool.black]
+extend-exclude = "src/nodetool/mlx/stable_audio_3/defs"
