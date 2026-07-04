@@ -21,7 +21,6 @@ from nodetool.workflows.types import NodeProgress
 if TYPE_CHECKING:
     import numpy as np
     import PIL.Image
-    from mflux.callbacks.callback import InLoopCallback
     from mflux.models.common.config import Config, ModelConfig
     from mflux.models.flux.variants.txt2img.flux import Flux1
     from mflux.utils.image_util import ImageUtil
@@ -59,17 +58,41 @@ class BaseMFluxNode(BaseNode):
         if not prompt.strip():
             raise ValueError(message)
 
+    # Private attributes that may hold the loaded MFLUX model across the various
+    # node families. Each model instance owns its own ``CallbackRegistry`` at
+    # ``model.callbacks`` (mflux >= 0.17), which is the registry the generation
+    # loop iterates.
+    _MODEL_ATTRS: ClassVar[tuple[str, ...]] = (
+        "_flux_model",
+        "_flux2_model",
+        "_fibo_model",
+        "_qwen_model",
+        "_zimage_model",
+        "_seedvr2_model",
+    )
+
+    def _active_model(self) -> Any | None:
+        for attr in self._MODEL_ATTRS:
+            model = getattr(self, attr, None)
+            if model is not None:
+                return model
+        return None
+
     def _register_progress_callback(
         self,
         context: ProcessingContext,
         total_steps: int,
-    ) -> "InLoopCallback":
-        from mflux.callbacks.callback import InLoopCallback
-        from mflux.callbacks.callback_registry import CallbackRegistry
+    ) -> Any:
+        # mflux registers callbacks per-model on ``model.callbacks``; a callback
+        # is any object exposing ``call_in_loop`` (duck-typed by the registry).
+        model = self._active_model()
+        registry = getattr(model, "callbacks", None) if model is not None else None
+        if registry is None:
+            return None
 
         node_id = self.id
 
-        class Callback(InLoopCallback):
+        class Callback:
             def call_in_loop(
                 self,
                 t: int,
@@ -88,15 +111,18 @@ class BaseMFluxNode(BaseNode):
                 )
 
         callback = Callback()
-        CallbackRegistry.register_in_loop(callback)
+        registry.register(callback)
         return callback
 
-    @staticmethod
-    def _remove_progress_callback(callback: "InLoopCallback") -> None:
-        from mflux.callbacks.callback_registry import CallbackRegistry
-
+    def _remove_progress_callback(self, callback: Any) -> None:
+        if callback is None:
+            return
+        model = self._active_model()
+        registry = getattr(model, "callbacks", None) if model is not None else None
+        if registry is None:
+            return
         with contextlib.suppress(ValueError):
-            CallbackRegistry.in_loop_callbacks().remove(callback)
+            registry.in_loop_callbacks().remove(callback)
 
 
 class MFlux(BaseMFluxNode):

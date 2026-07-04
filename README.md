@@ -10,15 +10,54 @@ High-performance MLX-native nodes for [Nodetool](https://github.com/nodetool-ai/
 
 ## Provided Nodes
 
-All nodes live under `src/nodetool/nodes/mlx`:
+All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
+[`mlx-audio`](https://github.com/Blaizzy/mlx-audio) library.
 
-- `mlx.whisper.MLXWhisper` – streaming speech-to-text using MLX Whisper checkpoints
-- `mlx.tts.TTS` – Kokoro and Sesame text-to-speech with optional chunked audio streaming
-- `mlx.mflux.ImageGeneration` – FLUX.1 image generation via the MFlux project (supports quantized models)
-- `mlx.text_to_music.ACEStepMusicGeneration` – local text-to-music generation with [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) (prompt + lyrics → full songs)
-- `mlx.text_to_music.ACEStepSongPlanner` – use the ACE-Step 5Hz language model to turn an idea into a caption, lyrics and musical metadata
+### Text-to-Speech (`mlx.text_to_speech`)
 
-### ACE-Step 1.5 (music generation)
+- `KokoroTTS` – fast multilingual TTS with 54 voice presets
+- `SesameTTS` – CSM voice cloning from a reference clip
+- `SparkTTS` – controllable speed / pitch / gender presets
+- `Qwen3TTS` – multilingual TTS with speaker voices and voice design
+- `KittenTTS` – compact, edge-friendly English voices
+- `DiaTTS` – dialogue TTS with `[S1]` / `[S2]` speaker tags
+- `OuteTTS` – efficient multilingual TTS with optional cloning
+- `OmniVoiceTTS` – zero-shot multilingual (646+ languages)
+- `MeloTTS` – lightweight VITS2 English accents
+- `VoxtralTTS` – Mistral's multilingual TTS with voice presets
+- `ChatterboxTTS` – expressive TTS with exaggeration control and cloning
+- `HiggsAudioTTS` – conversational TTS with zero-shot cloning
+- `LongCatAudioTTS` – diffusion TTS with zero-shot cloning
+- `MLXTextToSpeech` – generic node that runs any `mlx-audio` TTS repo id
+
+### Speech-to-Text (`mlx.automatic_speech_recognition`, `mlx.speech_to_text`)
+
+- `Whisper` – MLX Whisper transcription with optional word timestamps
+- `Parakeet` – NVIDIA Parakeet high-accuracy multilingual ASR
+- `Qwen3ASR` – Alibaba's multilingual ASR with long-form chunking
+- `Qwen3ForcedAligner` – word-level timestamp alignment for a known transcript
+- `MLXSpeechToText` – generic node that runs any `mlx-audio` STT repo id
+
+### Speech Enhancement (`mlx.speech_enhancement`)
+
+- `DeepFilterNet` – real-time noise suppression (v1/v2/v3) at 48 kHz
+- `MossFormer2` – high-quality 48 kHz speech enhancement
+
+### Image (`mlx.text_to_image`, `mlx.image_to_image`)
+
+- `MFlux` and the `MFlux*` family – FLUX.1 / Qwen-Image / Z-Image / FIBO generation
+  and editing via the MFlux project (supports quantized models)
+
+### Text (`mlx.text_generation`)
+
+- `TextGeneration` – local LLM text generation via `mlx-lm`
+
+### Music (`mlx.text_to_music`)
+
+- `ACEStepMusicGeneration` – local text-to-music generation with [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) (prompt + lyrics → full songs)
+- `ACEStepSongPlanner` – use the ACE-Step 5Hz language model to turn an idea into a caption, lyrics and musical metadata
+
+#### ACE-Step 1.5 setup
 
 The ACE-Step nodes wrap the official [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5)
 project, which uses MLX for the diffusion transformer, VAE and language model on

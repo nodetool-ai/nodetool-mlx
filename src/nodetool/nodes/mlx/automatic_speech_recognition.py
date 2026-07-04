@@ -7,13 +7,16 @@ import sys
 from typing import TYPE_CHECKING, Any, ClassVar, Optional, TypedDict
 from pydantic import Field
 
-from nodetool.metadata.types import AudioRef, HuggingFaceModel
+from nodetool.metadata.types import (
+    AudioRef,
+    HFAutomaticSpeechRecognition,
+    HuggingFaceModel,
+)
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
 if TYPE_CHECKING:
     import numpy as np
-    from huggingface_hub import try_to_load_from_cache
 
 log = logging.getLogger(__name__)
 
@@ -46,8 +49,8 @@ class Whisper(BaseNode):
         DISTIL_MEDIUM_EN = "mlx-community/distil-whisper-medium.en"
         DISTIL_SMALL_EN = "mlx-community/distil-whisper-small.en"
 
-    model: Model = Field(
-        default=Model.TINY_EN,
+    model: HFAutomaticSpeechRecognition = Field(
+        default=HFAutomaticSpeechRecognition(repo_id=Model.TINY_EN.value),
         description="Model to use for transcription",
     )
 
@@ -114,13 +117,15 @@ class Whisper(BaseNode):
         segments: list
 
     async def preload_model(self, context: ProcessingContext):
-        from huggingface_hub import scan_cache_dir
+        from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
-        cache = scan_cache_dir()
-        found = any(r.repo_id == self.model.value for r in cache.repos)
-        if not found:
+        loop = asyncio.get_running_loop()
+        found = await loop.run_in_executor(
+            None, find_cached_snapshot, self.model.repo_id, "config.json"
+        )
+        if found is None:
             raise ValueError(
-                f"Model {self.model.value} must be downloaded first, check recommended models"
+                f"Model {self.model.repo_id} must be downloaded first, check recommended models"
             )
 
     async def process(self, context: ProcessingContext) -> OutputType:
@@ -147,7 +152,7 @@ class Whisper(BaseNode):
         def _do_transcribe(audio: np.ndarray) -> dict[str, Any]:
             return mlx_whisper.transcribe(
                 audio,
-                path_or_hf_repo=self.model.value,
+                path_or_hf_repo=self.model.repo_id,
                 compression_ratio_threshold=self.compression_ratio_threshold,
                 logprob_threshold=self.logprob_threshold,
                 no_speech_threshold=self.no_speech_threshold,
@@ -175,4 +180,6 @@ class Whisper(BaseNode):
         These correspond to files listed on the HF repo page and are suitable
         for whisper.cpp bindings.
         """
-        return [HuggingFaceModel(repo_id=p.value, path=None) for p in cls.Model]
+        return [
+            HFAutomaticSpeechRecognition(repo_id=p.value, path=None) for p in cls.Model
+        ]
