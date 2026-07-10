@@ -150,12 +150,23 @@ Advanced users can still seed the Hugging Face cache manually, but using the UI 
 
 ## Development
 
-Run tests and lint checks before submitting PRs:
+### Running Tests
+
+Integration tests require macOS with Apple Silicon:
 
 ```bash
-pytest -q
+pytest tests/integration/ -v
+```
+
+Lint checks:
+
+```bash
 ruff check .
 black --check .
 ```
+
+### CI/CD
+
+Integration tests automatically run on GitHub Actions using macOS 14 (Sonoma) runners with Apple Silicon for pull requests and pushes to `main` or `develop` branches. See `.github/workflows/integration-tests.yml` for details.
 
 Please open issues or pull requests for bug fixes, new MLX models, or performance improvements. Contributions are welcome!
