@@ -21,20 +21,16 @@ The provider supports:
 
 import ast
 import asyncio
-import base64
 import json
 import logging
 import inspect
 from pathlib import Path
 import threading
-from dataclasses import dataclass
 import time
 from typing import (
     Any,
     AsyncGenerator,
     AsyncIterator,
-    Callable,
-    Iterable,
     List,
     Sequence,
 )
@@ -66,7 +62,6 @@ from nodetool.config.environment import Environment
 from nodetool.config.logging_config import get_logger
 from nodetool.ml.core.model_manager import ModelManager
 from nodetool.metadata.types import (
-    ASRModel,
     Message,
     Provider,
     ToolCall,

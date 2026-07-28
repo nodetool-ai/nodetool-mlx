@@ -24,7 +24,6 @@ from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
 
 if TYPE_CHECKING:
-    import mlx.core as mx
     import numpy as np
 
 log = logging.getLogger(__name__)
@@ -250,7 +249,6 @@ class BaseMLXTTS(BaseNode):
     def _encode_chunk(
         self, chunk: np.ndarray, sample_rate: int = 24_000
     ) -> tuple[Chunk, np.ndarray]:
-        import numpy as np
 
         audio_int16 = self._to_int16(chunk)
         chunk_msg = Chunk(

@@ -407,7 +407,7 @@ def test_find_cached_snapshot_returns_none_when_absent(monkeypatch):
 
 
 async def test_tts_preload_accepts_revision_only_cache(monkeypatch, tmp_path):
-    import mlx_audio.tts.utils as tts_utils
+    tts_utils = pytest.importorskip("mlx_audio.tts.utils")
 
     rid = "mlx-community/kitten-tts-nano-0.8"
     snap = tmp_path / "snap"
@@ -435,7 +435,7 @@ async def test_tts_preload_accepts_revision_only_cache(monkeypatch, tmp_path):
 
 
 async def test_stt_preload_accepts_revision_only_cache(monkeypatch, tmp_path):
-    import mlx_audio.stt.utils as stt_utils
+    stt_utils = pytest.importorskip("mlx_audio.stt.utils")
 
     rid = "mlx-community/parakeet-tdt-0.6b-v3"
     snap = tmp_path / "snap"
@@ -511,7 +511,7 @@ def test_configure_espeak_is_noop_without_phonemizer(monkeypatch):
 
 
 async def test_tts_preload_configures_espeak(monkeypatch, tmp_path):
-    import mlx_audio.tts.utils as tts_utils
+    tts_utils = pytest.importorskip("mlx_audio.tts.utils")
 
     rid = "mlx-community/kitten-tts-nano-0.8"
     snap = tmp_path / "snap"

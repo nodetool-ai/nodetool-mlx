@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import sys
+
 import pytest
 from PIL import Image as PILImage
 
@@ -41,7 +43,9 @@ def _mock_context() -> MagicMock:
 @pytest.fixture(autouse=True)
 def _force_darwin(monkeypatch):
     # The MFLUX nodes refuse to run off macOS; pretend we're on Apple Silicon.
-    monkeypatch.setattr(i2i.sys, "platform", "darwin")
+    # The guard lives on the shared base in ``text_to_image``, so patch the
+    # stdlib module rather than a re-export that the node module may not keep.
+    monkeypatch.setattr(sys, "platform", "darwin")
 
 
 async def test_redux_forwards_redux_image_paths():
@@ -67,9 +71,9 @@ class _FakeModelWithRegistry:
     """A stand-in MFLUX model carrying a real per-model CallbackRegistry."""
 
     def __init__(self):
-        from mflux.callbacks.callback_registry import CallbackRegistry
+        registry_mod = pytest.importorskip("mflux.callbacks.callback_registry")
 
-        self.callbacks = CallbackRegistry()
+        self.callbacks = registry_mod.CallbackRegistry()
 
 
 def test_progress_callback_registers_reports_and_removes():

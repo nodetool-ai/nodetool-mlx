@@ -3,9 +3,7 @@ from __future__ import annotations
 import asyncio
 import random
 import sys
-import tempfile
 from enum import IntEnum
-from pathlib import Path
 from typing import Any, ClassVar, TYPE_CHECKING
 
 from pydantic import Field
@@ -18,11 +16,8 @@ from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import NodeProgress
 
 if TYPE_CHECKING:
-    import numpy as np
     import PIL.Image
-    from mflux.models.common.config import Config, ModelConfig
     from mflux.models.flux.variants.txt2img.flux import Flux1
-    from mflux.utils.image_util import ImageUtil
 
 log = get_logger(__name__)
 
@@ -270,7 +265,6 @@ class MFlux(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
             from mflux.models.flux.variants.txt2img.flux import Flux1
 
             assert self._flux_model is not None
