@@ -29,7 +29,10 @@ jobs:
           cache: pip
 
       - name: Install linters
-        run: pip install --upgrade ruff black
+        # Pinned: an unpinned linter turns an upstream release into a red build
+        # on an unrelated PR. Bump deliberately, fixing any new findings in the
+        # same change. Keep in sync with requirements-dev.txt.
+        run: pip install "ruff==0.15.8" "black==26.3.1"
 
       - name: ruff
         run: ruff check .
