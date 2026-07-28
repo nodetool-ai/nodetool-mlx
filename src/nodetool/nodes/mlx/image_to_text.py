@@ -28,7 +28,7 @@ class MLXVisionLanguage(BaseNode):
     - Generate captions or detailed descriptions for an image
     - Visual question answering (VQA) about the contents of an image
     - OCR-style reading and document understanding without external APIs
-    - Local multimodal understanding on Apple Silicon (Qwen-VL, LLaVA, etc.)
+    - Local multimodal understanding on Apple Silicon (Qwen3-VL, Gemma 4, etc.)
     """
 
     _body: ClassVar[str] = "content_card"
@@ -43,7 +43,7 @@ class MLXVisionLanguage(BaseNode):
         description="Image to analyze.",
     )
     model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="mlx-community/Qwen2.5-VL-3B-Instruct-4bit"),
+        default=HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-4B-Instruct-4bit"),
         description="MLX vision-language model to load from the local Hugging Face cache.",
     )
     max_tokens: int = Field(
@@ -196,8 +196,12 @@ class MLXVisionLanguage(BaseNode):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HuggingFaceModel(repo_id="mlx-community/Qwen2.5-VL-3B-Instruct-4bit"),
-            HuggingFaceModel(repo_id="mlx-community/Qwen2.5-VL-7B-Instruct-4bit"),
-            HuggingFaceModel(repo_id="mlx-community/Qwen2.5-VL-7B-Instruct-8bit"),
-            HuggingFaceModel(repo_id="mlx-community/llava-1.5-7b-4bit"),
+            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-2B-Instruct-4bit"),
+            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-4B-Instruct-4bit"),
+            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-4B-Instruct-8bit"),
+            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-8B-Instruct-4bit"),
+            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-8B-Instruct-8bit"),
+            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-30B-A3B-Instruct-4bit"),
+            HuggingFaceModel(repo_id="mlx-community/gemma-4-e4b-it-4bit"),
+            HuggingFaceModel(repo_id="mlx-community/gemma-4-12B-it-4bit"),
         ]

@@ -50,7 +50,7 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 
 ### Image-to-Text (`mlx.image_to_text`)
 
-- `MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen-VL, LLaVA)
+- `MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen3-VL, Gemma 4)
 
 ### Text-to-Audio (`mlx.text_to_audio`)
 

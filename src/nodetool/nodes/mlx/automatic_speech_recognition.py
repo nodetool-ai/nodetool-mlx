@@ -47,7 +47,6 @@ class Whisper(BaseNode):
         LARGE_V3_TURBO_Q4 = "mlx-community/whisper-large-v3-turbo-q4"
         DISTIL_LARGE_V3 = "mlx-community/distil-whisper-large-v3"
         DISTIL_MEDIUM_EN = "mlx-community/distil-whisper-medium.en"
-        DISTIL_SMALL_EN = "mlx-community/distil-whisper-small.en"
 
     model: HFAutomaticSpeechRecognition = Field(
         default=HFAutomaticSpeechRecognition(repo_id=Model.TINY_EN.value),

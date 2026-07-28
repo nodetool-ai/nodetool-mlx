@@ -214,12 +214,18 @@ class MossFormer2(BaseMLXSpeechEnhancement):
     _expose_as_tool: ClassVar[bool] = True
 
     class Model(str, Enum):
-        MOSSFORMER2_SE_48K = "starkdmi/MossFormer2_SE_48K_MLX"
-        MOSSFORMER2_SE_48K_8BIT = "starkdmi/MossFormer2_SE_48K_MLX-8bit"
-        MOSSFORMER2_SE_48K_4BIT = "starkdmi/MossFormer2_SE_48K_MLX-4bit"
+        # ``starkdmi/MossFormer2_SE_48K_MLX`` is the legacy layout: a bare bag of
+        # ``model_*.safetensors`` with no ``config.json``, which mlx-audio cannot
+        # load. The ``MossFormer2-SE*`` repos are the maintained per-precision
+        # conversions and each ship ``config.json`` + ``model.safetensors``.
+        MOSSFORMER2_SE = "starkdmi/MossFormer2-SE"
+        MOSSFORMER2_SE_FP16 = "starkdmi/MossFormer2-SE-fp16"
+        MOSSFORMER2_SE_8BIT = "starkdmi/MossFormer2-SE-8bit"
+        MOSSFORMER2_SE_6BIT = "starkdmi/MossFormer2-SE-6bit"
+        MOSSFORMER2_SE_4BIT = "starkdmi/MossFormer2-SE-4bit"
 
     model: HFAudioToAudio = Field(
-        default=HFAudioToAudio(repo_id=Model.MOSSFORMER2_SE_48K.value),
+        default=HFAudioToAudio(repo_id=Model.MOSSFORMER2_SE_FP16.value),
         description="MossFormer2 speech enhancement model variant.",
     )
 

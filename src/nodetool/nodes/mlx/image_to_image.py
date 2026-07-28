@@ -167,7 +167,7 @@ class MFluxImageToImage(BaseMFluxNode):
 
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux"
+        cache_key = f"{self.model.repo_id}_flux_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -363,7 +363,7 @@ class MFluxControlNet(BaseMFluxNode):
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
         cache_key = (
-            f"{self.model.repo_id}:{self.controlnet_model.repo_id}_flux-controlnet"
+            f"{self.model.repo_id}:{self.controlnet_model.repo_id}_flux-controlnet_q{quantize_value}"
         )
 
         model = ModelManager.get_model(cache_key)
@@ -553,7 +553,7 @@ class MFluxInpaint(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-fill"
+        cache_key = f"{self.model.repo_id}_flux-fill_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -755,7 +755,7 @@ class MFluxOutpaint(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-fill"
+        cache_key = f"{self.model.repo_id}_flux-fill_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -992,7 +992,7 @@ class MFluxDepth(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-depth"
+        cache_key = f"{self.model.repo_id}_flux-depth_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1215,7 +1215,7 @@ class MFluxRedux(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-redux"
+        cache_key = f"{self.model.repo_id}_flux-redux_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1408,7 +1408,7 @@ class MFluxKontext(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-kontext"
+        cache_key = f"{self.model.repo_id}_flux-kontext_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1596,7 +1596,7 @@ class MFluxFlux2(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = self.lora_path or "none"
-        cache_key = f"{self.model.repo_id}_{lora_key}_flux2"
+        cache_key = f"{self.model.repo_id}_{lora_key}_flux2_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1778,7 +1778,7 @@ class MFluxFlux2Edit(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = self.lora_path or "none"
-        cache_key = f"{self.model.repo_id}_{lora_key}_flux2-edit"
+        cache_key = f"{self.model.repo_id}_{lora_key}_flux2-edit_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1979,7 +1979,7 @@ class MFluxFIBO(BaseMFluxNode):
             if self.lora_scales
             else "none"
         )
-        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2180,7 +2180,7 @@ class MFluxFIBOEdit(BaseMFluxNode):
             if self.lora_scales
             else "none"
         )
-        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo-edit"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo-edit_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2392,7 +2392,7 @@ class MFluxQwenImage(BaseMFluxNode):
             if self.lora_scales
             else "none"
         )
-        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2578,7 +2578,7 @@ class MFluxQwenImageEdit(BaseMFluxNode):
             if self.lora_scales
             else "none"
         )
-        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image-edit"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image-edit_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2775,7 +2775,7 @@ class MFluxZImage(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = self.lora_path or "none"
-        cache_key = f"{self.model.repo_id}_{lora_key}_z-image"
+        cache_key = f"{self.model.repo_id}_{lora_key}_z-image_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2944,7 +2944,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = self.lora_path or "none"
-        cache_key = f"{self.model.repo_id}_{lora_key}_z-image-turbo"
+        cache_key = f"{self.model.repo_id}_{lora_key}_z-image-turbo_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -3082,7 +3082,7 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_seedvr2"
+        cache_key = f"{self.model.repo_id}_seedvr2_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -3162,7 +3162,6 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
             HuggingFaceModel(repo_id="numz/SeedVR2_comfyUI"),
-            HuggingFaceModel(repo_id="numz/SeedVR2-7B"),
         ]
 
 
@@ -3278,7 +3277,7 @@ class MFluxInContext(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         style_key = self.style.value if self.style else "none"
-        cache_key = f"{self.model.repo_id}_{style_key}_flux-in-context"
+        cache_key = f"{self.model.repo_id}_{style_key}_flux-in-context_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
