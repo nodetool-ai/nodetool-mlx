@@ -1,5 +1,7 @@
 # nodetool-mlx
 
+[![CI](https://github.com/nodetool-ai/nodetool-mlx/actions/workflows/ci.yml/badge.svg)](https://github.com/nodetool-ai/nodetool-mlx/actions/workflows/ci.yml)
+
 High-performance MLX-native nodes for [Nodetool](https://github.com/nodetool-ai/nodetool) on Apple Silicon. This package wraps the community MLX implementations of Whisper, Kokoro/Sesame TTS, MFlux FLUX.1 image generation, and Stability AI's Stable Audio 3 so you can run state-of-the-art audio and vision workflows locally on macOS.
 
 ## Why nodetool-mlx?
@@ -50,7 +52,7 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 
 ### Image-to-Text (`mlx.image_to_text`)
 
-- `MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen-VL, LLaVA)
+- `MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen3-VL, Gemma 4)
 
 ### Text-to-Audio (`mlx.text_to_audio`)
 
@@ -145,7 +147,7 @@ Advanced users can still seed the Hugging Face cache manually, but using the UI 
 ## Usage
 
 1. Install `nodetool-core` and this package in the same environment
-2. Run `nodetool package scan` to generate package metadata
+2. Run `nodetool-pkg scan --write --enrich` to generate package metadata
 3. Build workflows in the Nodetool UI using the `mlx` nodes
 
 ## Development
@@ -157,5 +159,33 @@ pytest -q
 ruff check .
 black --check .
 ```
+
+Most of the suite is written to run on any platform: the MLX runtimes are
+imported lazily and the node logic is exercised against mocks. The handful of
+tests that need `mflux` or `mlx-audio` skip themselves when those Apple Silicon
+packages are unavailable, so a Linux run reports skips rather than failures.
+
+If you change a node's `get_recommended_models()`, regenerate the committed
+package metadata:
+
+```bash
+nodetool-pkg scan --write --enrich
+```
+
+`tests/test_package_metadata.py` fails when the two drift apart — the Nodetool
+UI reads that file to populate the model picker, so a stale entry becomes a
+model users cannot select or a download offer for a repository that no longer
+exists.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs on every pull request:
+
+| Job | Runner | What it covers |
+| --- | --- | --- |
+| Lint and format | ubuntu | `ruff check .` and `black --check .` |
+| Test (linux) | ubuntu, Python 3.11 + 3.12 | the platform-independent suite, installed with `--no-deps` |
+| Test (macOS) | macos-14 (Apple Silicon) | the full suite against the real MLX stack |
+| Build wheel | ubuntu | `python -m build` plus `twine check` |
 
 Please open issues or pull requests for bug fixes, new MLX models, or performance improvements. Contributions are welcome!

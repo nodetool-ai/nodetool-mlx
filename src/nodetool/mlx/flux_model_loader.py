@@ -5,19 +5,22 @@ This module provides a unified way to load Flux models across both nodes and ima
 with proper caching and availability checks.
 """
 
-import asyncio
-from typing import Any
+from __future__ import annotations
 
-from mflux.models.common.config import ModelConfig
-from mflux.models.flux.variants.controlnet.flux_controlnet import Flux1Controlnet
-from mflux.models.flux.variants.depth.flux_depth import Flux1Depth
-from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
-from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
-from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
-from mflux.models.flux.variants.txt2img.flux import Flux1
+import asyncio
+from typing import TYPE_CHECKING
+
 from nodetool.config.logging_config import get_logger
 from nodetool.integrations.huggingface.hf_cache import has_cached_files
 from nodetool.ml.core.model_manager import ModelManager
+
+if TYPE_CHECKING:  # pragma: no cover - import only for type checking
+    from mflux.models.flux.variants.controlnet.flux_controlnet import Flux1Controlnet
+    from mflux.models.flux.variants.depth.flux_depth import Flux1Depth
+    from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
+    from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
+    from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
+    from mflux.models.flux.variants.txt2img.flux import Flux1
 
 log = get_logger(__name__)
 
@@ -32,20 +35,24 @@ FLUX_MEMORY_ESTIMATES = {
     None: 34.0,  # Default/16-bit
 }
 
-def estimate_required_memory(quantize: int | None, is_controlnet: bool = False) -> float:
+
+def estimate_required_memory(
+    quantize: int | None, is_controlnet: bool = False
+) -> float:
     """Estimate the required memory in GB for loading the model."""
     base_mem = FLUX_MEMORY_ESTIMATES.get(quantize, 34.0)
-    
+
     # If quantization is not one of the standard values, estimate linearly
     if quantize not in FLUX_MEMORY_ESTIMATES and quantize is not None:
         # Rough linear interpolation: ~1.5GB per bit for 12B params + overhead
-        base_mem = quantize * 2.5 
-        
+        base_mem = quantize * 2.5
+
     if is_controlnet:
         # ControlNet adds extra parameters (approx 2-3GB for Flux ControlNet)
         base_mem += 3.0
-        
+
     return base_mem
+
 
 def check_memory_availability(required_gb: float):
     """
@@ -53,16 +60,17 @@ def check_memory_availability(required_gb: float):
     Raises MemoryError if insufficient memory.
     """
     import psutil
+
     vm = psutil.virtual_memory()
-    
+
     # Calculate available memory in GB
     # available includes memory that can be reclaimed (cache/buffers)
     available_gb = vm.available / (1024**3)
     total_gb = vm.total / (1024**3)
-    
+
     # 5% safety buffer
     buffer_gb = total_gb * 0.05
-    
+
     if available_gb < (required_gb + buffer_gb):
         raise MemoryError(
             f"Insufficient memory to load Flux model.\n"
@@ -72,10 +80,10 @@ def check_memory_availability(required_gb: float):
             f"Total System RAM: {total_gb:.1f} GB\n\n"
             f"Please close other applications or try a higher quantization level (e.g., 4-bit)."
         )
-        
-    log.info(f"Memory check passed: {available_gb:.1f} GB available, {required_gb:.1f} GB required")
-    
 
+    log.info(
+        f"Memory check passed: {available_gb:.1f} GB available, {required_gb:.1f} GB required"
+    )
 
 
 class FluxModelNotAvailableError(Exception):
@@ -100,7 +108,7 @@ def is_flux_model_available(model_id: str) -> bool:
     Check if a Flux model is available in the local HuggingFace cache.
 
     Args:
-        model_id: The HuggingFace repo ID (e.g., "apple/FLUX.1-schnell-4bit")
+        model_id: The HuggingFace repo ID (e.g., "black-forest-labs/FLUX.1-schnell")
 
     Returns:
         True if the model is cached locally, False otherwise
@@ -114,7 +122,7 @@ async def load_flux_model(
     node_id: str | None = None,
     task: str = "flux",
     force_reload: bool = False,
-) -> Flux1:
+) -> "Flux1":
     """
     Load a Flux model with proper caching and availability checks.
 
@@ -125,7 +133,7 @@ async def load_flux_model(
     4. Caches the loaded model for reuse
 
     Args:
-        model_id: The HuggingFace repo ID (e.g., "apple/FLUX.1-schnell-4bit")
+        model_id: The HuggingFace repo ID (e.g., "black-forest-labs/FLUX.1-schnell")
         quantize: Quantization level (3, 4, 5, 6, 8, or None)
         node_id: Optional node ID for ModelManager association
         task: Task identifier for ModelManager (default: "flux")
@@ -143,7 +151,7 @@ async def load_flux_model(
         raise FluxModelNotAvailableError(model_id)
 
     # Construct cache key
-    cache_key = f"{model_id}_{task}"
+    cache_key = f"{model_id}_{task}_q{quantize}"
 
     # Check ModelManager cache (unless forcing reload)
     if not force_reload:
@@ -158,11 +166,13 @@ async def load_flux_model(
 
     loop = asyncio.get_running_loop()
 
-    def _load() -> Flux1:
+    def _load() -> "Flux1":
         log.info(
             f"Loading Flux model {model_id} from local cache "
             f"(quantize={quantize if quantize is not None else 'none'})"
         )
+        from mflux.models.flux.variants.txt2img.flux import Flux1
+
         model = Flux1.from_name(
             model_name=model_id,
             quantize=quantize,
@@ -184,7 +194,7 @@ async def load_flux_controlnet_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Flux1Controlnet:
+) -> "Flux1Controlnet":
     """
     Load a Flux ControlNet model with proper caching and availability checks.
 
@@ -209,7 +219,7 @@ async def load_flux_controlnet_model(
         raise FluxModelNotAvailableError(controlnet_model_id)
 
     # Construct cache key
-    cache_key = f"{base_model_id}:{controlnet_model_id}_flux-controlnet"
+    cache_key = f"{base_model_id}:{controlnet_model_id}_flux-controlnet_q{quantize}"
 
     # Check ModelManager cache
     if not force_reload:
@@ -223,11 +233,16 @@ async def load_flux_controlnet_model(
 
     loop = asyncio.get_running_loop()
 
-    def _load() -> Flux1Controlnet:
+    def _load() -> "Flux1Controlnet":
         log.info(
             f"Loading Flux ControlNet model {base_model_id} with controlnet {controlnet_model_id} "
             f"(quantize={quantize if quantize is not None else 'none'})"
         )
+        from mflux.models.common.config import ModelConfig
+        from mflux.models.flux.variants.controlnet.flux_controlnet import (
+            Flux1Controlnet,
+        )
+
         model_config = ModelConfig.from_name(base_model_id)
         model_config.controlnet_model = controlnet_model_id
 
@@ -251,7 +266,7 @@ async def load_flux_fill_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Flux1Fill:
+) -> "Flux1Fill":
     """
     Load a Flux Fill (inpainting/outpainting) model.
 
@@ -268,7 +283,7 @@ async def load_flux_fill_model(
         raise FluxModelNotAvailableError(model_id)
 
     # Construct cache key
-    cache_key = f"{model_id}_flux-fill"
+    cache_key = f"{model_id}_flux-fill_q{quantize}"
 
     if not force_reload:
         cached_model = ModelManager.get_model(cache_key)
@@ -281,11 +296,13 @@ async def load_flux_fill_model(
 
     loop = asyncio.get_running_loop()
 
-    def _load() -> Flux1Fill:
+    def _load() -> "Flux1Fill":
         log.info(
             f"Loading Flux Fill model {model_id} "
             f"(quantize={quantize if quantize is not None else 'none'})"
         )
+        from mflux.models.flux.variants.fill.flux_fill import Flux1Fill
+
         model = Flux1Fill(quantize=quantize)
         return model
 
@@ -302,13 +319,13 @@ async def load_flux_depth_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Flux1Depth:
+) -> "Flux1Depth":
     """Load a Flux Depth model."""
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
     # Construct cache key
-    cache_key = f"{model_id}_flux-depth"
+    cache_key = f"{model_id}_flux-depth_q{quantize}"
 
     if not force_reload:
         cached_model = ModelManager.get_model(cache_key)
@@ -321,11 +338,13 @@ async def load_flux_depth_model(
 
     loop = asyncio.get_running_loop()
 
-    def _load() -> Flux1Depth:
+    def _load() -> "Flux1Depth":
         log.info(
             f"Loading Flux Depth model {model_id} "
             f"(quantize={quantize if quantize is not None else 'none'})"
         )
+        from mflux.models.flux.variants.depth.flux_depth import Flux1Depth
+
         model = Flux1Depth(quantize=quantize)
         return model
 
@@ -342,13 +361,13 @@ async def load_flux_redux_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Flux1Redux:
+) -> "Flux1Redux":
     """Load a Flux Redux model."""
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
     # Construct cache key
-    cache_key = f"{model_id}_flux-redux"
+    cache_key = f"{model_id}_flux-redux_q{quantize}"
 
     if not force_reload:
         cached_model = ModelManager.get_model(cache_key)
@@ -361,11 +380,14 @@ async def load_flux_redux_model(
 
     loop = asyncio.get_running_loop()
 
-    def _load() -> Flux1Redux:
+    def _load() -> "Flux1Redux":
         log.info(
             f"Loading Flux Redux model {model_id} "
             f"(quantize={quantize if quantize is not None else 'none'})"
         )
+        from mflux.models.common.config import ModelConfig
+        from mflux.models.flux.variants.redux.flux_redux import Flux1Redux
+
         model_config = ModelConfig.dev_redux()
         model = Flux1Redux(
             model_config=model_config,
@@ -386,13 +408,13 @@ async def load_flux_kontext_model(
     quantize: int | None = 4,
     node_id: str | None = None,
     force_reload: bool = False,
-) -> Flux1Kontext:
+) -> "Flux1Kontext":
     """Load a Flux Kontext model."""
     if not is_flux_model_available(model_id):
         raise FluxModelNotAvailableError(model_id)
 
     # Construct cache key
-    cache_key = f"{model_id}_flux-kontext"
+    cache_key = f"{model_id}_flux-kontext_q{quantize}"
 
     if not force_reload:
         cached_model = ModelManager.get_model(cache_key)
@@ -405,11 +427,13 @@ async def load_flux_kontext_model(
 
     loop = asyncio.get_running_loop()
 
-    def _load() -> Flux1Kontext:
+    def _load() -> "Flux1Kontext":
         log.info(
             f"Loading Flux Kontext model {model_id} "
             f"(quantize={quantize if quantize is not None else 'none'})"
         )
+        from mflux.models.flux.variants.kontext.flux_kontext import Flux1Kontext
+
         model = Flux1Kontext(quantize=quantize)
         return model
 

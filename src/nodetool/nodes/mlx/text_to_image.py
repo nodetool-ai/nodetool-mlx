@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import random
 import sys
-import tempfile
 from enum import IntEnum
-from pathlib import Path
 from typing import Any, ClassVar, TYPE_CHECKING
 
 from pydantic import Field
@@ -19,11 +16,8 @@ from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import NodeProgress
 
 if TYPE_CHECKING:
-    import numpy as np
     import PIL.Image
-    from mflux.models.common.config import Config, ModelConfig
     from mflux.models.flux.variants.txt2img.flux import Flux1
-    from mflux.utils.image_util import ImageUtil
 
 log = get_logger(__name__)
 
@@ -115,14 +109,23 @@ class BaseMFluxNode(BaseNode):
         return callback
 
     def _remove_progress_callback(self, callback: Any) -> None:
+        # Called from a ``finally`` block, so it must never raise: the model is
+        # cached in the ModelManager and outlives the run, and letting an
+        # unregister failure propagate would discard the generated image.
         if callback is None:
             return
         model = self._active_model()
         registry = getattr(model, "callbacks", None) if model is not None else None
         if registry is None:
             return
-        with contextlib.suppress(ValueError):
+        try:
             registry.in_loop_callbacks().remove(callback)
+        except Exception:  # pragma: no cover - depends on the mflux version
+            log.debug(
+                "Could not unregister the MFlux progress callback; it will be "
+                "dropped on the next model load.",
+                exc_info=True,
+            )
 
 
 class MFlux(BaseMFluxNode):
@@ -220,7 +223,7 @@ class MFlux(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux"
+        cache_key = f"{self.model.repo_id}_flux_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -262,7 +265,6 @@ class MFlux(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
             from mflux.models.flux.variants.txt2img.flux import Flux1
 
             assert self._flux_model is not None

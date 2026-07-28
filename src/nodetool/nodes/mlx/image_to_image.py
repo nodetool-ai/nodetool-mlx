@@ -4,8 +4,6 @@ import asyncio
 import contextlib
 import gc
 import json
-import random
-import sys
 import tempfile
 from enum import Enum
 from pathlib import Path
@@ -15,7 +13,6 @@ from pydantic import Field
 
 from nodetool.config.logging_config import get_logger
 from nodetool.metadata.types import (
-    HFControlNet,
     HFControlNetFlux,
     HFFlux,
     HFFluxDepth,
@@ -30,9 +27,7 @@ from nodetool.nodes.mlx.text_to_image import BaseMFluxNode, QuantizationLevel
 from nodetool.workflows.processing_context import ProcessingContext
 
 if TYPE_CHECKING:
-    import numpy as np
     import PIL.Image
-    from mflux.models.common.config.model_config import ModelConfig
     from mflux.models.flux.variants.txt2img.flux import Flux1
     from mflux.models.flux.variants.controlnet.flux_controlnet import Flux1Controlnet
     from mflux.models.flux.variants.depth.flux_depth import Flux1Depth
@@ -49,7 +44,6 @@ if TYPE_CHECKING:
     from mflux.models.qwen.variants.edit.qwen_image_edit import QwenImageEdit
     from mflux.models.z_image.variants import ZImageTurbo
     from mflux.models.seedvr2.variants.upscale.seedvr2 import SeedVR2
-    from mflux.utils.image_util import ImageUtil
     from mflux.ui.box_values import BoxValues
 
 log = get_logger(__name__)
@@ -159,15 +153,15 @@ class MFluxImageToImage(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'image']
+        return ["prompt", "image"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux"
+        cache_key = f"{self.model.repo_id}_flux_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -354,17 +348,15 @@ class MFluxControlNet(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'control_image']
+        return ["prompt", "control_image"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = (
-            f"{self.model.repo_id}:{self.controlnet_model.repo_id}_flux-controlnet"
-        )
+        cache_key = f"{self.model.repo_id}:{self.controlnet_model.repo_id}_flux-controlnet_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -417,7 +409,6 @@ class MFluxControlNet(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
 
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                 control_path = Path(tmp.name)
@@ -541,11 +532,11 @@ class MFluxInpaint(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'image', 'mask']
+        return ["prompt", "image", "mask"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -553,7 +544,7 @@ class MFluxInpaint(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-fill"
+        cache_key = f"{self.model.repo_id}_flux-fill_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -743,11 +734,11 @@ class MFluxOutpaint(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'image', 'mask']
+        return ["prompt", "image", "mask"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -755,7 +746,7 @@ class MFluxOutpaint(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-fill"
+        cache_key = f"{self.model.repo_id}_flux-fill_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -801,7 +792,7 @@ class MFluxOutpaint(BaseMFluxNode):
             import PIL.Image
             import numpy as np
             from mflux.utils.image_util import ImageUtil
-            from mflux.ui.box_values import BoxValues, parse_box_value
+            from mflux.ui.box_values import parse_box_value
 
             working_image = base_image.convert("RGB")
 
@@ -980,11 +971,11 @@ class MFluxDepth(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'image', 'depth_image']
+        return ["prompt", "image", "depth_image"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -992,7 +983,7 @@ class MFluxDepth(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-depth"
+        cache_key = f"{self.model.repo_id}_flux-depth_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1203,11 +1194,11 @@ class MFluxRedux(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'redux_image']
+        return ["prompt", "redux_image"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1215,7 +1206,7 @@ class MFluxRedux(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-redux"
+        cache_key = f"{self.model.repo_id}_flux-redux_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1396,11 +1387,11 @@ class MFluxKontext(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'reference_image']
+        return ["prompt", "reference_image"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1408,7 +1399,7 @@ class MFluxKontext(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_flux-kontext"
+        cache_key = f"{self.model.repo_id}_flux-kontext_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1583,11 +1574,11 @@ class MFluxFlux2(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt']
+        return ["prompt"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1596,7 +1587,7 @@ class MFluxFlux2(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = self.lora_path or "none"
-        cache_key = f"{self.model.repo_id}_{lora_key}_flux2"
+        cache_key = f"{self.model.repo_id}_{lora_key}_flux2_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1643,7 +1634,6 @@ class MFluxFlux2(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
 
             assert self._flux2_model is not None
             generated_image = self._flux2_model.generate_image(
@@ -1765,11 +1755,11 @@ class MFluxFlux2Edit(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'images']
+        return ["prompt", "images"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1778,7 +1768,7 @@ class MFluxFlux2Edit(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = self.lora_path or "none"
-        cache_key = f"{self.model.repo_id}_{lora_key}_flux2-edit"
+        cache_key = f"{self.model.repo_id}_{lora_key}_flux2-edit_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -1838,7 +1828,6 @@ class MFluxFlux2Edit(BaseMFluxNode):
             temp_paths.append(temp_path)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
 
             assert self._flux2_model is not None
             image_paths = [str(p) for p in temp_paths]
@@ -1961,11 +1950,11 @@ class MFluxFIBO(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'negative_prompt']
+        return ["prompt", "negative_prompt"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1979,7 +1968,9 @@ class MFluxFIBO(BaseMFluxNode):
             if self.lora_scales
             else "none"
         )
-        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo"
+        cache_key = (
+            f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo_q{quantize_value}"
+        )
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2023,7 +2014,6 @@ class MFluxFIBO(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import mlx.core as mx
-            import PIL.Image
             from mflux.models.fibo_vlm.model.fibo_vlm import FiboVLM
 
             assert self._fibo_model is not None
@@ -2162,11 +2152,11 @@ class MFluxFIBOEdit(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'negative_prompt', 'image']
+        return ["prompt", "negative_prompt", "image"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2180,7 +2170,7 @@ class MFluxFIBOEdit(BaseMFluxNode):
             if self.lora_scales
             else "none"
         )
-        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo-edit"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_fibo-edit_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2232,7 +2222,6 @@ class MFluxFIBOEdit(BaseMFluxNode):
 
         def _generate() -> "PIL.Image.Image":
             import mlx.core as mx
-            import PIL.Image
             from mflux.models.fibo.variants.edit.util import FiboEditUtil
             from mflux.models.fibo_vlm.model.fibo_vlm import FiboVLM
 
@@ -2374,11 +2363,11 @@ class MFluxQwenImage(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'negative_prompt']
+        return ["prompt", "negative_prompt"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2392,7 +2381,7 @@ class MFluxQwenImage(BaseMFluxNode):
             if self.lora_scales
             else "none"
         )
-        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2437,7 +2426,6 @@ class MFluxQwenImage(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
 
             assert self._qwen_model is not None
             generated_image = self._qwen_model.generate_image(
@@ -2560,11 +2548,11 @@ class MFluxQwenImageEdit(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'negative_prompt', 'images']
+        return ["prompt", "negative_prompt", "images"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2578,7 +2566,7 @@ class MFluxQwenImageEdit(BaseMFluxNode):
             if self.lora_scales
             else "none"
         )
-        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image-edit"
+        cache_key = f"{self.model.repo_id}_{lora_key}_{lora_scale_key}_qwen-image-edit_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2637,7 +2625,6 @@ class MFluxQwenImageEdit(BaseMFluxNode):
             temp_paths.append(temp_path)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
 
             assert self._qwen_model is not None
             image_paths = [str(p) for p in temp_paths]
@@ -2762,11 +2749,11 @@ class MFluxZImage(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'negative_prompt']
+        return ["prompt", "negative_prompt"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2775,7 +2762,7 @@ class MFluxZImage(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = self.lora_path or "none"
-        cache_key = f"{self.model.repo_id}_{lora_key}_z-image"
+        cache_key = f"{self.model.repo_id}_{lora_key}_z-image_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2823,7 +2810,6 @@ class MFluxZImage(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
 
             assert self._zimage_model is not None
             return self._zimage_model.generate_image(
@@ -2931,11 +2917,11 @@ class MFluxZImageTurbo(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt']
+        return ["prompt"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt']
+        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2944,7 +2930,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         lora_key = self.lora_path or "none"
-        cache_key = f"{self.model.repo_id}_{lora_key}_z-image-turbo"
+        cache_key = f"{self.model.repo_id}_{lora_key}_z-image-turbo_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -2992,7 +2978,6 @@ class MFluxZImageTurbo(BaseMFluxNode):
         progress_callback = self._register_progress_callback(context, total_steps)
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
 
             assert self._zimage_model is not None
             return self._zimage_model.generate_image(
@@ -3070,11 +3055,11 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['image']
+        return ["image"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'resolution']
+        return ["model", "resolution"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -3082,7 +3067,7 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
         )
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
-        cache_key = f"{self.model.repo_id}_seedvr2"
+        cache_key = f"{self.model.repo_id}_seedvr2_q{quantize_value}"
 
         model = ModelManager.get_model(cache_key)
         if model is not None:
@@ -3131,7 +3116,6 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _generate() -> "PIL.Image.Image":
-            import PIL.Image
             from mflux.utils.scale_factor import ScaleFactor
 
             assert self._seedvr2_model is not None
@@ -3162,7 +3146,6 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
             HuggingFaceModel(repo_id="numz/SeedVR2_comfyUI"),
-            HuggingFaceModel(repo_id="numz/SeedVR2-7B"),
         ]
 
 
@@ -3265,11 +3248,11 @@ class MFluxInContext(BaseMFluxNode):
 
     @classmethod
     def get_input_fields(cls):
-        return ['prompt', 'reference_image']
+        return ["prompt", "reference_image"]
 
     @classmethod
     def get_inline_fields(cls):
-        return ['model', 'prompt', 'style']
+        return ["model", "prompt", "style"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -3278,7 +3261,9 @@ class MFluxInContext(BaseMFluxNode):
 
         quantize_value = int(self.quantize) if self.quantize is not None else None
         style_key = self.style.value if self.style else "none"
-        cache_key = f"{self.model.repo_id}_{style_key}_flux-in-context"
+        cache_key = (
+            f"{self.model.repo_id}_{style_key}_flux-in-context_q{quantize_value}"
+        )
 
         model = ModelManager.get_model(cache_key)
         if model is not None:

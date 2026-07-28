@@ -24,7 +24,6 @@ from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
 
 if TYPE_CHECKING:
-    import mlx.core as mx
     import numpy as np
 
 log = logging.getLogger(__name__)
@@ -250,7 +249,6 @@ class BaseMLXTTS(BaseNode):
     def _encode_chunk(
         self, chunk: np.ndarray, sample_rate: int = 24_000
     ) -> tuple[Chunk, np.ndarray]:
-        import numpy as np
 
         audio_int16 = self._to_int16(chunk)
         chunk_msg = Chunk(
@@ -855,7 +853,9 @@ class OuteTTS(BaseMLXTTS):
 
     class Model(str, Enum):
         OUTETTS_1_0_0_6B = "mlx-community/OuteTTS-1.0-0.6B-fp16"
-        OUTETTS_0_3_500M = "mlx-community/outetts-0.3-500M-bf16"
+        OUTETTS_1_0_0_6B_8BIT = "mlx-community/OuteTTS-1.0-0.6B-8bit"
+        LLAMA_OUTETTS_1_0_1B = "mlx-community/Llama-OuteTTS-1.0-1B-fp16"
+        LLAMA_OUTETTS_1_0_1B_8BIT = "mlx-community/Llama-OuteTTS-1.0-1B-8bit"
 
     model: HFTextToSpeech = Field(
         default=HFTextToSpeech(repo_id=Model.OUTETTS_1_0_0_6B.value),
@@ -1210,7 +1210,6 @@ class HiggsAudioTTS(BaseMLXTTS):
     _split_text_by_lines: ClassVar[bool] = False
 
     class Model(str, Enum):
-        HIGGS_V2_3B_BF16 = "mlx-community/higgs-audio-v2-3B-mlx-bf16"
         HIGGS_V2_3B_Q6 = "mlx-community/higgs-audio-v2-3B-mlx-q6"
         HIGGS_V2_3B_Q8 = "mlx-community/higgs-audio-v2-3B-mlx-q8"
 

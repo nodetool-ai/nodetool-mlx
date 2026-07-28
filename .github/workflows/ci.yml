@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# A new push to a PR makes the in-flight run obsolete.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint and format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install linters
+        # Pinned: an unpinned linter turns an upstream release into a red build
+        # on an unrelated PR. Bump deliberately, fixing any new findings in the
+        # same change. Keep in sync with requirements-dev.txt.
+        run: pip install "ruff==0.15.8" "black==26.3.1"
+
+      - name: ruff
+        run: ruff check .
+
+      - name: black
+        run: black --check --diff .
+
+  # The MLX runtimes (mlx, mflux, mlx-audio, ...) are Apple Silicon only, so the
+  # bulk of the suite is written to run without them and this job installs the
+  # package with --no-deps. It is the fast signal on every push, and it also
+  # covers the "node modules import without the MLX stack" property that the
+  # package metadata scanner relies on.
+  test-linux:
+    name: Test (linux, no MLX runtime)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install nodetool-core and test dependencies
+        run: |
+          pip install --upgrade pip
+          pip install "nodetool-core>=0.7.0"
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Install this package without the Apple-Silicon-only dependencies
+        run: pip install --no-deps -e .
+
+      - name: Run tests
+        # Tests needing mflux / mlx-audio skip themselves via importorskip.
+        run: pytest tests -q
+
+  # The real thing: Apple Silicon runners install the full dependency set, so
+  # nothing is skipped here. Slower and heavier, hence a single Python version.
+  test-macos:
+    name: Test (macOS, full MLX runtime)
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package with all dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .
+          pip install pytest pytest-asyncio pytest-cov
+
+      - name: Show installed MLX stack
+        run: pip list | grep -Ei "^(mlx|mflux|nodetool)" || true
+
+      - name: Run tests
+        run: pytest tests -q
+
+  build:
+    name: Build wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install build tooling
+        run: pip install --upgrade pip build twine
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Check distributions
+        run: twine check dist/*

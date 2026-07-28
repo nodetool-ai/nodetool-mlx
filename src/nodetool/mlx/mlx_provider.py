@@ -21,20 +21,16 @@ The provider supports:
 
 import ast
 import asyncio
-import base64
 import json
 import logging
 import inspect
 from pathlib import Path
 import threading
-from dataclasses import dataclass
 import time
 from typing import (
     Any,
     AsyncGenerator,
     AsyncIterator,
-    Callable,
-    Iterable,
     List,
     Sequence,
 )
@@ -66,7 +62,6 @@ from nodetool.config.environment import Environment
 from nodetool.config.logging_config import get_logger
 from nodetool.ml.core.model_manager import ModelManager
 from nodetool.metadata.types import (
-    ASRModel,
     Message,
     Provider,
     ToolCall,
@@ -102,6 +97,11 @@ log.setLevel(logging.DEBUG)
 
 
 DEFAULT_MLX_MODEL = "mlx-community/Qwen3.5-0.8B-OptiQ-4bit"
+
+# Longest side (in pixels) an image is downscaled to before being handed to a
+# vision-language model. Large enough to keep document text legible, small
+# enough to bound the vision encoder's cost.
+VLM_MAX_IMAGE_SIDE = 1024
 
 
 # Simple in-memory TTL cache for loaded MLX models: 5 minutes
@@ -1027,11 +1027,11 @@ class MLXProvider(BaseProvider):
                 ("mlx-community/Dia-1.6B", "Dia 1.6B"),
                 ("mlx-community/Dia-1.6B-fp16", "Dia 1.6B (fp16)"),
                 ("mlx-community/OuteTTS-1.0-0.6B-fp16", "OuteTTS 1.0 0.6B"),
-                ("mlx-community/outetts-0.3-500M-bf16", "OuteTTS 0.3 500M"),
+                ("mlx-community/Llama-OuteTTS-1.0-1B-fp16", "Llama-OuteTTS 1.0 1B"),
                 ("mlx-community/OmniVoice-bf16", "OmniVoice"),
                 ("mlx-community/chatterbox-fp16", "Chatterbox TTS"),
                 ("mlx-community/Chatterbox-TTS-fp16", "Chatterbox TTS (fp16)"),
-                ("mlx-community/higgs-audio-v2-3B-mlx-bf16", "Higgs Audio v2 3B"),
+                ("mlx-community/higgs-audio-v2-3B-mlx-q6", "Higgs Audio v2 3B (q6)"),
                 ("mlx-community/higgs-audio-v2-3B-mlx-q8", "Higgs Audio v2 3B (q8)"),
                 (
                     "mlx-community/LongCat-AudioDiT-1B-4bit",
@@ -1584,15 +1584,29 @@ class MLXProvider(BaseProvider):
         return "fibo-vlm" in name or name == "briaai/fibo-vlm"
 
     def _is_vision_model(self, model: str) -> bool:
+        # Only consulted when the request actually carries images, so a false
+        # positive surfaces a load error while a false negative silently drops
+        # the image and answers from the text alone. Recent mainline models
+        # (Gemma 4, Qwen3.5/3.6) are natively multimodal and carry no "-VL"
+        # marker in their repo id, so they have to be listed explicitly.
         name = (model or "").lower()
         keywords = (
             "qwen2-vl",
             "qwen2.5-vl",
+            "qwen3-vl",
             "qwen-vl",
+            "qwen3.5",
+            "qwen3.6",
             "llava",
             "idefics",
+            "smolvlm",
+            "internvl",
+            "pixtral",
+            "molmo",
             "vl-",
-            "gemma-3n",
+            "vlm",
+            "gemma-3",
+            "gemma-4",
         )
         return any(k in name for k in keywords)
 
@@ -1685,7 +1699,11 @@ class MLXProvider(BaseProvider):
         return audios
 
     async def _prepare_vlm_images(self, parts: list[MessageImageContent]) -> list[str]:
-        """Load images as PIL.Image objects in memory (no temp files)."""
+        """Decode images and persist them as temporary PNG files.
+
+        Returns the filesystem paths, which the caller is responsible for
+        removing once generation has finished.
+        """
         prepared_images: list[str] = []
         for part in parts:
             image_ref: ImageRef = part.image
@@ -1712,15 +1730,20 @@ class MLXProvider(BaseProvider):
                 continue
 
             try:
-                bytes_io = BytesIO()
                 img = PIL.Image.open(BytesIO(data))
                 img = img.convert("RGB")
-                img = img.resize((224, 224))
-                tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-                img.save(tmp, format="PNG")
+                # Downscale only very large images, and keep the aspect ratio:
+                # modern VLMs handle dynamic resolutions, and squashing every
+                # input to a fixed square destroys text and layout detail.
+                img.thumbnail(
+                    (VLM_MAX_IMAGE_SIDE, VLM_MAX_IMAGE_SIDE),
+                    PIL.Image.Resampling.LANCZOS,
+                )
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                    img.save(tmp, format="PNG")
                 prepared_images.append(tmp.name)
             except Exception:
-                pass
+                log.debug("Skipping an image that could not be prepared for the VLM")
 
         return prepared_images
 
@@ -1850,34 +1873,33 @@ class MLXProvider(BaseProvider):
                 verbose=False,
                 max_tokens=max_tokens,
             )
-            # Some versions may return objects; coerce to string
-            return result.text
+            # mlx-vlm has returned both a result object exposing ``.text`` and a
+            # bare string across versions.
+            text = getattr(result, "text", result)
+            return text if isinstance(text, str) else str(text)
 
-        # Serialize VLM generation to avoid concurrent Metal access
-        async with self._vlm_generation_lock:
-            try:
-                output: str = await asyncio.to_thread(_run_generate)
-            except Exception as exc:
-                log.exception("MLX-VLM generation error: %s", exc)
-                raise RuntimeError(f"mlx-vlm generation failed: {exc}")
+        try:
+            # Serialize VLM generation to avoid concurrent Metal access
+            async with self._vlm_generation_lock:
+                try:
+                    output: str = await asyncio.to_thread(_run_generate)
+                except Exception as exc:
+                    log.exception("MLX-VLM generation error: %s", exc)
+                    raise RuntimeError(f"mlx-vlm generation failed: {exc}")
 
-        log.debug(
-            "MLX-VLM generation ok | output_len=%d",
-            len(output) if isinstance(output, str) else -1,
-        )
-        yield Chunk(content=output, done=True)
-
-        for audio_path in audios:
-            try:
-                os.remove(audio_path)
-            except Exception:
-                pass
-
-        for image_path in images:
-            try:
-                os.remove(image_path)
-            except Exception:
-                pass
+            log.debug(
+                "MLX-VLM generation ok | output_len=%d",
+                len(output) if isinstance(output, str) else -1,
+            )
+            yield Chunk(content=output, done=True)
+        finally:
+            # Runs on the error path and on early generator close too, so the
+            # decoded assets never outlive the request.
+            for path in (*audios, *images):
+                try:
+                    os.remove(path)
+                except Exception:
+                    pass
         log.debug("MLX-VLM _stream_vlm_chat end | model=%s", model)
 
     # ------------------------------------------------------------------
