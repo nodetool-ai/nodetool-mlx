@@ -164,13 +164,25 @@ class MLXVisionLanguage(BaseNode):
                 num_images=1,
             )
 
-            generate_fn = mlx_vlm.generate.generate
-            sig_params = set(inspect.signature(generate_fn).parameters)
+            # `mlx_vlm.generate` is the function itself in 0.4.x and a module
+            # exposing `.generate` in older layouts.
+            generate_fn = mlx_vlm.generate
+            if not callable(generate_fn):
+                generate_fn = generate_fn.generate
+
+            signature = inspect.signature(generate_fn)
+            sig_params = set(signature.parameters)
+            # 0.4.x declares `**kwargs` and forwards sampling options from
+            # there, so a name absent from the signature is still accepted.
+            takes_kwargs = any(
+                param.kind is inspect.Parameter.VAR_KEYWORD
+                for param in signature.parameters.values()
+            )
             gen_kwargs: dict[str, Any] = {"verbose": False}
-            if "max_tokens" in sig_params:
+            if "max_tokens" in sig_params or takes_kwargs:
                 gen_kwargs["max_tokens"] = self.max_tokens
             # mlx-vlm has used both "temperature" and "temp" across versions.
-            if "temperature" in sig_params:
+            if "temperature" in sig_params or takes_kwargs:
                 gen_kwargs["temperature"] = self.temperature
             elif "temp" in sig_params:
                 gen_kwargs["temp"] = self.temperature
