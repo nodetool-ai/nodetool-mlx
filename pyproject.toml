@@ -17,7 +17,7 @@ dependencies = [
     "mflux>=0.18.1",
     "huggingface-hub>=0.24.6",
     "numpy>=1.26",
-    "mlx-lm>=0.31.1",
+    "mlx-lm>=0.31.3",
     "mlx-vlm>=0.4.4",
     # Stable Audio 3 T5Gemma tokenizer
     "sentencepiece>=0.2",

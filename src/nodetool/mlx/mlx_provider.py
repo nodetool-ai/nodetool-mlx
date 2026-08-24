@@ -21,6 +21,7 @@ The provider supports:
 
 import ast
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import json
 import logging
 import inspect
@@ -93,6 +94,16 @@ from nodetool.mlx.flux_model_loader import (
 )
 
 log = get_logger(__name__)
+
+# mlx-lm binds a Metal stream per thread, and a prompt cache built on one
+# thread cannot be evaluated on another: `stream_generate` then raises
+# "There is no Stream(gpu, N) in current thread." Loading with
+# `asyncio.to_thread` and generating on a fresh thread put the two on
+# different threads every time, so every mlx-lm generation failed. Pin both to
+# one thread. The generation lock above already serializes this work, so a
+# single worker costs no concurrency.
+_MLX_LM_THREAD = ThreadPoolExecutor(max_workers=1, thread_name_prefix="mlx-lm")
+
 log.setLevel(logging.DEBUG)
 
 
@@ -1359,7 +1370,7 @@ class MLXProvider(BaseProvider):
                         queue.put(("done", None)), loop
                     ).result()
 
-            threading.Thread(target=_run_stream, daemon=True).start()
+            _MLX_LM_THREAD.submit(_run_stream)
 
             tool_state = {
                 "buffer": "",
@@ -1493,7 +1504,9 @@ class MLXProvider(BaseProvider):
                         adapter_path=self.adapter_path,
                     )
 
-                mdl, tokenizer = await asyncio.to_thread(_load)
+                mdl, tokenizer = await asyncio.get_running_loop().run_in_executor(
+                    _MLX_LM_THREAD, _load
+                )
 
                 self._configure_tokenizer(tokenizer)
 
