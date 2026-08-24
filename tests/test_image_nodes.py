@@ -113,6 +113,91 @@ def test_progress_callback_uses_variant_model_attribute():
     assert callback in model.callbacks.in_loop_callbacks()
 
 
+def test_progress_callback_uses_krea2_model_attribute():
+    node = i2i.MFluxKrea2(prompt="x")
+    model = _FakeModelWithRegistry()
+    node._krea2_model = model
+
+    callback = node._register_progress_callback(MagicMock(), total_steps=8)
+    assert callback in model.callbacks.in_loop_callbacks()
+
+
+_SETTING_FIELDS = {
+    "quantize",
+    "steps",
+    "guidance",
+    "height",
+    "width",
+    "seed",
+    "lora_path",
+    "lora_scale",
+    "lora_paths",
+    "lora_scales",
+    "softness",
+}
+
+
+def _mflux_node_classes():
+    return [
+        cls
+        for cls in i2i.__dict__.values()
+        if isinstance(cls, type)
+        and issubclass(cls, i2i.BaseMFluxNode)
+        and cls is not i2i.BaseMFluxNode
+    ] + [__import__("nodetool.nodes.mlx.text_to_image", fromlist=["MFlux"]).MFlux]
+
+
+def test_mflux_input_fields_are_primary_only():
+    # HuggingFace image nodes only expose prompt/assets as handles. Settings
+    # such as steps and seed stay in the inspector.
+    for cls in _mflux_node_classes():
+        inputs = set(cls.get_input_fields())
+        leaked = inputs & _SETTING_FIELDS
+        assert not leaked, f"{cls.__name__} exposes setting handles: {sorted(leaked)}"
+        assert inputs, f"{cls.__name__} has no input handles"
+
+
+def test_mflux_basic_fields_stay_short():
+    for cls in _mflux_node_classes():
+        basic = cls.get_basic_fields()
+        leaked = set(basic) & {
+            "quantize",
+            "guidance",
+            "seed",
+            "lora_path",
+            "lora_scale",
+            "softness",
+        }
+        assert not leaked, f"{cls.__name__} lists settings as basic: {sorted(leaked)}"
+        assert "model" in basic, f"{cls.__name__} is missing model in basic fields"
+
+
+async def test_krea2_forwards_generate_args():
+    node = i2i.MFluxKrea2(
+        prompt="a red fox",
+        negative_prompt="blurry",
+        steps=8,
+        guidance=1.0,
+        height=1024,
+        width=1024,
+        seed=42,
+    )
+    node._krea2_model = _mock_flux_model()
+
+    result = await node.process(_mock_context())
+
+    assert result == "image-ref"
+    kwargs = node._krea2_model.generate_image.call_args.kwargs
+    assert kwargs["prompt"] == "a red fox"
+    assert kwargs["negative_prompt"] == "blurry"
+    assert kwargs["num_inference_steps"] == 8
+    assert kwargs["guidance"] == 1.0
+    assert kwargs["height"] == 1024
+    assert kwargs["width"] == 1024
+    assert kwargs["seed"] == 42
+    assert "image_path" not in kwargs
+
+
 async def test_kontext_forwards_image_path():
     node = i2i.MFluxKontext(
         prompt="an atmospheric scene",

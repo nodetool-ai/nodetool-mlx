@@ -13,7 +13,7 @@ from typing import Any, Callable, ClassVar, TYPE_CHECKING, TypedDict
 from pydantic import Field, PrivateAttr
 
 from nodetool.config.logging_config import get_logger
-from nodetool.metadata.types import AudioRef, HuggingFaceModel, Provider
+from nodetool.metadata.types import AudioRef, HFTextToAudio, Provider
 from nodetool.ml.core.model_manager import ModelManager
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
@@ -426,16 +426,16 @@ class ACEStepMusicGeneration(ACEStepBaseNode):
         return ["prompt"]
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFTextToAudio]:
         return [
             # Main bundle: VAE + text encoder + turbo DiT + 1.7B planner LM.
-            HuggingFaceModel(repo_id=ACE_STEP_MAIN_REPO),
-            HuggingFaceModel(repo_id=f"{ACE_STEP_ORG}/acestep-v15-base"),
-            HuggingFaceModel(repo_id=f"{ACE_STEP_ORG}/acestep-v15-sft"),
-            HuggingFaceModel(repo_id=f"{ACE_STEP_ORG}/acestep-v15-xl-base"),
-            HuggingFaceModel(repo_id=f"{ACE_STEP_ORG}/acestep-v15-xl-turbo"),
-            HuggingFaceModel(repo_id=f"{ACE_STEP_ORG}/acestep-5Hz-lm-0.6B"),
-            HuggingFaceModel(repo_id=f"{ACE_STEP_ORG}/acestep-5Hz-lm-4B"),
+            HFTextToAudio(repo_id=ACE_STEP_MAIN_REPO),
+            HFTextToAudio(repo_id=f"{ACE_STEP_ORG}/acestep-v15-base"),
+            HFTextToAudio(repo_id=f"{ACE_STEP_ORG}/acestep-v15-sft"),
+            HFTextToAudio(repo_id=f"{ACE_STEP_ORG}/acestep-v15-xl-base"),
+            HFTextToAudio(repo_id=f"{ACE_STEP_ORG}/acestep-v15-xl-turbo"),
+            HFTextToAudio(repo_id=f"{ACE_STEP_ORG}/acestep-5Hz-lm-0.6B"),
+            HFTextToAudio(repo_id=f"{ACE_STEP_ORG}/acestep-5Hz-lm-4B"),
         ]
 
     def _resolve_seed(self) -> int:
@@ -632,11 +632,11 @@ class ACEStepSongPlanner(ACEStepBaseNode):
         return ["query"]
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFTextToAudio]:
         return [
-            HuggingFaceModel(repo_id=ACE_STEP_MAIN_REPO),
-            HuggingFaceModel(repo_id=f"{ACE_STEP_ORG}/acestep-5Hz-lm-0.6B"),
-            HuggingFaceModel(repo_id=f"{ACE_STEP_ORG}/acestep-5Hz-lm-4B"),
+            HFTextToAudio(repo_id=ACE_STEP_MAIN_REPO),
+            HFTextToAudio(repo_id=f"{ACE_STEP_ORG}/acestep-5Hz-lm-0.6B"),
+            HFTextToAudio(repo_id=f"{ACE_STEP_ORG}/acestep-5Hz-lm-4B"),
         ]
 
     async def preload_model(self, context: ProcessingContext) -> None:

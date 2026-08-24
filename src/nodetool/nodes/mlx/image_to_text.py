@@ -11,7 +11,7 @@ from typing import Any, ClassVar
 from pydantic import Field
 
 from nodetool.config.logging_config import get_logger
-from nodetool.metadata.types import HuggingFaceModel, ImageRef
+from nodetool.metadata.types import HFImageTextToText, ImageRef
 from nodetool.ml.core.model_manager import ModelManager
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
@@ -42,8 +42,8 @@ class MLXVisionLanguage(BaseNode):
         default=ImageRef(),
         description="Image to analyze.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-4B-Instruct-4bit"),
+    model: HFImageTextToText = Field(
+        default=HFImageTextToText(repo_id="mlx-community/Qwen3-VL-4B-Instruct-4bit"),
         description="MLX vision-language model to load from the local Hugging Face cache.",
     )
     max_tokens: int = Field(
@@ -194,14 +194,14 @@ class MLXVisionLanguage(BaseNode):
         return text if isinstance(text, str) else str(text)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFImageTextToText]:
         return [
-            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-2B-Instruct-4bit"),
-            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-4B-Instruct-4bit"),
-            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-4B-Instruct-8bit"),
-            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-8B-Instruct-4bit"),
-            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-8B-Instruct-8bit"),
-            HuggingFaceModel(repo_id="mlx-community/Qwen3-VL-30B-A3B-Instruct-4bit"),
-            HuggingFaceModel(repo_id="mlx-community/gemma-4-e4b-it-4bit"),
-            HuggingFaceModel(repo_id="mlx-community/gemma-4-12B-it-4bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3-VL-2B-Instruct-4bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3-VL-4B-Instruct-4bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3-VL-4B-Instruct-8bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3-VL-8B-Instruct-4bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3-VL-8B-Instruct-8bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3-VL-30B-A3B-Instruct-4bit"),
+            HFImageTextToText(repo_id="mlx-community/gemma-4-e4b-it-4bit"),
+            HFImageTextToText(repo_id="mlx-community/gemma-4-12B-it-4bit"),
         ]
