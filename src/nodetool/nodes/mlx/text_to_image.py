@@ -34,9 +34,67 @@ class BaseMFluxNode(BaseNode):
     _expose_as_tool: ClassVar[bool] = True
     _body: ClassVar[str] = "content_card"
 
+    # Handles match HuggingFace image nodes: primary text plus asset inputs.
+    _DATA_INPUT_NAMES: ClassVar[frozenset[str]] = frozenset(
+        {"prompt", "negative_prompt"}
+    )
+    _INLINE_NAMES: ClassVar[frozenset[str]] = frozenset({"model", "prompt"})
+    _BASIC_FIELD_ORDER: ClassVar[tuple[str, ...]] = (
+        "model",
+        "controlnet_model",
+        "prompt",
+        "image",
+        "images",
+        "mask",
+        "control_image",
+        "depth_image",
+        "redux_image",
+        "reference_image",
+        "width",
+        "height",
+        "steps",
+        "resolution",
+        "style",
+    )
+
     @classmethod
     def is_visible(cls) -> bool:
         return cls is not BaseMFluxNode
+
+    @classmethod
+    def get_input_fields(cls) -> list[str]:
+        names: list[str] = []
+        for prop in cls.properties():
+            hint = cls._expose_hint(prop)
+            if hint in ("inline", "none"):
+                continue
+            if hint in ("handle", "both"):
+                names.append(prop.name)
+                continue
+            if prop.type.is_asset_type(recursive=True):
+                names.append(prop.name)
+            elif prop.name in cls._DATA_INPUT_NAMES:
+                names.append(prop.name)
+        return names
+
+    @classmethod
+    def get_inline_fields(cls) -> list[str]:
+        names: list[str] = []
+        for prop in cls.properties():
+            hint = cls._expose_hint(prop)
+            if hint in ("inline", "both"):
+                names.append(prop.name)
+                continue
+            if hint in ("handle", "none"):
+                continue
+            if prop.name in cls._INLINE_NAMES:
+                names.append(prop.name)
+        return names
+
+    @classmethod
+    def get_basic_fields(cls) -> list[str]:
+        available = {prop.name for prop in cls.properties()}
+        return [name for name in cls._BASIC_FIELD_ORDER if name in available]
 
     @staticmethod
     def _ensure_supported_platform(message: str) -> None:
@@ -63,6 +121,7 @@ class BaseMFluxNode(BaseNode):
         "_qwen_model",
         "_zimage_model",
         "_seedvr2_model",
+        "_krea2_model",
     )
 
     def _active_model(self) -> Any | None:
@@ -151,7 +210,7 @@ class MFlux(BaseMFluxNode):
     )
     model: HFFlux = Field(
         default=HFFlux(
-            repo_id="black-forest-labs/FLUX.1-schnell",
+            repo_id="mflux-community/flux-1-schnell-mflux-q4",
         ),
         description="MFLUX model variant to load",
     )
@@ -190,32 +249,11 @@ class MFlux(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux"
 
     def required_inputs(self):
         return ["prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -289,7 +327,10 @@ class MFlux(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HFFlux]:
         return [
-            HFFlux(repo_id="black-forest-labs/FLUX.1-schnell"),
-            HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
-            HFFlux(repo_id="black-forest-labs/FLUX.1-Krea-dev"),
+            HFFlux(repo_id="mflux-community/flux-1-schnell-mflux-q4"),
+            HFFlux(repo_id="mflux-community/flux-1-schnell-mflux-q8"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q4"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q8"),
+            HFFlux(repo_id="mflux-community/flux-1-krea-dev-mflux-q4"),
+            HFFlux(repo_id="mflux-community/flux-1-krea-dev-mflux-q8"),
         ]

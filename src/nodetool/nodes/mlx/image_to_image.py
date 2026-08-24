@@ -19,6 +19,10 @@ from nodetool.metadata.types import (
     HFFluxFill,
     HFFluxKontext,
     HFFluxRedux,
+    HFImageToImage,
+    HFQwenImage,
+    HFQwenImageEdit,
+    HFTextToImage,
     HuggingFaceModel,
     ImageRef,
 )
@@ -43,6 +47,7 @@ if TYPE_CHECKING:
     from mflux.models.qwen.variants.txt2img.qwen_image import QwenImage
     from mflux.models.qwen.variants.edit.qwen_image_edit import QwenImageEdit
     from mflux.models.z_image.variants import ZImageTurbo
+    from mflux.models.krea2 import Krea2
     from mflux.models.seedvr2.variants.upscale.seedvr2 import SeedVR2
     from mflux.ui.box_values import BoxValues
 
@@ -84,7 +89,7 @@ class MFluxImageToImage(BaseMFluxNode):
     )
     model: HFFlux = Field(
         default=HFFlux(
-            repo_id="black-forest-labs/FLUX.1-dev",
+            repo_id="mflux-community/flux-1-dev-mflux-q4",
             path=None,
         ),
         description="MFLUX model variant to load for image-to-image generation.",
@@ -130,34 +135,11 @@ class MFluxImageToImage(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "image",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "image_strength",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux ImageToImage"
 
     def required_inputs(self):
         return ["image", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "image"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
@@ -247,9 +229,12 @@ class MFluxImageToImage(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HFFlux]:
         return [
-            HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
-            HFFlux(repo_id="black-forest-labs/FLUX.1-schnell"),
-            HFFlux(repo_id="black-forest-labs/FLUX.1-Krea-dev"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q4"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q8"),
+            HFFlux(repo_id="mflux-community/flux-1-schnell-mflux-q4"),
+            HFFlux(repo_id="mflux-community/flux-1-schnell-mflux-q8"),
+            HFFlux(repo_id="mflux-community/flux-1-krea-dev-mflux-q4"),
+            HFFlux(repo_id="mflux-community/flux-1-krea-dev-mflux-q8"),
         ]
 
 
@@ -274,13 +259,15 @@ class MFluxControlNet(BaseMFluxNode):
     )
     model: HFFlux = Field(
         default=HFFlux(
-            repo_id="black-forest-labs/FLUX.1-dev",
+            repo_id="mflux-community/flux-1-dev-mflux-q4",
             path=None,
         ),
         description="Base Flux model to load for conditioned generation.",
     )
     controlnet_model: HFControlNetFlux = Field(
-        default=HFControlNetFlux(repo_id="InstantX/FLUX.1-dev-Controlnet-Canny"),
+        default=HFControlNetFlux(
+            repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q4"
+        ),
         description="ControlNet weights that match the selected Flux base model.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -324,35 +311,11 @@ class MFluxControlNet(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "control_image",
-            "model",
-            "controlnet_model",
-            "quantize",
-            "steps",
-            "guidance",
-            "controlnet_strength",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux ControlNet"
 
     def required_inputs(self):
         return ["control_image", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "control_image"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         quantize_value = int(self.quantize) if self.quantize is not None else None
@@ -442,9 +405,20 @@ class MFluxControlNet(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HuggingFaceModel]:
         return [
-            HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
-            HFControlNetFlux(repo_id="InstantX/FLUX.1-dev-Controlnet-Canny"),
-            HFControlNetFlux(repo_id="jasperai/Flux.1-dev-Controlnet-Upscaler"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q4"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q8"),
+            HFControlNetFlux(
+                repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q4"
+            ),
+            HFControlNetFlux(
+                repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q8"
+            ),
+            HFControlNetFlux(
+                repo_id="mflux-community/flux-1-dev-controlnet-upscaler-mflux-q4"
+            ),
+            HFControlNetFlux(
+                repo_id="mflux-community/flux-1-dev-controlnet-upscaler-mflux-q8"
+            ),
         ]
 
 
@@ -509,34 +483,11 @@ class MFluxInpaint(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "image",
-            "mask",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Inpaint"
 
     def required_inputs(self):
         return ["image", "mask", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "image", "mask"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -710,35 +661,11 @@ class MFluxOutpaint(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "image",
-            "mask",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "padding",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Outpaint"
 
     def required_inputs(self):
         return ["image", "mask", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "image", "mask"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -948,34 +875,11 @@ class MFluxDepth(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "image",
-            "depth_image",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Depth"
 
     def required_inputs(self):
         return ["image", "depth_image", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "image", "depth_image"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1171,34 +1075,11 @@ class MFluxRedux(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "redux_image",
-            "redux_image_strength",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Redux"
 
     def required_inputs(self):
         return ["redux_image", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "redux_image"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1365,33 +1246,11 @@ class MFluxKontext(BaseMFluxNode):
     _flux_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "reference_image",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Kontext"
 
     def required_inputs(self):
         return ["reference_image", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "reference_image"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1502,8 +1361,8 @@ class MFluxFlux2(BaseMFluxNode):
         default="Photorealistic close-up of a hummingbird hovering near red flowers",
         description="Text prompt describing the image to generate.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-4B"),
+    model: HFTextToImage = Field(
+        default=HFTextToImage(repo_id="mflux-community/flux2-klein-4b-mflux-q4"),
         description="FLUX.2 Klein model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -1551,34 +1410,11 @@ class MFluxFlux2(BaseMFluxNode):
     _flux2_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-            "lora_path",
-            "lora_scale",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux FLUX.2"
 
     def required_inputs(self):
         return ["prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1654,12 +1490,12 @@ class MFluxFlux2(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFTextToImage]:
         return [
-            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-4B"),
-            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-9B"),
-            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-base-4B"),
-            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-base-9B"),
+            HFTextToImage(repo_id="mflux-community/flux2-klein-4b-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/flux2-klein-9b-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/flux-2-klein-base-4b-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/flux-2-klein-base-9b-mflux-q4"),
         ]
 
 
@@ -1682,8 +1518,8 @@ class MFluxFlux2Edit(BaseMFluxNode):
         default_factory=list,
         description="Reference images for the edit. One or more images may be provided.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-4B"),
+    model: HFTextToImage = Field(
+        default=HFTextToImage(repo_id="mflux-community/flux2-klein-4b-mflux-q4"),
         description="FLUX.2 Klein model to load for editing.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -1731,35 +1567,11 @@ class MFluxFlux2Edit(BaseMFluxNode):
     _flux2_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "images",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-            "lora_path",
-            "lora_scale",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux FLUX.2 Edit"
 
     def required_inputs(self):
         return ["images", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "images"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -1853,10 +1665,171 @@ class MFluxFlux2Edit(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFTextToImage]:
         return [
-            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-4B"),
-            HuggingFaceModel(repo_id="black-forest-labs/FLUX.2-klein-9B"),
+            HFTextToImage(repo_id="mflux-community/flux2-klein-4b-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/flux2-klein-4b-mflux-q8"),
+            HFTextToImage(repo_id="mflux-community/flux2-klein-9b-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/flux2-klein-9b-mflux-q8"),
+        ]
+
+
+class MFluxKrea2(BaseMFluxNode):
+    """
+    Generate images using Krea 2 Turbo via MFLUX.
+    mlx, krea2, text-to-image, apple-silicon
+
+    Use cases:
+    - Fast 8-step distilled generation with a wide style range
+    - Creative exploration with official Krea 2 style LoRAs
+    - Local Apple Silicon generation without an external API
+    """
+
+    prompt: str = Field(
+        default="a photograph of a red fox sitting in a sunlit forest clearing, sharp focus, bokeh",
+        description="Text prompt describing the image to generate.",
+    )
+    negative_prompt: str = Field(
+        default="",
+        description="Negative prompt. Used only when guidance is not 1.0.",
+    )
+    model: HFTextToImage = Field(
+        default=HFTextToImage(repo_id="mflux-community/krea-2-turbo-mflux-q4"),
+        description="Krea 2 model to load. Turbo is the inference checkpoint.",
+    )
+    quantize: QuantizationLevel | None = Field(
+        default=QuantizationLevel.BITS_8,
+        description="Quantization level for model weights. 8-bit is recommended for Krea 2.",
+    )
+    steps: int = Field(
+        default=8,
+        ge=1,
+        le=50,
+        description="Number of denoising steps. Krea 2 Turbo typically uses 8 steps.",
+    )
+    guidance: float = Field(
+        default=1.0,
+        ge=0.0,
+        description="Guidance scale. Distilled Turbo typically uses 1.0.",
+    )
+    height: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Height of the generated image in pixels.",
+    )
+    width: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Width of the generated image in pixels.",
+    )
+    seed: int = Field(
+        default=0,
+        description="Seed for deterministic generation. Leave as 0 for random.",
+    )
+    lora_path: str | None = Field(
+        default=None,
+        description="Optional path or HuggingFace repo ID for a Krea 2 LoRA adapter.",
+    )
+    lora_scale: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=2.0,
+        description="Scale factor for the LoRA adapter.",
+    )
+
+    _krea2_model: Any | None = None
+
+    @classmethod
+    def get_title(cls):
+        return "MFlux Krea2"
+
+    def required_inputs(self):
+        return ["prompt"]
+
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux Krea 2 generation requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        lora_key = self.lora_path or "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_krea2_q{quantize_value}"
+
+        model = ModelManager.get_model(cache_key)
+        if model is not None:
+            self._krea2_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+
+        def _load_model() -> "Krea2":
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.krea2 import Krea2
+
+            log.info(
+                "Loading MFlux Krea 2 model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            lora_paths = [self.lora_path] if self.lora_path else None
+            lora_scales = [self.lora_scale] if self.lora_path else None
+            model = Krea2(
+                quantize=quantize_value,
+                lora_paths=lora_paths,
+                lora_scales=lora_scales,
+                model_config=ModelConfig.krea2(),
+                model_path=self.model.repo_id,
+            )
+            ModelManager.set_model(self.id, cache_key, model)
+            return model
+
+        self._krea2_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
+        self._ensure_supported_platform(
+            "MFlux Krea 2 generation requires macOS (Apple Silicon / MLX)."
+        )
+        self._require_prompt(
+            self.prompt, "Prompt cannot be empty for Krea 2 generation."
+        )
+        self._ensure_seed()
+
+        assert self._krea2_model is not None
+
+        loop = asyncio.get_running_loop()
+        total_steps = self.steps
+        progress_callback = self._register_progress_callback(context, total_steps)
+        negative_prompt = self.negative_prompt.strip() or None
+
+        def _generate() -> "PIL.Image.Image":
+
+            assert self._krea2_model is not None
+            generated_image = self._krea2_model.generate_image(
+                seed=self.seed,
+                prompt=self.prompt,
+                num_inference_steps=self.steps,
+                height=self.height,
+                width=self.width,
+                guidance=self.guidance,
+                negative_prompt=negative_prompt,
+            )
+            return generated_image.image
+
+        try:
+            pil_image = await loop.run_in_executor(None, _generate)
+        finally:
+            self._remove_progress_callback(progress_callback)
+
+        return await context.image_from_pil(pil_image)
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HFTextToImage]:
+        return [
+            HFTextToImage(repo_id="mflux-community/krea-2-turbo-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/krea-2-turbo-mflux-q6"),
+            HFTextToImage(repo_id="mflux-community/krea-2-turbo-mflux-q8"),
         ]
 
 
@@ -1879,8 +1852,8 @@ class MFluxFIBO(BaseMFluxNode):
         default="",
         description="Negative prompt. Typically unnecessary for FIBO Lite.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="briaai/FIBO"),
+    model: HFTextToImage = Field(
+        default=HFTextToImage(repo_id="mflux-community/fibo-mflux-q4"),
         description="FIBO model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -1926,35 +1899,11 @@ class MFluxFIBO(BaseMFluxNode):
     _fibo_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "negative_prompt",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-            "lora_paths",
-            "lora_scales",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux FIBO"
 
     def required_inputs(self):
         return ["prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "negative_prompt"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2050,10 +1999,12 @@ class MFluxFIBO(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFTextToImage]:
         return [
-            HuggingFaceModel(repo_id="briaai/FIBO"),
-            HuggingFaceModel(repo_id="briaai/Fibo-lite"),
+            HFTextToImage(repo_id="mflux-community/fibo-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/fibo-mflux-q8"),
+            HFTextToImage(repo_id="mflux-community/fibo-lite-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/fibo-lite-mflux-q8"),
         ]
 
 
@@ -2080,8 +2031,8 @@ class MFluxFIBOEdit(BaseMFluxNode):
         default=ImageRef(),
         description="Image to edit.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="briaai/Fibo-Edit"),
+    model: HFImageToImage = Field(
+        default=HFImageToImage(repo_id="mflux-community/fibo-edit-mflux-q4"),
         description="FIBO Edit model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -2127,36 +2078,11 @@ class MFluxFIBOEdit(BaseMFluxNode):
     _fibo_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "negative_prompt",
-            "image",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-            "lora_paths",
-            "lora_scales",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux FIBO Edit"
 
     def required_inputs(self):
         return ["image", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "negative_prompt", "image"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2266,10 +2192,12 @@ class MFluxFIBOEdit(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFImageToImage]:
         return [
-            HuggingFaceModel(repo_id="briaai/Fibo-Edit"),
-            HuggingFaceModel(repo_id="briaai/Fibo-Edit-RMBG"),
+            HFImageToImage(repo_id="mflux-community/fibo-edit-mflux-q4"),
+            HFImageToImage(repo_id="mflux-community/fibo-edit-mflux-q8"),
+            HFImageToImage(repo_id="mflux-community/fibo-edit-rmbg-mflux-q4"),
+            HFImageToImage(repo_id="mflux-community/fibo-edit-rmbg-mflux-q8"),
         ]
 
 
@@ -2292,8 +2220,8 @@ class MFluxQwenImage(BaseMFluxNode):
         default="",
         description="Negative prompt describing what to avoid in the generation.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="Qwen/Qwen-Image"),
+    model: HFQwenImage = Field(
+        default=HFQwenImage(repo_id="mflux-community/qwen-image-mflux-q4"),
         description="Qwen Image model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -2339,35 +2267,11 @@ class MFluxQwenImage(BaseMFluxNode):
     _qwen_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "negative_prompt",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-            "lora_paths",
-            "lora_scales",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Qwen Image"
 
     def required_inputs(self):
         return ["prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "negative_prompt"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2447,9 +2351,11 @@ class MFluxQwenImage(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFQwenImage]:
         return [
-            HuggingFaceModel(repo_id="Qwen/Qwen-Image"),
+            HFQwenImage(repo_id="mflux-community/qwen-image-mflux-q4"),
+            HFQwenImage(repo_id="mflux-community/qwen-image-mflux-q6"),
+            HFQwenImage(repo_id="mflux-community/qwen-image-mflux-q8"),
         ]
 
 
@@ -2476,8 +2382,10 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         default_factory=list,
         description="Reference images for the edit. The last image dimensions determine output size.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="Qwen/Qwen-Image-Edit-2509"),
+    model: HFQwenImageEdit = Field(
+        default=HFQwenImageEdit(
+            repo_id="mflux-community/qwen-image-edit-2509-mflux-q4"
+        ),
         description="Qwen Image Edit model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -2523,36 +2431,11 @@ class MFluxQwenImageEdit(BaseMFluxNode):
     _qwen_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "negative_prompt",
-            "images",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-            "lora_paths",
-            "lora_scales",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Qwen Image Edit"
 
     def required_inputs(self):
         return ["images", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "negative_prompt", "images"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2651,9 +2534,11 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFQwenImageEdit]:
         return [
-            HuggingFaceModel(repo_id="Qwen/Qwen-Image-Edit-2509"),
+            HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2509-mflux-q4"),
+            HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2509-mflux-q6"),
+            HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2509-mflux-q8"),
         ]
 
 
@@ -2676,8 +2561,8 @@ class MFluxZImage(BaseMFluxNode):
         default="",
         description="Negative prompt describing what to avoid in the generation.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="Tongyi-MAI/Z-Image"),
+    model: HFTextToImage = Field(
+        default=HFTextToImage(repo_id="mflux-community/z-image-base-mflux-q4"),
         description="Base Z-Image model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -2725,35 +2610,11 @@ class MFluxZImage(BaseMFluxNode):
     _zimage_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "negative_prompt",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-            "lora_path",
-            "lora_scale",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Z-Image"
 
     def required_inputs(self):
         return ["prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "negative_prompt"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2787,7 +2648,7 @@ class MFluxZImage(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
-                model_config=ModelConfig.z_image(model_name=self.model.repo_id),
+                model_config=ModelConfig.from_name(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2812,7 +2673,7 @@ class MFluxZImage(BaseMFluxNode):
         def _generate() -> "PIL.Image.Image":
 
             assert self._zimage_model is not None
-            return self._zimage_model.generate_image(
+            generated_image = self._zimage_model.generate_image(
                 seed=self.seed,
                 prompt=self.prompt,
                 num_inference_steps=self.steps,
@@ -2821,6 +2682,7 @@ class MFluxZImage(BaseMFluxNode):
                 guidance=self.guidance,
                 negative_prompt=self.negative_prompt if self.negative_prompt else None,
             )
+            return generated_image.image
 
         try:
             pil_image = await loop.run_in_executor(None, _generate)
@@ -2830,9 +2692,15 @@ class MFluxZImage(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFTextToImage]:
+        # Pre-quantized builds only. The Tongyi-MAI base repo ships 20.5 GB of
+        # bf16 weights that mflux quantizes in memory on every load; a stored
+        # quantization level always wins over the `quantize` property, so these
+        # load straight into their target precision.
         return [
-            HuggingFaceModel(repo_id="Tongyi-MAI/Z-Image"),
+            HFTextToImage(repo_id="mflux-community/z-image-base-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/z-image-base-mflux-q6"),
+            HFTextToImage(repo_id="mflux-community/z-image-base-mflux-q8"),
         ]
 
 
@@ -2851,8 +2719,8 @@ class MFluxZImageTurbo(BaseMFluxNode):
         default="A beautiful sunset over mountains",
         description="Text prompt describing the image to generate.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="Tongyi-MAI/Z-Image-Turbo"),
+    model: HFTextToImage = Field(
+        default=HFTextToImage(repo_id="mflux-community/z-image-turbo-mflux-q4"),
         description="Z-Image Turbo model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -2895,33 +2763,11 @@ class MFluxZImageTurbo(BaseMFluxNode):
     _zimage_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "model",
-            "quantize",
-            "steps",
-            "height",
-            "width",
-            "seed",
-            "lora_path",
-            "lora_scale",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux Z-Image Turbo"
 
     def required_inputs(self):
         return ["prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -2955,7 +2801,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
-                model_config=ModelConfig.z_image(model_name=self.model.repo_id),
+                model_config=ModelConfig.from_name(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2980,13 +2826,14 @@ class MFluxZImageTurbo(BaseMFluxNode):
         def _generate() -> "PIL.Image.Image":
 
             assert self._zimage_model is not None
-            return self._zimage_model.generate_image(
+            generated_image = self._zimage_model.generate_image(
                 seed=self.seed,
                 prompt=self.prompt,
                 num_inference_steps=self.steps,
                 height=self.height,
                 width=self.width,
             )
+            return generated_image.image
 
         try:
             pil_image = await loop.run_in_executor(None, _generate)
@@ -2996,9 +2843,15 @@ class MFluxZImageTurbo(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFTextToImage]:
+        # Pre-quantized builds only. The Tongyi-MAI turbo repo ships 32.9 GB of
+        # bf16 weights that mflux quantizes in memory on every load; a stored
+        # quantization level always wins over the `quantize` property, so these
+        # load straight into their target precision.
         return [
-            HuggingFaceModel(repo_id="Tongyi-MAI/Z-Image-Turbo"),
+            HFTextToImage(repo_id="mflux-community/z-image-turbo-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/z-image-turbo-mflux-q6"),
+            HFTextToImage(repo_id="mflux-community/z-image-turbo-mflux-q8"),
         ]
 
 
@@ -3021,8 +2874,8 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
         default="1800",
         description="Target resolution for the shortest edge in pixels, or a scale factor like '2x' or '3x'.",
     )
-    model: HuggingFaceModel = Field(
-        default=HuggingFaceModel(repo_id="numz/SeedVR2_comfyUI"),
+    model: HFImageToImage = Field(
+        default=HFImageToImage(repo_id="numz/SeedVR2_comfyUI"),
         description="SeedVR2 model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -3043,23 +2896,11 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
     _seedvr2_model: Any | None = None
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return ["image", "resolution", "model", "quantize", "softness", "seed"]
-
-    @classmethod
     def get_title(cls):
         return "MFlux SeedVR2 Upscale"
 
     def required_inputs(self):
         return ["image"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["image"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "resolution"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -3143,9 +2984,9 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
         return await context.image_from_pil(pil_image)
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFImageToImage]:
         return [
-            HuggingFaceModel(repo_id="numz/SeedVR2_comfyUI"),
+            HFImageToImage(repo_id="numz/SeedVR2_comfyUI"),
         ]
 
 
@@ -3173,7 +3014,7 @@ class MFluxInContext(BaseMFluxNode):
         description="Optional pre-defined style LoRA to apply.",
     )
     model: HFFlux = Field(
-        default=HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
+        default=HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q4"),
         description="Base Flux dev model to load.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -3225,34 +3066,11 @@ class MFluxInContext(BaseMFluxNode):
     }
 
     @classmethod
-    def get_basic_fields(cls) -> list[str]:
-        return [
-            "prompt",
-            "reference_image",
-            "style",
-            "model",
-            "quantize",
-            "steps",
-            "guidance",
-            "height",
-            "width",
-            "seed",
-        ]
-
-    @classmethod
     def get_title(cls):
         return "MFlux In-Context"
 
     def required_inputs(self):
         return ["reference_image", "prompt"]
-
-    @classmethod
-    def get_input_fields(cls):
-        return ["prompt", "reference_image"]
-
-    @classmethod
-    def get_inline_fields(cls):
-        return ["model", "prompt", "style"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -3375,5 +3193,7 @@ class MFluxInContext(BaseMFluxNode):
     @classmethod
     def get_recommended_models(cls) -> list[HFFlux]:
         return [
-            HFFlux(repo_id="black-forest-labs/FLUX.1-dev"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q4"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q6"),
+            HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q8"),
         ]

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, ClassVar
 from pydantic import Field
 
 from nodetool.config.logging_config import get_logger
-from nodetool.metadata.types import AudioRef, HuggingFaceModel
+from nodetool.metadata.types import AudioRef, HFTextToAudio
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import NodeProgress
@@ -116,9 +116,9 @@ class BaseStableAudio3(BaseNode):
         return ["model", "prompt", "seconds", "steps", "cfg", "negative_prompt", "seed"]
 
     @classmethod
-    def get_recommended_models(cls) -> list[HuggingFaceModel]:
+    def get_recommended_models(cls) -> list[HFTextToAudio]:
         return [
-            HuggingFaceModel(repo_id=SA3_REPO_ID, allow_patterns=["MLX/*"]),
+            HFTextToAudio(repo_id=SA3_REPO_ID, allow_patterns=["MLX/*"]),
         ]
 
     @staticmethod
