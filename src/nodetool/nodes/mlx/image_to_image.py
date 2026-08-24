@@ -265,7 +265,9 @@ class MFluxControlNet(BaseMFluxNode):
         description="Base Flux model to load for conditioned generation.",
     )
     controlnet_model: HFControlNetFlux = Field(
-        default=HFControlNetFlux(repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q4"),
+        default=HFControlNetFlux(
+            repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q4"
+        ),
         description="ControlNet weights that match the selected Flux base model.",
     )
     quantize: QuantizationLevel | None = Field(
@@ -405,10 +407,18 @@ class MFluxControlNet(BaseMFluxNode):
         return [
             HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q4"),
             HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q8"),
-            HFControlNetFlux(repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q4"),
-            HFControlNetFlux(repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q8"),
-            HFControlNetFlux(repo_id="mflux-community/flux-1-dev-controlnet-upscaler-mflux-q4"),
-            HFControlNetFlux(repo_id="mflux-community/flux-1-dev-controlnet-upscaler-mflux-q8"),
+            HFControlNetFlux(
+                repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q4"
+            ),
+            HFControlNetFlux(
+                repo_id="mflux-community/flux-1-dev-controlnet-canny-mflux-q8"
+            ),
+            HFControlNetFlux(
+                repo_id="mflux-community/flux-1-dev-controlnet-upscaler-mflux-q4"
+            ),
+            HFControlNetFlux(
+                repo_id="mflux-community/flux-1-dev-controlnet-upscaler-mflux-q8"
+            ),
         ]
 
 
@@ -2373,7 +2383,9 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         description="Reference images for the edit. The last image dimensions determine output size.",
     )
     model: HFQwenImageEdit = Field(
-        default=HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2509-mflux-q4"),
+        default=HFQwenImageEdit(
+            repo_id="mflux-community/qwen-image-edit-2509-mflux-q4"
+        ),
         description="Qwen Image Edit model to load.",
     )
     quantize: QuantizationLevel | None = Field(

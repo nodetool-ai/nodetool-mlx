@@ -209,7 +209,9 @@ class BaseMLXTTS(BaseNode):
                 iterator = await loop.run_in_executor(_MLX_AUDIO_THREAD, _start)
                 idx = -1
                 while True:
-                    pulled = await loop.run_in_executor(_MLX_AUDIO_THREAD, _pull, iterator)
+                    pulled = await loop.run_in_executor(
+                        _MLX_AUDIO_THREAD, _pull, iterator
+                    )
                     if pulled is _GENERATOR_EXHAUSTED:
                         break
                     idx += 1
