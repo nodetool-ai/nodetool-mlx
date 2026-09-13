@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nodetool-mlx"
-version = "0.7.1"
+version = "0.7.2"
 description = "Apple Silicon MLX nodes for Nodetool"
 readme = "README.md"
 authors = [{ name = "Matthias Georgi", email = "matti.georgi@gmail.com" }]
@@ -17,6 +17,7 @@ dependencies = [
     "mflux>=0.18.1",
     "huggingface-hub>=0.24.6",
     "numpy>=1.26",
+    "pydub>=0.25.1",
     "mlx-lm>=0.31.3",
     "mlx-vlm>=0.4.4",
     # Stable Audio 3 T5Gemma tokenizer

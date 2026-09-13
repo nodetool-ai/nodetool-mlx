@@ -2,123 +2,119 @@
 
 from __future__ import annotations
 
+import ast
 import asyncio
-import importlib
-import sys
-import types
+import json
+import logging
+import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Any
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, AsyncIterator, Sequence
 
 import pytest
 
 from nodetool.metadata.types import Chunk, Message, ToolCall
 
-_MISSING = object()
-_MLX_MODULES = (
-    "mlx",
-    "mlx.nn",
-    "mlx_lm",
-    "mlx_lm.generate",
-    "mlx_lm.tokenizer_utils",
-    "mlx_lm.sample_utils",
-    "mlx_lm.utils",
-    "mlx_vlm",
-    "mlx_vlm.prompt_utils",
-    "mlx_vlm.utils",
-    "mlx_vlm.generate",
-    "mlx_audio",
-    "mlx_audio.tts",
-    "mlx_audio.tts.utils",
-    "mlx_audio.tts.generate",
+PROVIDER_PATH = Path(__file__).parents[1] / "src/nodetool/mlx/mlx_provider.py"
+STREAM_METHODS = (
+    "_stream_chat",
+    "_strip_terminal_special_tokens",
+    "_process_response_text",
+    "_parse_tool_call",
+    "_convert_message",
+    "_convert_tools",
+    "_normalize_content",
+    "_build_stream_kwargs",
 )
 
 
-def _module(name: str) -> types.ModuleType:
-    module = types.ModuleType(name)
-    sys.modules[name] = module
-    return module
-
-
-def _install_mlx_stubs() -> None:
-    """Make the provider importable on test hosts without the MLX packages."""
-    mlx = _module("mlx")
-    nn = _module("mlx.nn")
-    nn.Module = type("Module", (), {})
-    mlx.nn = nn
-
-    mlx_lm = _module("mlx_lm")
-    mlx_lm.generate = _module("mlx_lm.generate")
-    mlx_lm.generate.stream_generate = lambda *args, **kwargs: iter(())
-    mlx_lm.tokenizer_utils = _module("mlx_lm.tokenizer_utils")
-    mlx_lm.tokenizer_utils.TokenizerWrapper = object
-    mlx_lm.sample_utils = _module("mlx_lm.sample_utils")
-    mlx_lm.sample_utils.make_sampler = None
-    mlx_lm.utils = _module("mlx_lm.utils")
-    mlx_lm.utils.load = lambda *args, **kwargs: (None, None)
-
-    mlx_vlm = _module("mlx_vlm")
-    mlx_vlm.prompt_utils = _module("mlx_vlm.prompt_utils")
-    mlx_vlm.utils = _module("mlx_vlm.utils")
-    mlx_vlm.utils.load_config = None
-    mlx_vlm.generate = _module("mlx_vlm.generate")
-
-    mlx_audio = _module("mlx_audio")
-    mlx_audio.tts = _module("mlx_audio.tts")
-    mlx_audio.tts.utils = _module("mlx_audio.tts.utils")
-    mlx_audio.tts.utils.load_model = lambda *args, **kwargs: None
-    mlx_audio.tts.generate = _module("mlx_audio.tts.generate")
+def _extract_stream_methods() -> dict[str, Any]:
+    """Extract provider methods without importing optional MLX packages."""
+    tree = ast.parse(PROVIDER_PATH.read_text())
+    methods = {}
+    namespace = {
+        "Any": Any,
+        "AsyncIterator": AsyncIterator,
+        "Sequence": Sequence,
+        "Tool": object,
+        "Chunk": Chunk,
+        "Message": Message,
+        "ToolCall": ToolCall,
+        "TokenizerWrapper": Any,
+        "json": json,
+        "asyncio": asyncio,
+        "logging": logging,
+        "os": os,
+        "time": __import__("time"),
+        "log": logging.getLogger(__name__),
+    }
+    provider_class = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "MLXProvider"
+    )
+    for method_name in STREAM_METHODS:
+        method = next(
+            node
+            for node in provider_class.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == method_name
+        )
+        exec(
+            compile(
+                ast.Module(body=[method], type_ignores=[]),
+                str(PROVIDER_PATH),
+                "exec",
+            ),
+            namespace,
+        )
+        methods[method_name] = namespace[method_name]
+    methods["_globals"] = namespace
+    return methods
 
 
 @pytest.fixture
-def mlx_provider(monkeypatch: pytest.MonkeyPatch):
-    """Import one isolated provider instance and clean it up after the test."""
-    import nodetool
-    from nodetool.providers import base
+def mlx_provider():
+    """Build a provider from real streaming methods and local runtime globals."""
+    methods = _extract_stream_methods()
+    runtime_globals = methods.pop("_globals")
+    executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stream-test")
+    runtime_globals["_MLX_LM_THREAD"] = executor
+    runtime_globals["stream_generate"] = lambda *args, **kwargs: iter(())
 
-    module_names = (
-        "nodetool.mlx",
-        "nodetool.mlx.mlx_provider",
-        "nodetool.mlx.flux_model_loader",
-    )
-    previous_mlx_modules = {
-        name: sys.modules.get(name, _MISSING) for name in _MLX_MODULES
-    }
-    previous_modules = {name: sys.modules.get(name, _MISSING) for name in module_names}
-    previous_mlx_attr = getattr(nodetool, "mlx", _MISSING)
-    previous_registry = base._PROVIDER_REGISTRY.get(base.Provider.MLX, _MISSING)
+    class StreamProvider:
+        def __init__(self) -> None:
+            self._generation_lock = asyncio.Lock()
+            self.usage: dict[str, int] = {}
+
+        def _extract_image_parts(self, messages):
+            return []
+
+        def _extract_audio_parts(self, messages):
+            return []
+
+        def _is_fibo_vlm_model(self, model):
+            return False
+
+        def _is_vision_model(self, model):
+            return False
+
+        def _is_audio_model(self, model):
+            return False
+
+    for name, method in methods.items():
+        setattr(StreamProvider, name, method)
 
     try:
-        importlib.import_module("mlx")
-        importlib.import_module("mlx_lm")
-        importlib.import_module("mlx_vlm")
-        importlib.import_module("mlx_audio")
-    except ModuleNotFoundError:
-        _install_mlx_stubs()
-    provider_module = importlib.import_module("nodetool.mlx.mlx_provider")
-    try:
-        yield provider_module
+        yield SimpleNamespace(
+            MLXProvider=StreamProvider,
+            executor=executor,
+            globals=runtime_globals,
+        )
     finally:
-        if previous_modules["nodetool.mlx.mlx_provider"] is _MISSING:
-            provider_module._MLX_LM_THREAD.shutdown(wait=True, cancel_futures=True)
-        if previous_registry is _MISSING:
-            base._PROVIDER_REGISTRY.pop(base.Provider.MLX, None)
-        else:
-            base._PROVIDER_REGISTRY[base.Provider.MLX] = previous_registry
-        for name, previous in previous_modules.items():
-            if previous is _MISSING:
-                sys.modules.pop(name, None)
-            else:
-                sys.modules[name] = previous
-        for name, previous in previous_mlx_modules.items():
-            if previous is _MISSING:
-                sys.modules.pop(name, None)
-            else:
-                sys.modules[name] = previous
-        if previous_mlx_attr is _MISSING:
-            if hasattr(nodetool, "mlx"):
-                del nodetool.mlx
-        else:
-            nodetool.mlx = previous_mlx_attr
+        executor.shutdown(wait=True, cancel_futures=True)
 
 
 @dataclass
@@ -140,7 +136,7 @@ class FakeTokenizer:
 
     def apply_chat_template(
         self, messages: Any, tools: Any, add_generation_prompt: bool
-    ):
+    ) -> str:
         return "formatted prompt"
 
     def decode(self, tokens: list[int], **kwargs: Any) -> str:
@@ -148,19 +144,16 @@ class FakeTokenizer:
         return self.decoded
 
 
-async def _stream(provider_module, tokenizer, responses, monkeypatch, tools=()):
-    provider = provider_module.MLXProvider()
+async def _stream(harness, tokenizer, responses, monkeypatch, tools=()):
+    provider = harness.MLXProvider()
 
     async def load_model(model: str):
         return object(), tokenizer
 
-    monkeypatch.setattr(provider, "_load_model", load_model)
-    monkeypatch.setattr(provider, "_build_sampler", lambda kwargs: None)
-    monkeypatch.setattr(
-        provider_module,
-        "stream_generate",
-        lambda *args, **kwargs: iter(responses),
-    )
+    monkeypatch.setattr(provider, "_load_model", load_model, raising=False)
+    monkeypatch.setattr(provider, "_build_sampler", lambda kwargs: None, raising=False)
+    monkeypatch.setattr(provider, "_update_usage", lambda response: None, raising=False)
+    harness.globals["stream_generate"] = lambda *args, **kwargs: iter(responses)
     items = [
         item
         async for item in provider._stream_chat(
@@ -174,7 +167,7 @@ async def _stream(provider_module, tokenizer, responses, monkeypatch, tools=()):
     ]
     # Let the producer finish its final queue.put before fixture teardown shuts
     # down the single-worker executor. This barrier runs while the loop is alive.
-    worker_barrier = provider_module._MLX_LM_THREAD.submit(lambda: None)
+    worker_barrier = harness.executor.submit(lambda: None)
     await asyncio.wrap_future(worker_barrier)
     return items
 
