@@ -115,6 +115,13 @@ DEFAULT_MLX_MODEL = "mlx-community/Qwen3.5-0.8B-OptiQ-4bit"
 VLM_MAX_IMAGE_SIDE = 1024
 
 
+def _resolve_vlm_generate(generate_attr: Any) -> Any:
+    """Support mlx-vlm's callable export and its older module layout."""
+    if callable(generate_attr):
+        return generate_attr
+    return generate_attr.generate
+
+
 # Simple in-memory TTL cache for loaded MLX models: 5 minutes
 _CACHE_TTL_SECONDS: int = 300
 _MODEL_CACHE: dict[str, tuple[nn.Module, TokenizerWrapper, float]] = {}
@@ -418,7 +425,12 @@ class MLXProvider(BaseProvider):
             import mlx_whisper
 
             transcribe_fn = mlx_whisper.transcribe
-            sig_params = set(inspect.signature(transcribe_fn).parameters)
+            transcribe_signature = inspect.signature(transcribe_fn)
+            sig_params = set(transcribe_signature.parameters)
+            accepts_var_kwargs = any(
+                parameter.kind is inspect.Parameter.VAR_KEYWORD
+                for parameter in transcribe_signature.parameters.values()
+            )
 
             call_kwargs: dict[str, Any] = {"path_or_hf_repo": model}
 
@@ -450,7 +462,7 @@ class MLXProvider(BaseProvider):
 
             for options in (default_options, optional_options, extra_options):
                 for key, value in options.items():
-                    if value is not None and key in sig_params:
+                    if value is not None and (key in sig_params or accepts_var_kwargs):
                         call_kwargs[key] = value
 
             return transcribe_fn(audio_float, **call_kwargs)
@@ -1407,11 +1419,11 @@ class MLXProvider(BaseProvider):
                     if is_final:
                         self._update_usage(response)
 
+                    # mlx-lm's detokenizer may buffer a token until a later response;
+                    # an empty ``text`` is therefore an intentional empty chunk.
+                    # Decoding ``response.token`` here bypasses that buffering and
+                    # can emit replacement characters or duplicate whitespace.
                     clean_text = self._strip_terminal_special_tokens(response.text)
-                    if not clean_text and not is_final:
-                        clean_text = self._decode_stream_token(
-                            tokenizer, getattr(response, "token", None)
-                        )
 
                     # Process native tool calls if supported
                     segments, parsed_calls = self._process_response_text(
@@ -1711,13 +1723,115 @@ class MLXProvider(BaseProvider):
                         audios.append(part)
         return audios
 
-    async def _prepare_vlm_images(self, parts: list[MessageImageContent]) -> list[str]:
+    def _convert_vlm_message(
+        self,
+        message: Message,
+        index: int,
+        image_ids: set[int] | None = None,
+        audio_ids: set[int] | None = None,
+    ) -> dict[str, Any]:
+        """Convert a Nodetool message to mlx-vlm's multimodal chat format."""
+        payload = self._convert_message(message, index)
+        if not isinstance(message.content, list):
+            return payload
+
+        content: list[Any] = []
+        for part in message.content:
+            if isinstance(part, MessageTextContent):
+                content.append({"type": "text", "text": part.text})
+            elif isinstance(part, MessageImageContent):
+                # The media itself is passed to generate(); this marker keeps it
+                # associated with the originating message in the chat template.
+                if image_ids is None or id(part) in image_ids:
+                    content.append({"type": "image"})
+            elif isinstance(part, MessageAudioContent):
+                if audio_ids is None or id(part) in audio_ids:
+                    content.append({"type": "audio"})
+            elif isinstance(part, dict):
+                content.append(dict(part))
+            else:
+                text = getattr(part, "text", None)
+                if text:
+                    content.append({"type": "text", "text": text})
+
+        payload["content"] = content
+        return payload
+
+    def _format_vlm_messages(
+        self, proc: Any, cfg: Any, messages: list[dict[str, Any]]
+    ) -> Any:
+        """Apply mlx-vlm's formatter per turn, retaining media placement.
+
+        mlx-vlm 0.4.4's list form intentionally moves side-channel media to the
+        last user turn. Formatting each message as a single prompt first lets
+        the library emit the image/audio markers on their original turns before
+        its chat template renders the complete conversation.
+        """
+        template_messages: list[dict[str, Any]] = []
+        for message in messages:
+            content = message.get("content")
+            image_count = 0
+            audio_count = 0
+            if isinstance(content, list):
+                image_count = sum(
+                    1
+                    for part in content
+                    if isinstance(part, dict)
+                    and part.get("type") in ("image", "image_url", "input_image")
+                )
+                audio_count = sum(
+                    1
+                    for part in content
+                    if isinstance(part, dict)
+                    and part.get("type") in ("audio", "input_audio")
+                )
+
+            formatted = mlx_vlm.prompt_utils.apply_chat_template(
+                proc,
+                cfg,
+                message,
+                add_generation_prompt=False,
+                return_messages=True,
+                num_images=image_count,
+                num_audios=audio_count,
+            )
+            if isinstance(formatted, list):
+                template_messages.extend(formatted)
+            else:
+                template_messages.append(formatted)
+
+        model_type = (
+            cfg.get("model_type")
+            if isinstance(cfg, dict)
+            else getattr(cfg, "model_type", "")
+        )
+        if str(model_type).lower() in {
+            "paligemma",
+            "molmo",
+            "florence2",
+            "falcon_ocr",
+        }:
+            # These models intentionally receive the final formatted message,
+            # matching mlx-vlm's prompt-only handling.
+            return template_messages[-1]
+
+        return mlx_vlm.prompt_utils.get_chat_template(
+            proc, template_messages, add_generation_prompt=True
+        )
+
+    async def _prepare_vlm_images(
+        self,
+        parts: list[MessageImageContent],
+        *,
+        include_parts: bool = False,
+    ) -> list[str] | tuple[list[str], list[MessageImageContent]]:
         """Decode images and persist them as temporary PNG files.
 
         Returns the filesystem paths, which the caller is responsible for
         removing once generation has finished.
         """
         prepared_images: list[str] = []
+        prepared_parts: list[MessageImageContent] = []
         for part in parts:
             image_ref: ImageRef = part.image
             uri = image_ref.uri or ""
@@ -1742,6 +1856,7 @@ class MLXProvider(BaseProvider):
             if data is None:
                 continue
 
+            tmp_path: str | None = None
             try:
                 img = PIL.Image.open(BytesIO(data))
                 img = img.convert("RGB")
@@ -1753,20 +1868,35 @@ class MLXProvider(BaseProvider):
                     PIL.Image.Resampling.LANCZOS,
                 )
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+                    tmp_path = tmp.name
                     img.save(tmp, format="PNG")
-                prepared_images.append(tmp.name)
+                prepared_images.append(tmp_path)
+                prepared_parts.append(part)
             except Exception:
+                if tmp_path:
+                    try:
+                        os.remove(tmp_path)
+                    except OSError:
+                        pass
                 log.debug("Skipping an image that could not be prepared for the VLM")
 
+        if include_parts:
+            return prepared_images, prepared_parts
         return prepared_images
 
-    async def _prepare_vlm_audio(self, parts: list[MessageAudioContent]) -> list[str]:
+    async def _prepare_vlm_audio(
+        self,
+        parts: list[MessageAudioContent],
+        *,
+        include_parts: bool = False,
+    ) -> list[str] | tuple[list[str], list[MessageAudioContent]]:
         """Download/convert audios and persist as temporary WAV files.
 
         Returns (audio_paths, temp_files) where both lists contain filesystem paths.
         All returned paths in audio_paths are WAV files when possible.
         """
         prepared_paths: list[str] = []
+        prepared_parts: list[MessageAudioContent] = []
         for part in parts:
             audio_ref: AudioRef = part.audio
             uri = audio_ref.uri or ""
@@ -1791,14 +1921,33 @@ class MLXProvider(BaseProvider):
             if data is None:
                 continue
 
-            audio_seg = AudioSegment.from_file(BytesIO(data))
-            audio_seg = (
-                audio_seg.set_frame_rate(16000).set_channels(1).set_sample_width(2)
-            )
-            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
-            audio_seg.export(tmp, format="wav")
-            prepared_paths.append(tmp.name)
+            tmp_path: str | None = None
+            try:
+                audio_seg = AudioSegment.from_file(BytesIO(data))
+                audio_seg = (
+                    audio_seg.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+                )
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+                    tmp_path = tmp.name
+                    audio_seg.export(tmp, format="wav")
+                prepared_paths.append(tmp_path)
+                prepared_parts.append(part)
+            except Exception:
+                if tmp_path:
+                    try:
+                        os.remove(tmp_path)
+                    except OSError:
+                        pass
+                for path in prepared_paths:
+                    try:
+                        os.remove(path)
+                    except OSError:
+                        pass
+                prepared_paths.clear()
+                raise
 
+        if include_parts:
+            return prepared_paths, prepared_parts
         return prepared_paths
 
     async def _stream_fibo_vlm_chat(
@@ -1853,45 +2002,58 @@ class MLXProvider(BaseProvider):
         )
         mdl, proc, cfg = await self._load_vlm_model(model)
 
-        prompt_text = self._extract_last_user_prompt(messages)
-        images = await self._prepare_vlm_images(image_parts)
-        audios = await self._prepare_vlm_audio(audio_parts)
-        log.debug(
-            "MLX-VLM prepared assets | images=%d audios=%d", len(images), len(audios)
-        )
-
-        # Defensive processor normalization
-        self._ensure_vlm_processor_ready(proc, cfg)
-
-        formatted_prompt = mlx_vlm.prompt_utils.apply_chat_template(
-            proc,
-            cfg,
-            prompt_text,
-            num_images=len(images),
-            num_audios=len(audios),
-        )
-        log.debug(
-            "MLX-VLM prompt prepared | prompt_len=%d",
-            len(formatted_prompt) if isinstance(formatted_prompt, str) else -1,
-        )
-
-        def _run_generate() -> str:
-            # Keep params conservative; mlx-vlm's generate may accept more kwargs
-            result = mlx_vlm.generate.generate(
-                mdl,
-                proc,
-                formatted_prompt,
-                image=images if images else None,
-                audio=audios if audios else None,
-                verbose=False,
-                max_tokens=max_tokens,
-            )
-            # mlx-vlm has returned both a result object exposing ``.text`` and a
-            # bare string across versions.
-            text = getattr(result, "text", result)
-            return text if isinstance(text, str) else str(text)
-
+        images: list[str] = []
+        audios: list[str] = []
         try:
+            images, prepared_image_parts = await self._prepare_vlm_images(
+                image_parts, include_parts=True
+            )
+            audios, prepared_audio_parts = await self._prepare_vlm_audio(
+                audio_parts, include_parts=True
+            )
+            log.debug(
+                "MLX-VLM prepared assets | images=%d audios=%d",
+                len(images),
+                len(audios),
+            )
+
+            # Defensive processor normalization
+            self._ensure_vlm_processor_ready(proc, cfg)
+
+            image_ids = {id(part) for part in prepared_image_parts}
+            audio_ids = {id(part) for part in prepared_audio_parts}
+            converted_messages = [
+                self._convert_vlm_message(
+                    message,
+                    index,
+                    image_ids=image_ids,
+                    audio_ids=audio_ids,
+                )
+                for index, message in enumerate(messages)
+            ]
+            formatted_prompt = self._format_vlm_messages(proc, cfg, converted_messages)
+            log.debug(
+                "MLX-VLM prompt prepared | prompt_len=%d",
+                len(formatted_prompt) if isinstance(formatted_prompt, str) else -1,
+            )
+
+            def _run_generate() -> str:
+                # Keep params conservative; mlx-vlm's generate may accept more kwargs
+                generate_fn = _resolve_vlm_generate(mlx_vlm.generate)
+                result = generate_fn(
+                    mdl,
+                    proc,
+                    formatted_prompt,
+                    image=images if images else None,
+                    audio=audios if audios else None,
+                    verbose=False,
+                    max_tokens=max_tokens,
+                )
+                # mlx-vlm has returned both a result object exposing ``.text`` and a
+                # bare string across versions.
+                text = getattr(result, "text", result)
+                return text if isinstance(text, str) else str(text)
+
             # Serialize VLM generation to avoid concurrent Metal access
             async with self._vlm_generation_lock:
                 try:
