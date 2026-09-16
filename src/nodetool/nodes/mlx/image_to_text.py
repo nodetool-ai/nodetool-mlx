@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import contextlib
@@ -128,7 +129,7 @@ class MLXVisionLanguage(BaseNode):
                 cfg = mlx_vlm.utils.load_config(model_id)
             return mdl, proc, cfg
 
-        self._vlm = await loop.run_in_executor(None, _load_model)
+        self._vlm = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
         ModelManager.set_model(self.id, cache_key, self._vlm)
 
     async def process(self, context: ProcessingContext) -> str:
@@ -198,7 +199,7 @@ class MLXVisionLanguage(BaseNode):
             return getattr(result, "text", result)
 
         try:
-            text = await loop.run_in_executor(None, _generate)
+            text = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             with contextlib.suppress(FileNotFoundError):
                 image_path.unlink()

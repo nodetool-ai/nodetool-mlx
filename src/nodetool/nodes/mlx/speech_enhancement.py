@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import logging
@@ -104,7 +105,7 @@ class BaseMLXSpeechEnhancement(BaseNode):
             return
 
         loop = asyncio.get_running_loop()
-        self._model = await loop.run_in_executor(None, self._load_model_sync)
+        self._model = await loop.run_in_executor(MLX_EXECUTOR, self._load_model_sync)
         self._model_id_loaded = load_key
 
     class OutputType(TypedDict):
@@ -126,7 +127,7 @@ class BaseMLXSpeechEnhancement(BaseNode):
         mono = samples.flatten().astype(np.float32)
 
         loop = asyncio.get_running_loop()
-        enhanced = await loop.run_in_executor(None, self._enhance_sync, mono)
+        enhanced = await loop.run_in_executor(MLX_EXECUTOR, self._enhance_sync, mono)
 
         enhanced_np = np.asarray(enhanced, dtype=np.float32).flatten()
         audio_ref = await context.audio_from_numpy(enhanced_np, self._sample_rate)

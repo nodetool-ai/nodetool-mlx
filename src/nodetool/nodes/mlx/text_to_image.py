@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import random
@@ -285,7 +286,7 @@ class MFlux(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -319,7 +320,7 @@ class MFlux(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
         return await context.image_from_pil(pil_image)

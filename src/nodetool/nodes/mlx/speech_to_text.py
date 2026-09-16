@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import inspect
@@ -106,7 +107,7 @@ class BaseMLXSpeechToText(BaseNode):
             log.info("Loading MLX STT model %s", model_id)
             return load_model(load_target)
 
-        self._stt_model = await loop.run_in_executor(None, _load_model)
+        self._stt_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
         self._model_id_loaded = model_id
 
     class OutputType(TypedDict):
@@ -190,7 +191,7 @@ class BaseMLXSpeechToText(BaseNode):
 
         loop = asyncio.get_running_loop()
         try:
-            result = await loop.run_in_executor(None, _run_transcription)
+            result = await loop.run_in_executor(MLX_EXECUTOR, _run_transcription)
         finally:
             with suppress(FileNotFoundError):
                 os.remove(audio_path)

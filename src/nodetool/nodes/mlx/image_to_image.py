@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import contextlib
@@ -167,7 +168,7 @@ class MFluxImageToImage(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -221,7 +222,7 @@ class MFluxImageToImage(BaseMFluxNode):
                     image_path.unlink()
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
         return await context.image_from_pil(pil_image)
@@ -351,7 +352,7 @@ class MFluxControlNet(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -396,7 +397,7 @@ class MFluxControlNet(BaseMFluxNode):
             return generated.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -518,7 +519,7 @@ class MFluxInpaint(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -583,7 +584,7 @@ class MFluxInpaint(BaseMFluxNode):
                     mask_path.unlink()
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -696,7 +697,7 @@ class MFluxOutpaint(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -800,7 +801,7 @@ class MFluxOutpaint(BaseMFluxNode):
                     mask_path.unlink()
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -910,7 +911,7 @@ class MFluxDepth(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -998,7 +999,7 @@ class MFluxDepth(BaseMFluxNode):
                         working_depth_path.unlink()
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -1114,7 +1115,7 @@ class MFluxRedux(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -1172,7 +1173,7 @@ class MFluxRedux(BaseMFluxNode):
                 )
                 return generated.image
 
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
             for path in temp_paths:
@@ -1281,7 +1282,7 @@ class MFluxKontext(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -1333,7 +1334,7 @@ class MFluxKontext(BaseMFluxNode):
                     image_path.unlink()
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -1452,7 +1453,7 @@ class MFluxFlux2(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux2_model = await loop.run_in_executor(None, _load_model)
+        self._flux2_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -1483,7 +1484,7 @@ class MFluxFlux2(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -1609,7 +1610,7 @@ class MFluxFlux2Edit(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux2_model = await loop.run_in_executor(None, _load_model)
+        self._flux2_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -1655,7 +1656,7 @@ class MFluxFlux2Edit(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
             for path in temp_paths:
@@ -1785,7 +1786,7 @@ class MFluxKrea2(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._krea2_model = await loop.run_in_executor(None, _load_model)
+        self._krea2_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -1818,7 +1819,7 @@ class MFluxKrea2(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -1946,7 +1947,7 @@ class MFluxFIBO(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._fibo_model = await loop.run_in_executor(None, _load_model)
+        self._fibo_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -1992,7 +1993,7 @@ class MFluxFIBO(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -2123,7 +2124,7 @@ class MFluxFIBOEdit(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._fibo_model = await loop.run_in_executor(None, _load_model)
+        self._fibo_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -2183,7 +2184,7 @@ class MFluxFIBOEdit(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
             with contextlib.suppress(FileNotFoundError):
@@ -2312,7 +2313,7 @@ class MFluxQwenImage(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._qwen_model = await loop.run_in_executor(None, _load_model)
+        self._qwen_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -2344,7 +2345,7 @@ class MFluxQwenImage(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -2476,7 +2477,7 @@ class MFluxQwenImageEdit(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._qwen_model = await loop.run_in_executor(None, _load_model)
+        self._qwen_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -2524,7 +2525,7 @@ class MFluxQwenImageEdit(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
             for path in temp_paths:
@@ -2653,7 +2654,7 @@ class MFluxZImage(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._zimage_model = await loop.run_in_executor(None, _load_model)
+        self._zimage_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -2685,7 +2686,7 @@ class MFluxZImage(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -2806,7 +2807,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._zimage_model = await loop.run_in_executor(None, _load_model)
+        self._zimage_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -2836,7 +2837,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
 
@@ -2933,7 +2934,7 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._seedvr2_model = await loop.run_in_executor(None, _load_model)
+        self._seedvr2_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -2976,7 +2977,7 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
             return generated_image.image
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             with contextlib.suppress(FileNotFoundError):
                 temp_path.unlink()
@@ -3118,7 +3119,7 @@ class MFluxInContext(BaseMFluxNode):
             ModelManager.set_model(self.id, cache_key, model)
             return model
 
-        self._flux_model = await loop.run_in_executor(None, _load_model)
+        self._flux_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
 
     async def process(self, context: ProcessingContext) -> ImageRef:
         self._ensure_supported_platform(
@@ -3182,7 +3183,7 @@ class MFluxInContext(BaseMFluxNode):
             return cropped
 
         try:
-            pil_image = await loop.run_in_executor(None, _generate)
+            pil_image = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
             with contextlib.suppress(FileNotFoundError):

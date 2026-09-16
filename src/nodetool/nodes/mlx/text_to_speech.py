@@ -1,7 +1,7 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import base64
 import logging
 import os
@@ -32,10 +32,9 @@ log = logging.getLogger(__name__)
 # MLX binds a Metal stream per thread, so a model loaded on one thread cannot
 # be used from another: mlx-audio then raises "There is no Stream(gpu, N) in
 # current thread." Loading with `run_in_executor(None, ...)` and iterating the
-# generator on the event loop thread put the two on different threads. Pin
-# every MLX call in this module to one thread. A single worker also serializes
-# Metal access, which these models want anyway.
-_MLX_AUDIO_THREAD = ThreadPoolExecutor(max_workers=1, thread_name_prefix="mlx-audio")
+# generator on the event loop thread put the two on different threads. Every
+# MLX call in this package is pinned to the shared MLX_EXECUTOR thread. A
+# single worker also serializes Metal access, which these models want anyway.
 _GENERATOR_EXHAUSTED = object()
 log.setLevel(logging.DEBUG)
 
@@ -143,7 +142,7 @@ class BaseMLXTTS(BaseNode):
             log.info("Loading MLX TTS model %s", model_id)
             return load_model(load_target)
 
-        self._tts_model = await loop.run_in_executor(_MLX_AUDIO_THREAD, _load_model)
+        self._tts_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
         self._model_id_loaded = model_id
 
     class OutputType(TypedDict):
@@ -206,12 +205,10 @@ class BaseMLXTTS(BaseNode):
                         getattr(item, "sample_rate", None),
                     )
 
-                iterator = await loop.run_in_executor(_MLX_AUDIO_THREAD, _start)
+                iterator = await loop.run_in_executor(MLX_EXECUTOR, _start)
                 idx = -1
                 while True:
-                    pulled = await loop.run_in_executor(
-                        _MLX_AUDIO_THREAD, _pull, iterator
-                    )
+                    pulled = await loop.run_in_executor(MLX_EXECUTOR, _pull, iterator)
                     if pulled is _GENERATOR_EXHAUSTED:
                         break
                     idx += 1
