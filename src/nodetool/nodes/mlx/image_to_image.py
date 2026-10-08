@@ -2356,6 +2356,9 @@ class MFluxQwenImage(BaseMFluxNode):
             HFQwenImage(repo_id="mflux-community/qwen-image-mflux-q4"),
             HFQwenImage(repo_id="mflux-community/qwen-image-mflux-q6"),
             HFQwenImage(repo_id="mflux-community/qwen-image-mflux-q8"),
+            HFQwenImage(repo_id="mflux-community/qwen-image-2512-mflux-q4"),
+            HFQwenImage(repo_id="mflux-community/qwen-image-2512-mflux-q6"),
+            HFQwenImage(repo_id="mflux-community/qwen-image-2512-mflux-q8"),
         ]
 
 

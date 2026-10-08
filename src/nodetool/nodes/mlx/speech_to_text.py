@@ -402,6 +402,16 @@ class MLXSpeechToText(BaseMLXSpeechToText):
             HFAutomaticSpeechRecognition(repo_id="mlx-community/parakeet-tdt-0.6b-v3"),
             HFAutomaticSpeechRecognition(repo_id="mlx-community/Qwen3-ASR-0.6B-8bit"),
             HFAutomaticSpeechRecognition(repo_id="mlx-community/Qwen3-ASR-1.7B-8bit"),
+            HFAutomaticSpeechRecognition(
+                repo_id="mlx-community/nemotron-3.5-asr-streaming-0.6b"
+            ),
+            HFAutomaticSpeechRecognition(
+                repo_id="mlx-community/Voxtral-Mini-3B-2507-bf16"
+            ),
+            HFAutomaticSpeechRecognition(
+                repo_id="mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit"
+            ),
+            HFAutomaticSpeechRecognition(repo_id="mlx-community/VibeVoice-ASR-4bit"),
         ]
 
     def _build_generate_kwargs(self) -> dict[str, Any]:

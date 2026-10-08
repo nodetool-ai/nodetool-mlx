@@ -1101,6 +1101,8 @@ class VoxtralTTS(BaseMLXTTS):
 
     class Model(str, Enum):
         VOXTRAL_4B_TTS = "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16"
+        VOXTRAL_4B_TTS_6BIT = "mlx-community/Voxtral-4B-TTS-2603-mlx-6bit"
+        VOXTRAL_4B_TTS_4BIT = "mlx-community/Voxtral-4B-TTS-2603-mlx-4bit"
 
     class Voice(str, Enum):
         NEUTRAL_FEMALE = "neutral_female"
@@ -1439,6 +1441,15 @@ class MLXTextToSpeech(BaseMLXTTS):
             HFTextToSpeech(repo_id="mlx-community/Dia-1.6B-fp16"),
             HFTextToSpeech(repo_id="mlx-community/csm-1b"),
             HFTextToSpeech(repo_id="mlx-community/OuteTTS-1.0-0.6B-fp16"),
+            HFTextToSpeech(repo_id="mlx-community/Soprano-1.1-80M-bf16"),
+            HFTextToSpeech(repo_id="mlx-community/MOSS-TTS-Nano-100M"),
+            HFTextToSpeech(repo_id="mlx-community/VibeVoice-Realtime-0.5B-fp16"),
+            HFTextToSpeech(repo_id="mlx-community/MisoLabs-MisoTTS-8bit"),
+            HFTextToSpeech(repo_id="mlx-community/Ming-omni-tts-0.5B-bf16"),
+            HFTextToSpeech(repo_id="mlx-community/Ming-omni-tts-16.8B-A3B-bf16"),
+            HFTextToSpeech(repo_id="bosonai/higgs-audio-v3-tts-4b"),
+            HFTextToSpeech(repo_id="kugelaudio/kugelaudio-0-open"),
+            HFTextToSpeech(repo_id="OpenMOSS-Team/MOSS-TTS-v1.5"),
         ]
 
     def _normalize_speed(self) -> float:

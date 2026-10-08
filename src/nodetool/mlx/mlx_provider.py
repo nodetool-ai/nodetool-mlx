@@ -364,6 +364,26 @@ class MLXProvider(BaseProvider):
                 name="Qwen3 ASR 1.7B (8-bit)",
                 provider=Provider.MLX,
             ),
+            ASRModel(
+                id="mlx-community/nemotron-3.5-asr-streaming-0.6b",
+                name="Nemotron 3.5 ASR 0.6B",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/Voxtral-Mini-3B-2507-bf16",
+                name="Voxtral Mini 3B",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit",
+                name="Voxtral Mini 4B Realtime (4-bit)",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/VibeVoice-ASR-4bit",
+                name="VibeVoice ASR (4-bit)",
+                provider=Provider.MLX,
+            ),
         ]
         return models
 
@@ -1025,12 +1045,18 @@ class MLXProvider(BaseProvider):
             "pt_male",
         ]
         voxtral_models = [
-            TTSModel(
-                id="mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
-                name="Voxtral 4B TTS",
-                provider=Provider.MLX,
-                voices=voxtral_voices,
-            )
+            TTSModel(id=repo, name=name, provider=Provider.MLX, voices=voxtral_voices)
+            for repo, name in [
+                ("mlx-community/Voxtral-4B-TTS-2603-mlx-bf16", "Voxtral 4B TTS"),
+                (
+                    "mlx-community/Voxtral-4B-TTS-2603-mlx-6bit",
+                    "Voxtral 4B TTS (6-bit)",
+                ),
+                (
+                    "mlx-community/Voxtral-4B-TTS-2603-mlx-4bit",
+                    "Voxtral 4B TTS (4-bit)",
+                ),
+            ]
         ]
 
         # MeloTTS lightweight English model (accent via language code)
@@ -1064,6 +1090,15 @@ class MLXProvider(BaseProvider):
                     "mlx-community/LongCat-AudioDiT-3.5B-4bit",
                     "LongCat-AudioDiT 3.5B (4-bit)",
                 ),
+                ("mlx-community/Soprano-1.1-80M-bf16", "Soprano 1.1 80M"),
+                ("mlx-community/MOSS-TTS-Nano-100M", "MOSS-TTS Nano 100M"),
+                (
+                    "mlx-community/VibeVoice-Realtime-0.5B-fp16",
+                    "VibeVoice Realtime 0.5B",
+                ),
+                ("mlx-community/MisoLabs-MisoTTS-8bit", "MisoTTS (8-bit)"),
+                ("mlx-community/Ming-omni-tts-0.5B-bf16", "Ming Omni TTS 0.5B"),
+                ("bosonai/higgs-audio-v3-tts-4b", "Higgs Audio v3 4B"),
             ]
         ]
 

@@ -47,12 +47,12 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 
 ### Image (`mlx.text_to_image`, `mlx.image_to_image`)
 
-- `MFlux` and the `MFlux*` family – FLUX.1 / Qwen-Image / Z-Image / FIBO generation
+- `MFlux` and the `MFlux*` family – FLUX.1 / FLUX.2 / Qwen-Image / Z-Image / FIBO / Krea 2 / ERNIE-Image / Ideogram 4 generation
   and editing via the MFlux project (supports quantized models)
 
 ### Image-to-Text (`mlx.image_to_text`)
 
-- `MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen3-VL, Gemma 4)
+- `MLXVisionLanguage` – image captioning, visual Q&A, and OCR via MLX vision-language models (Qwen3-VL, Qwen3.5, Gemma 4, Ministral 3, LFM2.5-VL, GLM-OCR, DeepSeek-OCR 2, dots.ocr)
 
 ### Text-to-Audio (`mlx.text_to_audio`)
 

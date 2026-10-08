@@ -192,6 +192,21 @@ class TextGeneration(BaseNode):
             HFTextGeneration(repo_id="mlx-community/Qwen3.5-9B-8bit"),
             HFTextGeneration(repo_id="mlx-community/Qwen3.5-0.8B-OptiQ-4bit"),
             HFTextGeneration(repo_id="mlx-community/Qwen3.5-4B-4bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.5-27B-4bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.5-35B-A3B-4bit"),
+            HFTextGeneration(repo_id="mlx-community/gpt-oss-20b-MXFP4-Q8"),
+            HFTextGeneration(repo_id="mlx-community/gpt-oss-120b-MXFP4-Q8"),
+            HFTextGeneration(repo_id="mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit"),
+            HFTextGeneration(
+                repo_id="mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit"
+            ),
+            HFTextGeneration(repo_id="mlx-community/Ministral-3-3B-Instruct-2512-4bit"),
+            HFTextGeneration(repo_id="mlx-community/Ministral-3-8B-Instruct-2512-4bit"),
+            HFTextGeneration(
+                repo_id="mlx-community/Ministral-3-14B-Reasoning-2512-4bit"
+            ),
+            HFTextGeneration(repo_id="mlx-community/LFM2.5-1.2B-Instruct-4bit"),
+            HFTextGeneration(repo_id="mlx-community/LFM2.5-8B-A1B-MLX-4bit"),
             HFTextGeneration(repo_id="mlx-community/LFM2-24B-A2B-4bit"),
             HFTextGeneration(repo_id="mlx-community/GLM-4.7-Flash-4bit"),
             HFTextGeneration(repo_id="mlx-community/GLM-4.7-Flash-6bit"),
