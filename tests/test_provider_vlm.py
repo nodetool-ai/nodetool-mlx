@@ -10,11 +10,16 @@ from __future__ import annotations
 import ast
 import asyncio
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
+
+# Stands in for the provider's single mlx-vlm thread.
+_VLM_TEST_THREAD = ThreadPoolExecutor(max_workers=1, thread_name_prefix="vlm-test")
 
 PROVIDER_PATH = (
     Path(__file__).resolve().parents[1] / "src" / "nodetool" / "mlx" / "mlx_provider.py"
@@ -149,6 +154,7 @@ def _helpers() -> tuple[type[Any], Any, type[Any], type[Any], type[Any]]:
         "MessageAudioContent": _Audio,
         "mlx_vlm": SimpleNamespace(prompt_utils=None),
         "asyncio": asyncio,
+        "MLX_VLM_THREAD": _VLM_TEST_THREAD,
         "os": SimpleNamespace(remove=lambda path: None),
         "Chunk": SimpleNamespace,
         "log": SimpleNamespace(debug=lambda *args: None, exception=lambda *args: None),
@@ -248,6 +254,7 @@ async def test_stream_uses_generate_export_and_full_conversation(legacy_export: 
     def generate(*args: Any, **kwargs: Any):
         generated["args"] = args
         generated["kwargs"] = kwargs
+        generated["thread"] = threading.current_thread().name
         return SimpleNamespace(text="generated")
 
     export = SimpleNamespace(generate=generate) if legacy_export else generate
@@ -275,6 +282,8 @@ async def test_stream_uses_generate_export_and_full_conversation(legacy_export: 
     assert chunks[0].content == "generated"
     assert generated["kwargs"]["image"] == ["image.tmp"]
     assert generated["kwargs"]["audio"] is None
+    # Generation runs on the dedicated thread the model was loaded on.
+    assert generated["thread"].startswith("vlm-test")
     assert "system: rules" in generated["args"][2]
     assert "user: <image>first" in generated["args"][2]
     assert "assistant: earlier answer" in generated["args"][2]

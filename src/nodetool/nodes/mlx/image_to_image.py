@@ -27,6 +27,7 @@ from nodetool.metadata.types import (
     ImageRef,
 )
 from nodetool.ml.core.model_manager import ModelManager
+from nodetool.mlx.mflux_config import mflux_model_config
 from nodetool.nodes.mlx.text_to_image import BaseMFluxNode, QuantizationLevel
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -49,7 +50,7 @@ if TYPE_CHECKING:
     from mflux.models.z_image.variants import ZImageTurbo
     from mflux.models.krea2 import Krea2
     from mflux.models.seedvr2.variants.upscale.seedvr2 import SeedVR2
-    from mflux.ui.box_values import BoxValues
+    from mflux.utils.box_values import BoxValues
 
 log = get_logger(__name__)
 
@@ -329,7 +330,6 @@ class MFluxControlNet(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux1Controlnet":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.flux.variants.controlnet.flux_controlnet import (
                 Flux1Controlnet,
             )
@@ -341,7 +341,9 @@ class MFluxControlNet(BaseMFluxNode):
                 quantize_value if quantize_value is not None else "none",
             )
 
-            model_config = ModelConfig.from_name(self.model.repo_id)
+            # A private copy, so setting the controlnet leaves mflux's
+            # process-wide registry unchanged.
+            model_config = mflux_model_config(self.model.repo_id)
             model_config.controlnet_model = self.controlnet_model.repo_id
 
             model = Flux1Controlnet(
@@ -665,7 +667,8 @@ class MFluxOutpaint(BaseMFluxNode):
         return "MFlux Outpaint"
 
     def required_inputs(self):
-        return ["image", "mask", "prompt"]
+        # A blank mask is valid: the padding then defines the regions to fill.
+        return ["image", "prompt"]
 
     async def preload_model(self, context: ProcessingContext) -> None:
         self._ensure_supported_platform(
@@ -705,7 +708,9 @@ class MFluxOutpaint(BaseMFluxNode):
         self._require_prompt(self.prompt, "Prompt cannot be empty for outpainting.")
 
         base_image = await context.image_to_pil(self.image)
-        existing_mask = await context.image_to_pil(self.mask)
+        existing_mask = (
+            None if self.mask.is_empty() else await context.image_to_pil(self.mask)
+        )
 
         self._ensure_seed()
 
@@ -719,7 +724,7 @@ class MFluxOutpaint(BaseMFluxNode):
             import PIL.Image
             import numpy as np
             from mflux.utils.image_util import ImageUtil
-            from mflux.ui.box_values import parse_box_value
+            from mflux.utils.box_values import BoxValues
 
             working_image = base_image.convert("RGB")
 
@@ -733,18 +738,23 @@ class MFluxOutpaint(BaseMFluxNode):
 
             # Prepare mask: if empty, generate from padding
             mask_candidate = existing_mask
-            if mask_candidate.size != (target_width, target_height):
+            if mask_candidate is not None and mask_candidate.size != (
+                target_width,
+                target_height,
+            ):
                 mask_candidate = mask_candidate.resize(
                     (target_width, target_height), PIL.Image.Resampling.NEAREST
                 )
 
-            mask_array = np.array(mask_candidate.convert("L"))
-            if not mask_array.any():
+            if (
+                mask_candidate is None
+                or not np.array(mask_candidate.convert("L")).any()
+            ):
                 if not self.padding:
                     raise ValueError(
                         "Outpainting requires either a mask or padding to expand the canvas."
                     )
-                padding_values: BoxValues = parse_box_value(self.padding)
+                padding_values: BoxValues = BoxValues.parse(self.padding)
                 abs_padding = padding_values.normalize_to_dimensions(
                     target_width, target_height
                 )
@@ -1433,7 +1443,6 @@ class MFluxFlux2(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux2Klein":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.flux2.variants import Flux2Klein
 
             log.info(
@@ -1447,7 +1456,7 @@ class MFluxFlux2(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -1590,7 +1599,6 @@ class MFluxFlux2Edit(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "Flux2KleinEdit":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.flux2.variants import Flux2KleinEdit
 
             log.info(
@@ -1604,7 +1612,7 @@ class MFluxFlux2Edit(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -1628,16 +1636,8 @@ class MFluxFlux2Edit(BaseMFluxNode):
 
         loop = asyncio.get_running_loop()
         total_steps = self.steps
-        progress_callback = self._register_progress_callback(context, total_steps)
-
+        progress_callback = None
         temp_paths: list[Path] = []
-        for img_ref in self.images:
-            pil_img = await context.image_to_pil(img_ref)
-            tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-            temp_path = Path(tmp.name)
-            tmp.close()
-            pil_img.convert("RGB").save(temp_path)
-            temp_paths.append(temp_path)
 
         def _generate() -> "PIL.Image.Image":
 
@@ -1655,6 +1655,17 @@ class MFluxFlux2Edit(BaseMFluxNode):
             return generated_image.image
 
         try:
+            # Save reference images to temp files. Inside the try so a failed
+            # load still removes the files already written.
+            for img_ref in self.images:
+                pil_img = await context.image_to_pil(img_ref)
+                tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+                temp_path = Path(tmp.name)
+                tmp.close()
+                temp_paths.append(temp_path)
+                pil_img.convert("RGB").save(temp_path)
+
+            progress_callback = self._register_progress_callback(context, total_steps)
             pil_image = await loop.run_in_executor(None, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
@@ -1929,7 +1940,6 @@ class MFluxFIBO(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "FIBO":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.fibo.variants.txt2img.fibo import FIBO
 
             log.info(
@@ -1941,7 +1951,7 @@ class MFluxFIBO(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=self.lora_paths or None,
                 lora_scales=self.lora_scales or None,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2106,7 +2116,6 @@ class MFluxFIBOEdit(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "FIBOEdit":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.fibo.variants.edit.fibo_edit import FIBOEdit
 
             log.info(
@@ -2118,7 +2127,7 @@ class MFluxFIBOEdit(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=self.lora_paths or None,
                 lora_scales=self.lora_scales or None,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2295,7 +2304,6 @@ class MFluxQwenImage(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "QwenImage":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.qwen.variants.txt2img.qwen_image import QwenImage
 
             log.info(
@@ -2307,7 +2315,7 @@ class MFluxQwenImage(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=self.lora_paths or None,
                 lora_scales=self.lora_scales or None,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2459,7 +2467,6 @@ class MFluxQwenImageEdit(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "QwenImageEdit":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.qwen.variants.edit.qwen_image_edit import QwenImageEdit
 
             log.info(
@@ -2471,7 +2478,7 @@ class MFluxQwenImageEdit(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=self.lora_paths or None,
                 lora_scales=self.lora_scales or None,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2495,17 +2502,8 @@ class MFluxQwenImageEdit(BaseMFluxNode):
 
         loop = asyncio.get_running_loop()
         total_steps = self.steps
-        progress_callback = self._register_progress_callback(context, total_steps)
-
-        # Save reference images to temp files
+        progress_callback = None
         temp_paths: list[Path] = []
-        for img_ref in self.images:
-            pil_img = await context.image_to_pil(img_ref)
-            tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
-            temp_path = Path(tmp.name)
-            tmp.close()
-            pil_img.convert("RGB").save(temp_path)
-            temp_paths.append(temp_path)
 
         def _generate() -> "PIL.Image.Image":
 
@@ -2524,6 +2522,17 @@ class MFluxQwenImageEdit(BaseMFluxNode):
             return generated_image.image
 
         try:
+            # Save reference images to temp files. Inside the try so a failed
+            # load still removes the files already written.
+            for img_ref in self.images:
+                pil_img = await context.image_to_pil(img_ref)
+                tmp = tempfile.NamedTemporaryFile(suffix=".png", delete=False)
+                temp_path = Path(tmp.name)
+                tmp.close()
+                temp_paths.append(temp_path)
+                pil_img.convert("RGB").save(temp_path)
+
+            progress_callback = self._register_progress_callback(context, total_steps)
             pil_image = await loop.run_in_executor(None, _generate)
         finally:
             self._remove_progress_callback(progress_callback)
@@ -2633,7 +2642,6 @@ class MFluxZImage(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "ZImageTurbo":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.z_image.variants import ZImage
 
             log.info(
@@ -2648,7 +2656,7 @@ class MFluxZImage(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2786,7 +2794,6 @@ class MFluxZImageTurbo(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "ZImageTurbo":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.z_image.variants import ZImageTurbo
 
             log.info(
@@ -2801,7 +2808,7 @@ class MFluxZImageTurbo(BaseMFluxNode):
                 quantize=quantize_value,
                 lora_paths=lora_paths,
                 lora_scales=lora_scales,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model
@@ -2918,7 +2925,6 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
         loop = asyncio.get_running_loop()
 
         def _load_model() -> "SeedVR2":
-            from mflux.models.common.config import ModelConfig
             from mflux.models.seedvr2.variants.upscale.seedvr2 import SeedVR2
 
             log.info(
@@ -2928,7 +2934,7 @@ class MFluxSeedVR2Upscale(BaseMFluxNode):
             )
             model = SeedVR2(
                 quantize=quantize_value,
-                model_config=ModelConfig.from_name(self.model.repo_id),
+                model_config=mflux_model_config(self.model.repo_id),
             )
             ModelManager.set_model(self.id, cache_key, model)
             return model

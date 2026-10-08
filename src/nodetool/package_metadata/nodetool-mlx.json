@@ -6319,10 +6319,15 @@
           }
         },
         {
-          "default": null,
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "audio",
+            "uri": ""
+          },
           "description": "Input audio used as the starting point (resampled to 44.1 kHz stereo).",
           "name": "audio",
-          "required": true,
           "title": "Audio",
           "type": {
             "type": "audio"
@@ -6478,10 +6483,15 @@
           }
         },
         {
-          "default": null,
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "audio",
+            "uri": ""
+          },
           "description": "Input audio to edit (resampled to 44.1 kHz stereo).",
           "name": "audio",
-          "required": true,
           "title": "Audio",
           "type": {
             "type": "audio"

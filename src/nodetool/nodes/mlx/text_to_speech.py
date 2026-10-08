@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import base64
 import logging
 import os
@@ -20,6 +19,8 @@ from typing import (
 from pydantic import Field, PrivateAttr
 
 from nodetool.metadata.types import AudioRef, HFTextToSpeech, HuggingFaceModel, Provider
+from nodetool.ml.core.model_manager import ModelManager
+from nodetool.mlx.threads import MLX_AUDIO_THREAD
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
@@ -31,11 +32,9 @@ log = logging.getLogger(__name__)
 
 # MLX binds a Metal stream per thread, so a model loaded on one thread cannot
 # be used from another: mlx-audio then raises "There is no Stream(gpu, N) in
-# current thread." Loading with `run_in_executor(None, ...)` and iterating the
-# generator on the event loop thread put the two on different threads. Pin
-# every MLX call in this module to one thread. A single worker also serializes
-# Metal access, which these models want anyway.
-_MLX_AUDIO_THREAD = ThreadPoolExecutor(max_workers=1, thread_name_prefix="mlx-audio")
+# current thread." Every MLX call in this module runs on the shared audio
+# thread, which the provider and the other audio nodes also use.
+_MLX_AUDIO_THREAD = MLX_AUDIO_THREAD
 _GENERATOR_EXHAUSTED = object()
 log.setLevel(logging.DEBUG)
 
@@ -127,6 +126,14 @@ class BaseMLXTTS(BaseNode):
         if self._tts_model is not None and self._model_id_loaded == model_id:
             return
 
+        # The worker builds a new node per execution, so cache across runs.
+        cache_key = f"{model_id}_mlx_tts_node"
+        cached = ModelManager.get_model(cache_key)
+        if cached is not None:
+            self._tts_model = cached
+            self._model_id_loaded = model_id
+            return
+
         from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
         load_target = find_cached_snapshot(model_id, "config.json")
@@ -145,6 +152,7 @@ class BaseMLXTTS(BaseNode):
 
         self._tts_model = await loop.run_in_executor(_MLX_AUDIO_THREAD, _load_model)
         self._model_id_loaded = model_id
+        ModelManager.set_model(self.id, cache_key, self._tts_model)
 
     class OutputType(TypedDict):
         audio: AudioRef | None

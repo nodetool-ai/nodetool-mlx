@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import ast
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import inspect
 import logging
 from pathlib import Path
 import sys
+import threading
 from types import SimpleNamespace
 from typing import Any
 
 import numpy as np
 import pytest
+
+# Stands in for the provider's single mlx-audio thread.
+_AUDIO_TEST_THREAD = ThreadPoolExecutor(max_workers=1, thread_name_prefix="audio-test")
 
 
 def _load_transcription_method():
@@ -40,6 +45,7 @@ def _load_transcription_method():
         "log": logging.getLogger(__name__),
         "np": np,
         "sys": sys,
+        "MLX_AUDIO_THREAD": _AUDIO_TEST_THREAD,
     }
     exec(compile(module, str(provider_path), "exec"), namespace)
     return namespace["automatic_speech_recognition"]
@@ -86,6 +92,7 @@ async def test_whisper_forwards_decode_options_to_var_keyword_signature(
 
     def transcribe(audio: np.ndarray, path_or_hf_repo: str, **decode_options: Any):
         received["audio"] = audio
+        received["thread"] = threading.current_thread().name
         received["path_or_hf_repo"] = path_or_hf_repo
         received.update(decode_options)
         return {"text": "translated"}
@@ -104,6 +111,8 @@ async def test_whisper_forwards_decode_options_to_var_keyword_signature(
     )
 
     assert result == "translated"
+    # mlx-whisper loads and runs on the shared audio thread.
+    assert received["thread"].startswith("audio-test")
     assert received["path_or_hf_repo"] == "mlx-community/whisper-base-mlx"
     np.testing.assert_array_equal(received["audio"], np.array([0.0, 0.5, -0.5]))
     assert received["language"] == "de"
