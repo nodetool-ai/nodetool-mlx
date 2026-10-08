@@ -3,13 +3,13 @@ from __future__ import annotations
 import asyncio
 import random
 import sys
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import Any, ClassVar, TYPE_CHECKING
 
 from pydantic import Field
 
 from nodetool.config.logging_config import get_logger
-from nodetool.metadata.types import HFFlux, ImageRef
+from nodetool.metadata.types import HFFlux, HFTextToImage, ImageRef
 from nodetool.ml.core.model_manager import ModelManager
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
@@ -17,7 +17,9 @@ from nodetool.workflows.types import NodeProgress
 
 if TYPE_CHECKING:
     import PIL.Image
+    from mflux.models.ernie_image import ErnieImage
     from mflux.models.flux.variants.txt2img.flux import Flux1
+    from mflux.models.ideogram4 import Ideogram4
 
 log = get_logger(__name__)
 
@@ -122,6 +124,8 @@ class BaseMFluxNode(BaseNode):
         "_zimage_model",
         "_seedvr2_model",
         "_krea2_model",
+        "_ernie_model",
+        "_ideogram_model",
     )
 
     def _active_model(self) -> Any | None:
@@ -333,4 +337,334 @@ class MFlux(BaseMFluxNode):
             HFFlux(repo_id="mflux-community/flux-1-dev-mflux-q8"),
             HFFlux(repo_id="mflux-community/flux-1-krea-dev-mflux-q4"),
             HFFlux(repo_id="mflux-community/flux-1-krea-dev-mflux-q8"),
+        ]
+
+
+class MFluxErnieImage(BaseMFluxNode):
+    """
+    Generate images with Baidu's ERNIE-Image via MFLUX.
+    mlx, ernie, ernie-image, text-to-image, apple-silicon
+
+    Use cases:
+    - Fast 8-step generation with ERNIE-Image-Turbo
+    - Higher-fidelity generation with the non-distilled base model and guidance
+    - Local 8B diffusion transformer generation on Apple Silicon
+    """
+
+    prompt: str = Field(
+        default="Close-up portrait of a barn owl perched on a mossy branch, detailed feathers, soft forest bokeh",
+        description="Text prompt describing the image to generate.",
+    )
+    negative_prompt: str = Field(
+        default="",
+        description="Negative prompt. Used only when guidance is above 1.0.",
+    )
+    model: HFTextToImage = Field(
+        default=HFTextToImage(repo_id="mflux-community/ernie-image-turbo-mflux-q4"),
+        description="ERNIE-Image checkpoint. Turbo runs in 8 steps, the base model needs about 50.",
+    )
+    quantize: QuantizationLevel | None = Field(
+        default=QuantizationLevel.BITS_4,
+        description="Quantization level for model weights. Pre-quantized checkpoints keep their stored level.",
+    )
+    steps: int = Field(
+        default=8,
+        ge=1,
+        le=100,
+        description="Number of denoising steps. Use 8 for Turbo and about 50 for the base model.",
+    )
+    guidance: float = Field(
+        default=1.0,
+        ge=0.0,
+        description="Guidance scale. Turbo uses 1.0, the base model about 4.0.",
+    )
+    height: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Height of the generated image in pixels.",
+    )
+    width: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Width of the generated image in pixels.",
+    )
+    seed: int = Field(
+        default=0,
+        description="Seed for deterministic generation. Leave as 0 for random.",
+    )
+    lora_path: str | None = Field(
+        default=None,
+        description="Optional path or HuggingFace repo ID for an ERNIE-Image LoRA adapter.",
+    )
+    lora_scale: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=2.0,
+        description="Scale factor for the LoRA adapter.",
+    )
+
+    _ernie_model: Any | None = None
+
+    @classmethod
+    def get_title(cls):
+        return "MFlux ERNIE-Image"
+
+    def required_inputs(self):
+        return ["prompt"]
+
+    def _is_turbo(self) -> bool:
+        return "turbo" in self.model.repo_id.lower()
+
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux ERNIE-Image requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        lora_key = self.lora_path or "none"
+        cache_key = f"{self.model.repo_id}_{lora_key}_ernie-image_q{quantize_value}"
+
+        model = ModelManager.get_model(cache_key)
+        if model is not None:
+            self._ernie_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+        is_turbo = self._is_turbo()
+
+        def _load_model() -> "ErnieImage":
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.ernie_image import ErnieImage
+
+            log.info(
+                "Loading MFlux ERNIE-Image model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            # The named configs carry the sigma shift and rope overrides that a
+            # config inferred from the repo id (ModelConfig.from_name) drops.
+            model_config = (
+                ModelConfig.ernie_image_turbo()
+                if is_turbo
+                else ModelConfig.ernie_image()
+            )
+            lora_paths = [self.lora_path] if self.lora_path else None
+            lora_scales = [self.lora_scale] if self.lora_path else None
+            model = ErnieImage(
+                quantize=quantize_value,
+                model_path=self.model.repo_id,
+                lora_paths=lora_paths,
+                lora_scales=lora_scales,
+                model_config=model_config,
+            )
+            ModelManager.set_model(self.id, cache_key, model)
+            return model
+
+        self._ernie_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
+        self._ensure_supported_platform(
+            "MFlux ERNIE-Image requires macOS (Apple Silicon / MLX)."
+        )
+        self._require_prompt(
+            self.prompt, "Prompt cannot be empty for ERNIE-Image generation."
+        )
+        self._ensure_seed()
+
+        assert self._ernie_model is not None
+
+        loop = asyncio.get_running_loop()
+        progress_callback = self._register_progress_callback(context, self.steps)
+        negative_prompt = self.negative_prompt.strip() or None
+
+        def _generate() -> "PIL.Image.Image":
+            assert self._ernie_model is not None
+            generated_image = self._ernie_model.generate_image(
+                seed=self.seed,
+                prompt=self.prompt,
+                num_inference_steps=self.steps,
+                height=16 * (self.height // 16),
+                width=16 * (self.width // 16),
+                guidance=self.guidance,
+                negative_prompt=negative_prompt,
+            )
+            return generated_image.image
+
+        try:
+            pil_image = await loop.run_in_executor(None, _generate)
+        finally:
+            self._remove_progress_callback(progress_callback)
+
+        return await context.image_from_pil(pil_image)
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HFTextToImage]:
+        return [
+            HFTextToImage(repo_id="mflux-community/ernie-image-turbo-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/ernie-image-turbo-mflux-q6"),
+            HFTextToImage(repo_id="mflux-community/ernie-image-turbo-mflux-q8"),
+            HFTextToImage(repo_id="mflux-community/ernie-image-base-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/ernie-image-base-mflux-q8"),
+        ]
+
+
+class Ideogram4Preset(str, Enum):
+    """Sampler presets shipped with Ideogram 4 (steps and guidance schedule)."""
+
+    TURBO_12 = "V4_TURBO_12"
+    DEFAULT_20 = "V4_DEFAULT_20"
+    QUALITY_48 = "V4_QUALITY_48"
+
+
+class MFluxIdeogram4(BaseMFluxNode):
+    """
+    Generate typography-heavy images with Ideogram 4 via MFLUX.
+    mlx, ideogram, ideogram4, text-to-image, typography, apple-silicon
+
+    Use cases:
+    - Posters, labels and layouts with legible rendered text
+    - Structured JSON captions with bounding boxes and color palettes
+    - Local Apple Silicon generation without the Ideogram API
+
+    The prompt accepts plain text or an Ideogram JSON caption. JSON captions
+    give much better results; see Ideogram's prompting guide for the schema.
+    """
+
+    prompt: str = Field(
+        default="A vintage travel poster for the city of Lisbon with the headline 'LISBOA' in bold art deco letters",
+        description="Plain text prompt or an Ideogram 4 JSON caption.",
+    )
+    model: HFTextToImage = Field(
+        default=HFTextToImage(repo_id="mflux-community/ideogram-4-mflux-q4"),
+        description="Ideogram 4 checkpoint to load.",
+    )
+    quantize: QuantizationLevel | None = Field(
+        default=QuantizationLevel.BITS_4,
+        description="Quantization level for model weights. Pre-quantized checkpoints keep their stored level.",
+    )
+    preset: Ideogram4Preset = Field(
+        default=Ideogram4Preset.DEFAULT_20,
+        description="Sampler preset. Sets the step count and guidance schedule unless steps is set.",
+    )
+    steps: int = Field(
+        default=0,
+        ge=0,
+        le=100,
+        description="Override the preset step count. 0 uses the preset.",
+    )
+    guidance: float = Field(
+        default=7.0,
+        ge=0.0,
+        description="Constant guidance scale. Only used when steps overrides the preset.",
+    )
+    height: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Height of the generated image in pixels (rounded down to a multiple of 16).",
+    )
+    width: int = Field(
+        default=1024,
+        ge=256,
+        le=2048,
+        description="Width of the generated image in pixels (rounded down to a multiple of 16).",
+    )
+    seed: int = Field(
+        default=0,
+        description="Seed for deterministic generation. Leave as 0 for random.",
+    )
+
+    _ideogram_model: Any | None = None
+
+    _PRESET_STEPS: ClassVar[dict[str, int]] = {
+        Ideogram4Preset.TURBO_12.value: 12,
+        Ideogram4Preset.DEFAULT_20.value: 20,
+        Ideogram4Preset.QUALITY_48.value: 48,
+    }
+
+    @classmethod
+    def get_title(cls):
+        return "MFlux Ideogram 4"
+
+    def required_inputs(self):
+        return ["prompt"]
+
+    async def preload_model(self, context: ProcessingContext) -> None:
+        self._ensure_supported_platform(
+            "MFlux Ideogram 4 requires macOS (Apple Silicon / MLX)."
+        )
+
+        quantize_value = int(self.quantize) if self.quantize is not None else None
+        cache_key = f"{self.model.repo_id}_ideogram4_q{quantize_value}"
+
+        model = ModelManager.get_model(cache_key)
+        if model is not None:
+            self._ideogram_model = model
+            return
+
+        loop = asyncio.get_running_loop()
+
+        def _load_model() -> "Ideogram4":
+            from mflux.models.common.config import ModelConfig
+            from mflux.models.ideogram4 import Ideogram4
+
+            log.info(
+                "Loading MFlux Ideogram 4 model %s (quantize=%s)",
+                self.model.repo_id,
+                quantize_value if quantize_value is not None else "none",
+            )
+            model = Ideogram4(
+                quantize=quantize_value,
+                model_path=self.model.repo_id,
+                model_config=ModelConfig.ideogram4_fp8(),
+            )
+            ModelManager.set_model(self.id, cache_key, model)
+            return model
+
+        self._ideogram_model = await loop.run_in_executor(None, _load_model)
+
+    async def process(self, context: ProcessingContext) -> ImageRef:
+        self._ensure_supported_platform(
+            "MFlux Ideogram 4 requires macOS (Apple Silicon / MLX)."
+        )
+        self._require_prompt(
+            self.prompt, "Prompt cannot be empty for Ideogram 4 generation."
+        )
+        self._ensure_seed()
+
+        assert self._ideogram_model is not None
+
+        loop = asyncio.get_running_loop()
+        preset = Ideogram4Preset(self.preset).value
+        total_steps = self.steps or self._PRESET_STEPS[preset]
+        progress_callback = self._register_progress_callback(context, total_steps)
+
+        def _generate() -> "PIL.Image.Image":
+            assert self._ideogram_model is not None
+            generated_image = self._ideogram_model.generate_image(
+                seed=self.seed,
+                prompt=self.prompt,
+                num_inference_steps=self.steps or None,
+                height=16 * (self.height // 16),
+                width=16 * (self.width // 16),
+                guidance=self.guidance if self.steps else None,
+                preset=preset,
+            )
+            return generated_image.image
+
+        try:
+            pil_image = await loop.run_in_executor(None, _generate)
+        finally:
+            self._remove_progress_callback(progress_callback)
+
+        return await context.image_from_pil(pil_image)
+
+    @classmethod
+    def get_recommended_models(cls) -> list[HFTextToImage]:
+        return [
+            HFTextToImage(repo_id="mflux-community/ideogram-4-mflux-q4"),
+            HFTextToImage(repo_id="mflux-community/ideogram-4-mflux-q6"),
+            HFTextToImage(repo_id="mflux-community/ideogram-4-mflux-q8"),
         ]

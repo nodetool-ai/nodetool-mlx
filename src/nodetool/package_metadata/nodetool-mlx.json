@@ -3061,6 +3061,24 @@
             "region:us"
           ],
           "type": "hf.qwen_image"
+        },
+        {
+          "id": "mflux-community/qwen-image-2512-mflux-q4",
+          "name": "mflux-community/qwen-image-2512-mflux-q4",
+          "repo_id": "mflux-community/qwen-image-2512-mflux-q4",
+          "type": "hf.qwen_image"
+        },
+        {
+          "id": "mflux-community/qwen-image-2512-mflux-q6",
+          "name": "mflux-community/qwen-image-2512-mflux-q6",
+          "repo_id": "mflux-community/qwen-image-2512-mflux-q6",
+          "type": "hf.qwen_image"
+        },
+        {
+          "id": "mflux-community/qwen-image-2512-mflux-q8",
+          "name": "mflux-community/qwen-image-2512-mflux-q8",
+          "repo_id": "mflux-community/qwen-image-2512-mflux-q8",
+          "type": "hf.qwen_image"
         }
       ],
       "title": "MFlux Qwen Image"
@@ -4230,6 +4248,54 @@
             "region:us"
           ],
           "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/Qwen3.5-4B-MLX-4bit",
+          "name": "mlx-community/Qwen3.5-4B-MLX-4bit",
+          "repo_id": "mlx-community/Qwen3.5-4B-MLX-4bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/Qwen3.5-9B-MLX-4bit",
+          "name": "mlx-community/Qwen3.5-9B-MLX-4bit",
+          "repo_id": "mlx-community/Qwen3.5-9B-MLX-4bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
+          "name": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
+          "repo_id": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/Ministral-3-14B-Instruct-2512-4bit",
+          "name": "mlx-community/Ministral-3-14B-Instruct-2512-4bit",
+          "repo_id": "mlx-community/Ministral-3-14B-Instruct-2512-4bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/LFM2.5-VL-1.6B-4bit",
+          "name": "mlx-community/LFM2.5-VL-1.6B-4bit",
+          "repo_id": "mlx-community/LFM2.5-VL-1.6B-4bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/GLM-OCR-bf16",
+          "name": "mlx-community/GLM-OCR-bf16",
+          "repo_id": "mlx-community/GLM-OCR-bf16",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/DeepSeek-OCR-2-8bit",
+          "name": "mlx-community/DeepSeek-OCR-2-8bit",
+          "repo_id": "mlx-community/DeepSeek-OCR-2-8bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/dots.ocr-bf16",
+          "name": "mlx-community/dots.ocr-bf16",
+          "repo_id": "mlx-community/dots.ocr-bf16",
+          "type": "hf.image_text_to_text"
         }
       ],
       "title": "MLX Vision Language"
@@ -4674,6 +4740,30 @@
             "8-bit",
             "region:us"
           ],
+          "type": "hf.automatic_speech_recognition"
+        },
+        {
+          "id": "mlx-community/nemotron-3.5-asr-streaming-0.6b",
+          "name": "mlx-community/nemotron-3.5-asr-streaming-0.6b",
+          "repo_id": "mlx-community/nemotron-3.5-asr-streaming-0.6b",
+          "type": "hf.automatic_speech_recognition"
+        },
+        {
+          "id": "mlx-community/Voxtral-Mini-3B-2507-bf16",
+          "name": "mlx-community/Voxtral-Mini-3B-2507-bf16",
+          "repo_id": "mlx-community/Voxtral-Mini-3B-2507-bf16",
+          "type": "hf.automatic_speech_recognition"
+        },
+        {
+          "id": "mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit",
+          "name": "mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit",
+          "repo_id": "mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit",
+          "type": "hf.automatic_speech_recognition"
+        },
+        {
+          "id": "mlx-community/VibeVoice-ASR-4bit",
+          "name": "mlx-community/VibeVoice-ASR-4bit",
+          "repo_id": "mlx-community/VibeVoice-ASR-4bit",
           "type": "hf.automatic_speech_recognition"
         }
       ],
@@ -5922,6 +6012,72 @@
           "type": "hf.text_generation"
         },
         {
+          "id": "mlx-community/Qwen3.5-27B-4bit",
+          "name": "mlx-community/Qwen3.5-27B-4bit",
+          "repo_id": "mlx-community/Qwen3.5-27B-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/Qwen3.5-35B-A3B-4bit",
+          "name": "mlx-community/Qwen3.5-35B-A3B-4bit",
+          "repo_id": "mlx-community/Qwen3.5-35B-A3B-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/gpt-oss-20b-MXFP4-Q8",
+          "name": "mlx-community/gpt-oss-20b-MXFP4-Q8",
+          "repo_id": "mlx-community/gpt-oss-20b-MXFP4-Q8",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/gpt-oss-120b-MXFP4-Q8",
+          "name": "mlx-community/gpt-oss-120b-MXFP4-Q8",
+          "repo_id": "mlx-community/gpt-oss-120b-MXFP4-Q8",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit",
+          "name": "mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit",
+          "repo_id": "mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit",
+          "name": "mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit",
+          "repo_id": "mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/Ministral-3-3B-Instruct-2512-4bit",
+          "name": "mlx-community/Ministral-3-3B-Instruct-2512-4bit",
+          "repo_id": "mlx-community/Ministral-3-3B-Instruct-2512-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
+          "name": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
+          "repo_id": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/Ministral-3-14B-Reasoning-2512-4bit",
+          "name": "mlx-community/Ministral-3-14B-Reasoning-2512-4bit",
+          "repo_id": "mlx-community/Ministral-3-14B-Reasoning-2512-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/LFM2.5-1.2B-Instruct-4bit",
+          "name": "mlx-community/LFM2.5-1.2B-Instruct-4bit",
+          "repo_id": "mlx-community/LFM2.5-1.2B-Instruct-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/LFM2.5-8B-A1B-MLX-4bit",
+          "name": "mlx-community/LFM2.5-8B-A1B-MLX-4bit",
+          "repo_id": "mlx-community/LFM2.5-8B-A1B-MLX-4bit",
+          "type": "hf.text_generation"
+        },
+        {
           "downloads": 303,
           "has_model_index": false,
           "id": "mlx-community/LFM2-24B-A2B-4bit",
@@ -6750,6 +6906,350 @@
         }
       ],
       "title": "MFlux"
+    },
+    {
+      "basic_fields": [
+        "model",
+        "prompt",
+        "width",
+        "height",
+        "steps"
+      ],
+      "body": "content_card",
+      "description": "Generate images with Baidu's ERNIE-Image via MFLUX.\n    mlx, ernie, ernie-image, text-to-image, apple-silicon\n\n    Use cases:\n    - Fast 8-step generation with ERNIE-Image-Turbo\n    - Higher-fidelity generation with the non-distilled base model and guidance\n    - Local 8B diffusion transformer generation on Apple Silicon",
+      "expose_as_tool": true,
+      "input_fields": [
+        "prompt",
+        "negative_prompt"
+      ],
+      "namespace": "mlx.text_to_image",
+      "node_type": "mlx.text_to_image.MFluxErnieImage",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "image"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "Close-up portrait of a barn owl perched on a mossy branch, detailed feathers, soft forest bokeh",
+          "description": "Text prompt describing the image to generate.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "",
+          "description": "Negative prompt. Used only when guidance is above 1.0.",
+          "name": "negative_prompt",
+          "title": "Negative Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mflux-community/ernie-image-turbo-mflux-q4",
+            "type": "hf.text_to_image",
+            "variant": null
+          },
+          "description": "ERNIE-Image checkpoint. Turbo runs in 8 steps, the base model needs about 50.",
+          "name": "model",
+          "title": "Model",
+          "type": {
+            "type": "hf.text_to_image"
+          }
+        },
+        {
+          "default": 4,
+          "description": "Quantization level for model weights. Pre-quantized checkpoints keep their stored level.",
+          "name": "quantize",
+          "title": "Quantize",
+          "type": {
+            "optional": true,
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel",
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ]
+          }
+        },
+        {
+          "default": 8,
+          "description": "Number of denoising steps. Use 8 for Turbo and about 50 for the base model.",
+          "max": 100.0,
+          "min": 1.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "Guidance scale. Turbo uses 1.0, the base model about 4.0.",
+          "min": 0.0,
+          "name": "guidance",
+          "title": "Guidance",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 1024,
+          "description": "Height of the generated image in pixels.",
+          "max": 2048.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 1024,
+          "description": "Width of the generated image in pixels.",
+          "max": 2048.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 0,
+          "description": "Seed for deterministic generation. Leave as 0 for random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": null,
+          "description": "Optional path or HuggingFace repo ID for an ERNIE-Image LoRA adapter.",
+          "name": "lora_path",
+          "title": "Lora Path",
+          "type": {
+            "optional": true,
+            "type": "str"
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "Scale factor for the LoRA adapter.",
+          "max": 2.0,
+          "min": 0.0,
+          "name": "lora_scale",
+          "title": "Lora Scale",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mflux-community/ernie-image-turbo-mflux-q4",
+          "name": "mflux-community/ernie-image-turbo-mflux-q4",
+          "repo_id": "mflux-community/ernie-image-turbo-mflux-q4",
+          "type": "hf.text_to_image"
+        },
+        {
+          "id": "mflux-community/ernie-image-turbo-mflux-q6",
+          "name": "mflux-community/ernie-image-turbo-mflux-q6",
+          "repo_id": "mflux-community/ernie-image-turbo-mflux-q6",
+          "type": "hf.text_to_image"
+        },
+        {
+          "id": "mflux-community/ernie-image-turbo-mflux-q8",
+          "name": "mflux-community/ernie-image-turbo-mflux-q8",
+          "repo_id": "mflux-community/ernie-image-turbo-mflux-q8",
+          "type": "hf.text_to_image"
+        },
+        {
+          "id": "mflux-community/ernie-image-base-mflux-q4",
+          "name": "mflux-community/ernie-image-base-mflux-q4",
+          "repo_id": "mflux-community/ernie-image-base-mflux-q4",
+          "type": "hf.text_to_image"
+        },
+        {
+          "id": "mflux-community/ernie-image-base-mflux-q8",
+          "name": "mflux-community/ernie-image-base-mflux-q8",
+          "repo_id": "mflux-community/ernie-image-base-mflux-q8",
+          "type": "hf.text_to_image"
+        }
+      ],
+      "title": "MFlux ERNIE-Image"
+    },
+    {
+      "basic_fields": [
+        "model",
+        "prompt",
+        "width",
+        "height",
+        "steps"
+      ],
+      "body": "content_card",
+      "description": "Generate typography-heavy images with Ideogram 4 via MFLUX.\n    mlx, ideogram, ideogram4, text-to-image, typography, apple-silicon\n\n    Use cases:\n    - Posters, labels and layouts with legible rendered text\n    - Structured JSON captions with bounding boxes and color palettes\n    - Local Apple Silicon generation without the Ideogram API\n\n    The prompt accepts plain text or an Ideogram JSON caption. JSON captions\n    give much better results; see Ideogram's prompting guide for the schema.",
+      "expose_as_tool": true,
+      "input_fields": [
+        "prompt"
+      ],
+      "namespace": "mlx.text_to_image",
+      "node_type": "mlx.text_to_image.MFluxIdeogram4",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "image"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "A vintage travel poster for the city of Lisbon with the headline 'LISBOA' in bold art deco letters",
+          "description": "Plain text prompt or an Ideogram 4 JSON caption.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": {
+            "allow_patterns": null,
+            "ignore_patterns": null,
+            "path": null,
+            "repo_id": "mflux-community/ideogram-4-mflux-q4",
+            "type": "hf.text_to_image",
+            "variant": null
+          },
+          "description": "Ideogram 4 checkpoint to load.",
+          "name": "model",
+          "title": "Model",
+          "type": {
+            "type": "hf.text_to_image"
+          }
+        },
+        {
+          "default": 4,
+          "description": "Quantization level for model weights. Pre-quantized checkpoints keep their stored level.",
+          "name": "quantize",
+          "title": "Quantize",
+          "type": {
+            "optional": true,
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_image.QuantizationLevel",
+            "values": [
+              3,
+              4,
+              5,
+              6,
+              8
+            ]
+          }
+        },
+        {
+          "default": "V4_DEFAULT_20",
+          "description": "Sampler preset. Sets the step count and guidance schedule unless steps is set.",
+          "name": "preset",
+          "title": "Preset",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_image.Ideogram4Preset",
+            "values": [
+              "V4_TURBO_12",
+              "V4_DEFAULT_20",
+              "V4_QUALITY_48"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Override the preset step count. 0 uses the preset.",
+          "max": 100.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 7.0,
+          "description": "Constant guidance scale. Only used when steps overrides the preset.",
+          "min": 0.0,
+          "name": "guidance",
+          "title": "Guidance",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 1024,
+          "description": "Height of the generated image in pixels (rounded down to a multiple of 16).",
+          "max": 2048.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 1024,
+          "description": "Width of the generated image in pixels (rounded down to a multiple of 16).",
+          "max": 2048.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 0,
+          "description": "Seed for deterministic generation. Leave as 0 for random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "mflux-community/ideogram-4-mflux-q4",
+          "name": "mflux-community/ideogram-4-mflux-q4",
+          "repo_id": "mflux-community/ideogram-4-mflux-q4",
+          "type": "hf.text_to_image"
+        },
+        {
+          "id": "mflux-community/ideogram-4-mflux-q6",
+          "name": "mflux-community/ideogram-4-mflux-q6",
+          "repo_id": "mflux-community/ideogram-4-mflux-q6",
+          "type": "hf.text_to_image"
+        },
+        {
+          "id": "mflux-community/ideogram-4-mflux-q8",
+          "name": "mflux-community/ideogram-4-mflux-q8",
+          "repo_id": "mflux-community/ideogram-4-mflux-q8",
+          "type": "hf.text_to_image"
+        }
+      ],
+      "title": "MFlux Ideogram 4"
     },
     {
       "basic_fields": [
@@ -8832,6 +9332,60 @@
             "region:us"
           ],
           "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/Soprano-1.1-80M-bf16",
+          "name": "mlx-community/Soprano-1.1-80M-bf16",
+          "repo_id": "mlx-community/Soprano-1.1-80M-bf16",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/MOSS-TTS-Nano-100M",
+          "name": "mlx-community/MOSS-TTS-Nano-100M",
+          "repo_id": "mlx-community/MOSS-TTS-Nano-100M",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/VibeVoice-Realtime-0.5B-fp16",
+          "name": "mlx-community/VibeVoice-Realtime-0.5B-fp16",
+          "repo_id": "mlx-community/VibeVoice-Realtime-0.5B-fp16",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/MisoLabs-MisoTTS-8bit",
+          "name": "mlx-community/MisoLabs-MisoTTS-8bit",
+          "repo_id": "mlx-community/MisoLabs-MisoTTS-8bit",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/Ming-omni-tts-0.5B-bf16",
+          "name": "mlx-community/Ming-omni-tts-0.5B-bf16",
+          "repo_id": "mlx-community/Ming-omni-tts-0.5B-bf16",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/Ming-omni-tts-16.8B-A3B-bf16",
+          "name": "mlx-community/Ming-omni-tts-16.8B-A3B-bf16",
+          "repo_id": "mlx-community/Ming-omni-tts-16.8B-A3B-bf16",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "bosonai/higgs-audio-v3-tts-4b",
+          "name": "bosonai/higgs-audio-v3-tts-4b",
+          "repo_id": "bosonai/higgs-audio-v3-tts-4b",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "kugelaudio/kugelaudio-0-open",
+          "name": "kugelaudio/kugelaudio-0-open",
+          "repo_id": "kugelaudio/kugelaudio-0-open",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "OpenMOSS-Team/MOSS-TTS-v1.5",
+          "name": "OpenMOSS-Team/MOSS-TTS-v1.5",
+          "repo_id": "OpenMOSS-Team/MOSS-TTS-v1.5",
+          "type": "hf.text_to_speech"
         }
       ],
       "title": "MLX Text To Speech"
@@ -10094,6 +10648,18 @@
             "license:cc-by-nc-4.0",
             "region:us"
           ],
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/Voxtral-4B-TTS-2603-mlx-6bit",
+          "name": "mlx-community/Voxtral-4B-TTS-2603-mlx-6bit",
+          "repo_id": "mlx-community/Voxtral-4B-TTS-2603-mlx-6bit",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/Voxtral-4B-TTS-2603-mlx-4bit",
+          "name": "mlx-community/Voxtral-4B-TTS-2603-mlx-4bit",
+          "repo_id": "mlx-community/Voxtral-4B-TTS-2603-mlx-4bit",
           "type": "hf.text_to_speech"
         }
       ],
