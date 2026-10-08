@@ -18,6 +18,7 @@ import pytest
 from PIL import Image as PILImage
 
 import nodetool.nodes.mlx.image_to_image as i2i
+import nodetool.nodes.mlx.text_to_image as t2i
 from nodetool.metadata.types import ImageRef
 
 
@@ -146,7 +147,7 @@ def _mflux_node_classes():
         if isinstance(cls, type)
         and issubclass(cls, i2i.BaseMFluxNode)
         and cls is not i2i.BaseMFluxNode
-    ] + [__import__("nodetool.nodes.mlx.text_to_image", fromlist=["MFlux"]).MFlux]
+    ] + [t2i.MFlux, t2i.MFluxErnieImage, t2i.MFluxIdeogram4]
 
 
 def test_mflux_input_fields_are_primary_only():
@@ -408,3 +409,110 @@ async def test_vlm_node_loads_from_revision_only_cache_on_one_thread(
 
     assert load_targets == [str(tmp_path)]
     assert len(set(threads)) == 1 and threads[0].startswith("mlx-vlm")
+
+
+def _install_fake_mflux(monkeypatch, **variants) -> MagicMock:
+    """Register stub ``mflux`` modules so ``preload_model`` runs without MLX."""
+    model_config = MagicMock(name="ModelConfig")
+    modules = {
+        "mflux": MagicMock(),
+        "mflux.models": MagicMock(),
+        "mflux.models.common": MagicMock(),
+        "mflux.models.common.config": MagicMock(ModelConfig=model_config),
+    }
+    for module_name, attrs in variants.items():
+        modules[module_name] = MagicMock(**attrs)
+    for name, module in modules.items():
+        monkeypatch.setitem(sys.modules, name, module)
+    return model_config
+
+
+@pytest.mark.parametrize(
+    ("repo_id", "config_factory"),
+    [
+        ("mflux-community/ernie-image-turbo-mflux-q8", "ernie_image_turbo"),
+        ("mflux-community/ernie-image-base-mflux-q8", "ernie_image"),
+    ],
+)
+async def test_ernie_image_loads_matching_named_config(
+    monkeypatch, repo_id, config_factory
+):
+    # ModelConfig.from_name on an mflux-community repo id keeps the ERNIE base
+    # config but drops its sigma shift, so the node must pass the named config
+    # and load the weights through model_path.
+    ernie_cls = MagicMock(name="ErnieImage")
+    model_config = _install_fake_mflux(
+        monkeypatch, **{"mflux.models.ernie_image": {"ErnieImage": ernie_cls}}
+    )
+    monkeypatch.setattr(t2i.ModelManager, "get_model", lambda _key: None)
+    monkeypatch.setattr(t2i.ModelManager, "set_model", lambda *_args: None)
+
+    node = t2i.MFluxErnieImage(model=t2i.HFTextToImage(repo_id=repo_id))
+    await node.preload_model(MagicMock())
+
+    kwargs = ernie_cls.call_args.kwargs
+    assert kwargs["model_path"] == repo_id
+    assert kwargs["model_config"] is getattr(model_config, config_factory).return_value
+
+
+async def test_ernie_image_forwards_generate_args():
+    node = t2i.MFluxErnieImage(
+        prompt="a barn owl",
+        negative_prompt="  ",
+        steps=8,
+        guidance=1.0,
+        height=1000,
+        width=1030,
+        seed=7,
+    )
+    node._ernie_model = _mock_flux_model()
+
+    result = await node.process(_mock_context())
+
+    assert result == "image-ref"
+    kwargs = node._ernie_model.generate_image.call_args.kwargs
+    assert kwargs["prompt"] == "a barn owl"
+    assert kwargs["negative_prompt"] is None
+    assert kwargs["num_inference_steps"] == 8
+    assert kwargs["guidance"] == 1.0
+    assert (kwargs["height"], kwargs["width"]) == (992, 1024)
+    assert kwargs["seed"] == 7
+
+
+async def test_ideogram4_uses_preset_schedule_by_default():
+    node = t2i.MFluxIdeogram4(
+        prompt='{"high_level_description": "a poster"}',
+        preset=t2i.Ideogram4Preset.TURBO_12,
+        seed=3,
+    )
+    node._ideogram_model = _mock_flux_model()
+
+    await node.process(_mock_context())
+
+    kwargs = node._ideogram_model.generate_image.call_args.kwargs
+    assert kwargs["prompt"] == '{"high_level_description": "a poster"}'
+    assert kwargs["preset"] == "V4_TURBO_12"
+    assert kwargs["num_inference_steps"] is None
+    assert kwargs["guidance"] is None
+
+
+async def test_ideogram4_step_override_uses_constant_guidance():
+    node = t2i.MFluxIdeogram4(prompt="a label", steps=30, guidance=5.0, seed=3)
+    node._ideogram_model = _mock_flux_model()
+
+    await node.process(_mock_context())
+
+    kwargs = node._ideogram_model.generate_image.call_args.kwargs
+    assert kwargs["num_inference_steps"] == 30
+    assert kwargs["guidance"] == 5.0
+
+
+def test_progress_callback_uses_new_model_attributes():
+    for node, attr in (
+        (t2i.MFluxErnieImage(prompt="x"), "_ernie_model"),
+        (t2i.MFluxIdeogram4(prompt="x"), "_ideogram_model"),
+    ):
+        model = _FakeModelWithRegistry()
+        setattr(node, attr, model)
+        callback = node._register_progress_callback(MagicMock(), total_steps=8)
+        assert callback in model.callbacks.in_loop_callbacks()

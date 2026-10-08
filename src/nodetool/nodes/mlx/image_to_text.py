@@ -220,4 +220,16 @@ class MLXVisionLanguage(BaseNode):
             HFImageTextToText(repo_id="mlx-community/Qwen3-VL-30B-A3B-Instruct-4bit"),
             HFImageTextToText(repo_id="mlx-community/gemma-4-e4b-it-4bit"),
             HFImageTextToText(repo_id="mlx-community/gemma-4-12B-it-4bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3.5-4B-MLX-4bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3.5-9B-MLX-4bit"),
+            HFImageTextToText(
+                repo_id="mlx-community/Ministral-3-8B-Instruct-2512-4bit"
+            ),
+            HFImageTextToText(
+                repo_id="mlx-community/Ministral-3-14B-Instruct-2512-4bit"
+            ),
+            HFImageTextToText(repo_id="mlx-community/LFM2.5-VL-1.6B-4bit"),
+            HFImageTextToText(repo_id="mlx-community/GLM-OCR-bf16"),
+            HFImageTextToText(repo_id="mlx-community/DeepSeek-OCR-2-8bit"),
+            HFImageTextToText(repo_id="mlx-community/dots.ocr-bf16"),
         ]
