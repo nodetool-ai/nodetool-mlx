@@ -56,7 +56,7 @@ jobs:
             echo "::group::$platform"
             printf '%s\n' . 'nodetool-huggingface>=0.8.2' |
               uv pip compile --quiet --no-config --python-version 3.11 \
-                --python-platform "$platform" -o /dev/null -
+                --python-platform "$platform" -o "$RUNNER_TEMP/mlx-hf-resolve.txt" -
             echo "::endgroup::"
           done
 
