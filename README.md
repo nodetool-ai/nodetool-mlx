@@ -111,7 +111,7 @@ recommended models on each node.
 
 - macOS 14+ on Apple Silicon (MLX currently supports Apple hardware only)
 - Python 3.11 or newer (CI tests 3.11 and 3.12)
-- [nodetool-core](https://github.com/nodetool-ai/nodetool-core) 0.8.1 or newer
+- [nodetool-core](https://github.com/nodetool-ai/nodetool-core) 0.8.2 or newer
 
 The package installs on Windows, Linux and Intel Macs, but there it pulls only
 `nodetool-core`: the MLX runtimes carry an Apple Silicon environment marker, and

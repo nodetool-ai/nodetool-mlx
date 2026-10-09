@@ -24,10 +24,11 @@ import sys
 
 # MLX runs only on Apple Silicon, and the pack's MLX dependencies install only
 # there. Stop before importing them so the provider never registers on Windows,
-# Linux or Intel Macs. `name` is this module, so nodetool-core's worker treats
-# the error as "provider not available here" rather than a broken install.
+# Linux or Intel Macs. nodetool-core's worker treats a ModuleNotFoundError whose
+# `name` is this module as "provider not available here" rather than a broken
+# install.
 if sys.platform != "darwin" or platform.machine() != "arm64":
-    raise ImportError(
+    raise ModuleNotFoundError(
         "The MLX provider requires macOS on Apple Silicon (arm64)",
         name=__name__,
     )

@@ -8,7 +8,7 @@ import sys
 import pytest
 
 from nodetool.metadata.types import Provider
-from nodetool.providers.base import _PROVIDER_REGISTRY
+from nodetool.providers.base import _PROVIDER_REGISTRY, _is_pack_absent
 
 PROVIDER_MODULE = "nodetool.mlx.mlx_provider"
 
@@ -38,5 +38,8 @@ def test_provider_does_not_register_off_apple_silicon(monkeypatch, os_name, mach
     with pytest.raises(ImportError) as excinfo:
         importlib.import_module(PROVIDER_MODULE)
 
+    assert isinstance(excinfo.value, ModuleNotFoundError)
     assert excinfo.value.name == PROVIDER_MODULE
+    # The worker logs anything else as a broken install.
+    assert _is_pack_absent(PROVIDER_MODULE, excinfo.value)
     assert Provider.MLX not in _PROVIDER_REGISTRY

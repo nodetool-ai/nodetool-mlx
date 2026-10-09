@@ -15,7 +15,7 @@ requires-python = ">=3.11"
 # marker, Linux resolves mflux to mlx[cuda13] and torch (several GB) for nodes
 # that cannot run. Keep the marker identical on every MLX-only line.
 dependencies = [
-    "nodetool-core>=0.8.1",
+    "nodetool-core>=0.8.2",
     # mflux caps huggingface-hub below 2.0; transformers 5.19 needs >=1.31.
     "huggingface-hub>=1.33.0,<2",
     # Same floor as nodetool-core. Do not raise it to 2.4: nodetool-huggingface
