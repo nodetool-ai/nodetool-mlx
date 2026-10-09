@@ -135,6 +135,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # build.py comes from a pinned nodetool-core tag, never from main.
+      - name: Download registry helper
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/nodetool-ai/nodetool-core/v0.8.1/build.py -o build.py
+
+      - name: Notify registry
+        if: success()
+        env:
+          REGISTRY_UPDATE_TOKEN: ${{ secrets.REGISTRY_UPDATE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 build.py notify-registry \
+            --package "${{ env.PACKAGE_NAME }}" \
+            --version "${{ needs.validate.outputs.version }}" \
+            --tag "${{ needs.validate.outputs.tag-name }}" \
+            --repository "${{ github.repository }}" \
+            --server-url "${{ github.server_url }}"
+
   # Publish to PyPI via Trusted Publishing (OIDC). No stored tokens.
   # Runs on every v*.*.* tag push, or a manual run with publish_pypi=pypi.
   # PyPI pending publisher: workflow publish-wheel.yml, environment pypi.
