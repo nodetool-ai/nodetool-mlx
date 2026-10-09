@@ -18,8 +18,9 @@ dependencies = [
     "nodetool-core>=0.8.1",
     # mflux caps huggingface-hub below 2.0; transformers 5.19 needs >=1.31.
     "huggingface-hub>=1.33.0,<2",
-    # nodetool-core 0.8.1 caps numpy below 2.5.
-    "numpy>=2.4.6",
+    # Same floor as nodetool-core. Do not raise it to 2.4: nodetool-huggingface
+    # needs mistral-common, which caps numpy below 2.4 on Python 3.11 and 3.12.
+    "numpy>=2.3.5",
     "pydub>=0.25.1",
     "mlx>=0.32.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "mlx-lm>=0.32.0; sys_platform == 'darwin' and platform_machine == 'arm64'",

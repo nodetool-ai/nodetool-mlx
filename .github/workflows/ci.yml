@@ -45,6 +45,21 @@ jobs:
       - name: uv.lock is current
         run: uv lock --check
 
+      # The desktop app installs every pack into one environment, so this pack
+      # must resolve next to the published nodetool-huggingface on each platform
+      # the app supports. A dependency floor that HF cannot meet fails here.
+      - name: Resolves together with nodetool-huggingface
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "14.0"
+        run: |
+          for platform in aarch64-apple-darwin x86_64-manylinux_2_35 x86_64-pc-windows-msvc; do
+            echo "::group::$platform"
+            printf '%s\n' . 'nodetool-huggingface>=0.8.2' |
+              uv pip compile --quiet --no-config --python-version 3.11 \
+                --python-platform "$platform" -o /dev/null -
+            echo "::endgroup::"
+          done
+
   # The MLX runtimes (mlx, mflux, mlx-audio, ...) are Apple Silicon only, and
   # pyproject.toml gates them with an environment marker. A Linux install must
   # therefore pull nodetool-core and the small helpers only, never mlx or torch.
