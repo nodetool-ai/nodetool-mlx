@@ -60,6 +60,8 @@ jobs:
           echo "🏷️ Tag: $TAG_NAME"
           echo "🔄 Prerelease: $IS_PRERELEASE"
 
+  # Build once. The GitHub Release and PyPI receive these same files, built
+  # from the tagged source with no helper script fetched from another repo.
   build-wheel:
     needs: validate
     runs-on: ubuntu-latest
@@ -69,36 +71,36 @@ jobs:
         with:
           ref: ${{ needs.validate.outputs.tag-name }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.11"
 
-      - name: Install build dependencies
+      - name: Verify tag matches the package version
+        env:
+          EXPECTED_VERSION: ${{ needs.validate.outputs.version }}
         run: |
-          pip install --upgrade pip
-          pip install build hatchling twine
+          PACKAGE_VERSION="$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          test "$EXPECTED_VERSION" = "$PACKAGE_VERSION" || {
+            echo "Release version $EXPECTED_VERSION does not match package version $PACKAGE_VERSION" >&2
+            exit 1
+          }
 
-      - name: Download build helper
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/nodetool-ai/nodetool-core/main/build.py -o build.py
+      - name: Verify the lock file matches pyproject.toml
+        run: uv lock --check
 
-      - name: Build wheel
-        run: |
-          echo "🏗️ Building wheel for ${{ env.PACKAGE_NAME }}"
-          python build.py build-wheel --expected-version "${{ needs.validate.outputs.version }}"
+      - name: Build sdist + wheel
+        run: uv build
 
-      - name: Validate wheel
-        run: |
-          python build.py validate-wheel
+      - name: Validate distributions
+        run: uvx twine check dist/*
 
-      - name: Upload wheel artifact
+      - name: Upload distributions
         uses: actions/upload-artifact@v7
         with:
-          name: wheel-${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}
-          path: |
-            dist/*.whl
-            dist/*.whl.metadata
+          name: dist-${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}
+          path: dist/
+          if-no-files-found: error
           retention-days: 30
 
   create-release:
@@ -107,66 +109,31 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.validate.outputs.tag-name }}
-
-      - name: Download build helper
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/nodetool-ai/nodetool-core/main/build.py -o build.py
-
-      - name: Download wheel artifact
+      - name: Download distributions
         uses: actions/download-artifact@v8
         with:
-          name: wheel-${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}
+          name: dist-${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}
           path: dist/
-
-      - name: Generate release notes
-        run: |
-          python build.py release-notes \
-            --package "${{ env.PACKAGE_NAME }}" \
-            --version "${{ needs.validate.outputs.version }}" \
-            --tag "${{ needs.validate.outputs.tag-name }}" \
-            --repository "${{ github.repository }}" \
-            --server-url "${{ github.server_url }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.validate.outputs.tag-name }}
           name: "${{ env.PACKAGE_NAME }} v${{ needs.validate.outputs.version }}"
-          body_path: release_notes.md
-          files: |
-            dist/*.whl
-            dist/*.whl.metadata
+          body: |
+            Install from PyPI:
+
+            ```bash
+            pip install ${{ env.PACKAGE_NAME }}==${{ needs.validate.outputs.version }}
+            ```
+
+            The MLX runtime dependencies install only on macOS arm64 (Apple Silicon).
+          files: dist/*
           draft: false
           prerelease: ${{ needs.validate.outputs.is-prerelease }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Notify registry
-        if: success()
-        env:
-          REGISTRY_UPDATE_TOKEN: ${{ secrets.REGISTRY_UPDATE_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python build.py notify-registry \
-            --package "${{ env.PACKAGE_NAME }}" \
-            --version "${{ needs.validate.outputs.version }}" \
-            --tag "${{ needs.validate.outputs.tag-name }}" \
-            --repository "${{ github.repository }}" \
-            --server-url "${{ github.server_url }}"
-
-      - name: Create success summary
-        run: |
-          python build.py summary \
-            --package "${{ env.PACKAGE_NAME }}" \
-            --version "${{ needs.validate.outputs.version }}" \
-            --tag "${{ needs.validate.outputs.tag-name }}" \
-            --repository "${{ github.repository }}" \
-            --server-url "${{ github.server_url }}"
 
   # Publish to PyPI via Trusted Publishing (OIDC). No stored tokens.
   # Runs on every v*.*.* tag push, or a manual run with publish_pypi=pypi.
@@ -181,21 +148,11 @@ jobs:
     permissions:
       id-token: write # required for OIDC trusted publishing
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - name: Download distributions
+        uses: actions/download-artifact@v8
         with:
-          ref: ${{ needs.validate.outputs.tag-name }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.11"
-
-      - name: Build sdist + wheel
-        run: uv build
-
-      - name: Validate distributions
-        run: uvx twine check dist/*
+          name: dist-${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}
+          path: dist/
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -211,18 +168,11 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - name: Download distributions
+        uses: actions/download-artifact@v8
         with:
-          ref: ${{ needs.validate.outputs.tag-name }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.11"
-
-      - name: Build sdist + wheel
-        run: uv build
+          name: dist-${{ env.PACKAGE_NAME }}-${{ needs.validate.outputs.version }}
+          path: dist/
 
       - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1

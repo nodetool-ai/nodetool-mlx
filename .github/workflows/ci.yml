@@ -40,11 +40,17 @@ jobs:
       - name: black
         run: black --check --diff .
 
-  # The MLX runtimes (mlx, mflux, mlx-audio, ...) are Apple Silicon only, so the
-  # bulk of the suite is written to run without them and this job installs the
-  # package with --no-deps. It is the fast signal on every push, and it also
-  # covers the "node modules import without the MLX stack" property that the
-  # package metadata scanner relies on.
+      - uses: astral-sh/setup-uv@v5
+
+      - name: uv.lock is current
+        run: uv lock --check
+
+  # The MLX runtimes (mlx, mflux, mlx-audio, ...) are Apple Silicon only, and
+  # pyproject.toml gates them with an environment marker. A Linux install must
+  # therefore pull nodetool-core and the small helpers only, never mlx or torch.
+  # This job is the fast signal on every push, and it also covers the "node
+  # modules import without the MLX stack" property that the package metadata
+  # scanner relies on.
   test-linux:
     name: Test (linux, no MLX runtime)
     runs-on: ubuntu-latest
@@ -61,14 +67,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
 
-      - name: Install nodetool-core and test dependencies
+      - name: Install package and test dependencies
         run: |
           pip install --upgrade pip
-          pip install "nodetool-core>=0.7.0"
+          pip install -e .
           pip install pytest pytest-asyncio pytest-cov
 
-      - name: Install this package without the Apple-Silicon-only dependencies
-        run: pip install --no-deps -e .
+      - name: MLX stack is not installed off Apple Silicon
+        run: |
+          ! pip show mlx mflux mlx-lm mlx-vlm mlx-audio mlx-whisper torch 2>/dev/null | grep -q '^Name:'
 
       - name: Run tests
         # Tests needing mflux / mlx-audio skip themselves via importorskip.

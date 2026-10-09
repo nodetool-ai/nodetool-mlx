@@ -19,6 +19,19 @@ The provider supports:
 - Text-to-image and image-to-image generation
 """
 
+import platform
+import sys
+
+# MLX runs only on Apple Silicon, and the pack's MLX dependencies install only
+# there. Stop before importing them so the provider never registers on Windows,
+# Linux or Intel Macs. `name` is this module, so nodetool-core's worker treats
+# the error as "provider not available here" rather than a broken install.
+if sys.platform != "darwin" or platform.machine() != "arm64":
+    raise ImportError(
+        "The MLX provider requires macOS on Apple Silicon (arm64)",
+        name=__name__,
+    )
+
 import ast
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -38,7 +51,6 @@ from typing import (
 from io import BytesIO
 from urllib.parse import urlparse, unquote
 import os
-import sys
 import tempfile
 from nodetool.media.audio.audio_helpers import convert_audio_to_standard_format
 import numpy as np

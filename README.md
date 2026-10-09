@@ -110,17 +110,24 @@ recommended models on each node.
 ## Requirements
 
 - macOS 14+ on Apple Silicon (MLX currently supports Apple hardware only)
-- Python 3.11
-- [nodetool-core](https://github.com/nodetool-ai/nodetool-core) v0.6.0+
+- Python 3.11 or newer (CI tests 3.11 and 3.12)
+- [nodetool-core](https://github.com/nodetool-ai/nodetool-core) 0.8.1 or newer
+
+The package installs on Windows, Linux and Intel Macs, but there it pulls only
+`nodetool-core`: the MLX runtimes carry an Apple Silicon environment marker, and
+the `mlx` provider does not register. Do not install it on those machines.
 - Required MLX checkpoints managed via the Nodetool Models Manager (see [_Managing Models_](#managing-models))
 
 ## Installation
 
 ### From the Nodetool UI
 
-1. Open Nodetool → **Tools ▸ Packages**
-2. Install the `nodetool-mlx` pack from the package registry
-3. Nodetool will handle dependencies and expose the MLX nodes in the graph editor once installed
+1. Open **Tools → Package Manager** in the desktop app's menu bar
+2. Install the MLX pack. NodeTool installs `nodetool-mlx` from PyPI into its Python environment, setting up Python first if needed
+3. The MLX nodes appear in the node menu once the install finishes
+
+Outside the desktop app, install it from PyPI into the environment that runs the
+NodeTool Python worker: `uv pip install nodetool-mlx`.
 
 ### From source (development)
 
@@ -131,16 +138,16 @@ uv pip install -e .
 uv pip install -r requirements-dev.txt
 ```
 
-If you prefer Poetry or pip, install the project the same way—just ensure dependencies are resolved against Python 3.11.
+`uv.lock` pins the development environment. `uv sync --extra dev` reproduces it.
 
 ## Managing Models
 
 All MLX nodes rely on locally cached checkpoints. The recommended way to download and update them is through the **Models Manager** built into Nodetool:
 
-1. Open Nodetool → **Menu ▸ Models**
-2. Select the `mlx` tab to view the recommended checkpoints for each node
-3. Click **Download** for the models you plan to use; Nodetool stores them in the Hugging Face cache automatically
-4. The UI will keep track of model availability and prompt you when updates are available
+1. Open **Tools → Model Manager** in the menu bar, or **Model Manager** in the logo menu
+2. Switch the source toggle to **Recommended**, which lists the checkpoints the installed MLX nodes recommend. Set the **Format** filter to **MLX** to hide other models
+3. Click **Download** for the models you plan to use. NodeTool stores them in the Hugging Face cache
+4. The **Installed** source shows which models are on disk and ready
 
 Advanced users can still seed the Hugging Face cache manually, but using the UI integration ensures consistent paths and avoids missing-model errors in workflows.
 
@@ -183,8 +190,8 @@ exists.
 
 | Job | Runner | What it covers |
 | --- | --- | --- |
-| Lint and format | ubuntu | `ruff check .` and `black --check .` |
-| Test (linux) | ubuntu, Python 3.11 + 3.12 | the platform-independent suite, installed with `--no-deps` |
+| Lint and format | ubuntu | `ruff check .`, `black --check .` and `uv lock --check` |
+| Test (linux) | ubuntu, Python 3.11 + 3.12 | the platform-independent suite, and a check that no MLX runtime or torch installs off Apple Silicon |
 | Test (macOS) | macos-14 (Apple Silicon) | the full suite against the real MLX stack |
 | Build wheel | ubuntu | `python -m build` plus `twine check` |
 
