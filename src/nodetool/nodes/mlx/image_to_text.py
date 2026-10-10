@@ -13,6 +13,7 @@ from pydantic import Field
 from nodetool.config.logging_config import get_logger
 from nodetool.metadata.types import HFImageTextToText, ImageRef
 from nodetool.ml.core.model_manager import ModelManager
+from nodetool.mlx.threads import MLX_VLM_THREAD
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -109,12 +110,14 @@ class MLXVisionLanguage(BaseNode):
             self._vlm = cached
             return
 
-        from huggingface_hub import try_to_load_from_cache
+        from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
-        if not try_to_load_from_cache(model_id, "config.json"):
+        snapshot = find_cached_snapshot(model_id, "config.json")
+        if snapshot is None:
             raise ValueError(
                 f"Model {model_id} must be downloaded first, check recommended models"
             )
+        load_target = str(snapshot)
 
         loop = asyncio.get_running_loop()
 
@@ -122,13 +125,14 @@ class MLXVisionLanguage(BaseNode):
             import mlx_vlm
 
             log.info("Loading MLX-VLM model %s", model_id)
-            mdl, proc = mlx_vlm.load(model_id)
+            mdl, proc = mlx_vlm.load(load_target)
             cfg = getattr(mdl, "config", None)
             if cfg is None:
-                cfg = mlx_vlm.utils.load_config(model_id)
+                cfg = mlx_vlm.utils.load_config(load_target)
             return mdl, proc, cfg
 
-        self._vlm = await loop.run_in_executor(None, _load_model)
+        # Load and run on the same thread: MLX binds a Metal stream per thread.
+        self._vlm = await loop.run_in_executor(MLX_VLM_THREAD, _load_model)
         ModelManager.set_model(self.id, cache_key, self._vlm)
 
     async def process(self, context: ProcessingContext) -> str:
@@ -198,7 +202,7 @@ class MLXVisionLanguage(BaseNode):
             return getattr(result, "text", result)
 
         try:
-            text = await loop.run_in_executor(None, _generate)
+            text = await loop.run_in_executor(MLX_VLM_THREAD, _generate)
         finally:
             with contextlib.suppress(FileNotFoundError):
                 image_path.unlink()

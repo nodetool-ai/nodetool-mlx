@@ -18,6 +18,8 @@ from nodetool.metadata.types import (
     HuggingFaceModel,
     Provider,
 )
+from nodetool.ml.core.model_manager import ModelManager
+from nodetool.mlx.threads import MLX_AUDIO_THREAD
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -90,6 +92,14 @@ class BaseMLXSpeechToText(BaseNode):
         if self._stt_model is not None and self._model_id_loaded == model_id:
             return
 
+        # The worker builds a new node per execution, so cache across runs.
+        cache_key = f"{model_id}_mlx_stt_node"
+        cached = ModelManager.get_model(cache_key)
+        if cached is not None:
+            self._stt_model = cached
+            self._model_id_loaded = model_id
+            return
+
         from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
         load_target = find_cached_snapshot(model_id, "config.json")
@@ -106,8 +116,10 @@ class BaseMLXSpeechToText(BaseNode):
             log.info("Loading MLX STT model %s", model_id)
             return load_model(load_target)
 
-        self._stt_model = await loop.run_in_executor(None, _load_model)
+        # Load and run on the same thread: MLX binds a Metal stream per thread.
+        self._stt_model = await loop.run_in_executor(MLX_AUDIO_THREAD, _load_model)
         self._model_id_loaded = model_id
+        ModelManager.set_model(self.id, cache_key, self._stt_model)
 
     class OutputType(TypedDict):
         text: str
@@ -186,20 +198,20 @@ class BaseMLXSpeechToText(BaseNode):
                         sorted(dropped),
                         self._get_model_id(),
                     )
-            return generate(audio_path, **filtered)
+            result = generate(audio_path, **filtered)
+            # Convert on this thread so no MLX value is touched off it.
+            return {
+                "text": str(getattr(result, "text", "") or ""),
+                "segments": self._normalize_segments(result),
+                "language": str(getattr(result, "language", "") or ""),
+            }
 
         loop = asyncio.get_running_loop()
         try:
-            result = await loop.run_in_executor(None, _run_transcription)
+            return await loop.run_in_executor(MLX_AUDIO_THREAD, _run_transcription)
         finally:
             with suppress(FileNotFoundError):
                 os.remove(audio_path)
-
-        text = str(getattr(result, "text", "") or "")
-        segments = self._normalize_segments(result)
-        language = str(getattr(result, "language", "") or "")
-
-        return {"text": text, "segments": segments, "language": language}
 
 
 class Parakeet(BaseMLXSpeechToText):
