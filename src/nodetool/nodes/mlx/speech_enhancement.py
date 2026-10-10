@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import logging
@@ -15,7 +16,6 @@ from nodetool.metadata.types import (
     Provider,
 )
 from nodetool.ml.core.model_manager import ModelManager
-from nodetool.mlx.threads import MLX_AUDIO_THREAD
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -111,7 +111,7 @@ class BaseMLXSpeechEnhancement(BaseNode):
         if cached is None:
             # Load and run on the same thread: MLX binds a Metal stream per thread.
             loop = asyncio.get_running_loop()
-            cached = await loop.run_in_executor(MLX_AUDIO_THREAD, self._load_model_sync)
+            cached = await loop.run_in_executor(MLX_EXECUTOR, self._load_model_sync)
             ModelManager.set_model(self.id, cache_key, cached)
         self._model = cached
         self._model_id_loaded = load_key
@@ -140,7 +140,7 @@ class BaseMLXSpeechEnhancement(BaseNode):
             return np.asarray(enhanced, dtype=np.float32).flatten()
 
         loop = asyncio.get_running_loop()
-        enhanced_np = await loop.run_in_executor(MLX_AUDIO_THREAD, _enhance)
+        enhanced_np = await loop.run_in_executor(MLX_EXECUTOR, _enhance)
         audio_ref = await context.audio_from_numpy(enhanced_np, self._sample_rate)
         return {"audio": audio_ref}
 

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import contextlib
@@ -13,7 +14,6 @@ from pydantic import Field
 from nodetool.config.logging_config import get_logger
 from nodetool.metadata.types import HFImageTextToText, ImageRef
 from nodetool.ml.core.model_manager import ModelManager
-from nodetool.mlx.threads import MLX_VLM_THREAD
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -132,7 +132,7 @@ class MLXVisionLanguage(BaseNode):
             return mdl, proc, cfg
 
         # Load and run on the same thread: MLX binds a Metal stream per thread.
-        self._vlm = await loop.run_in_executor(MLX_VLM_THREAD, _load_model)
+        self._vlm = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
         ModelManager.set_model(self.id, cache_key, self._vlm)
 
     async def process(self, context: ProcessingContext) -> str:
@@ -202,7 +202,7 @@ class MLXVisionLanguage(BaseNode):
             return getattr(result, "text", result)
 
         try:
-            text = await loop.run_in_executor(MLX_VLM_THREAD, _generate)
+            text = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         finally:
             with contextlib.suppress(FileNotFoundError):
                 image_path.unlink()

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import logging
@@ -120,7 +121,7 @@ class Whisper(BaseNode):
 
         loop = asyncio.get_running_loop()
         found = await loop.run_in_executor(
-            None, find_cached_snapshot, self.model.repo_id, "config.json"
+            MLX_EXECUTOR, find_cached_snapshot, self.model.repo_id, "config.json"
         )
         if found is None:
             raise ValueError(
@@ -161,7 +162,9 @@ class Whisper(BaseNode):
 
         # Run transcription in a thread pool to avoid blocking
         loop = asyncio.get_running_loop()
-        result: dict[str, Any] = await loop.run_in_executor(None, _do_transcribe, arr)
+        result: dict[str, Any] = await loop.run_in_executor(
+            MLX_EXECUTOR, _do_transcribe, arr
+        )
 
         text = result.get("text", "") or ""
         segments = result.get("segments", []) or []

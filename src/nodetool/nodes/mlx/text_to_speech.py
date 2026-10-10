@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import base64
@@ -20,7 +21,6 @@ from pydantic import Field, PrivateAttr
 
 from nodetool.metadata.types import AudioRef, HFTextToSpeech, HuggingFaceModel, Provider
 from nodetool.ml.core.model_manager import ModelManager
-from nodetool.mlx.threads import MLX_AUDIO_THREAD
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
@@ -32,9 +32,10 @@ log = logging.getLogger(__name__)
 
 # MLX binds a Metal stream per thread, so a model loaded on one thread cannot
 # be used from another: mlx-audio then raises "There is no Stream(gpu, N) in
-# current thread." Every MLX call in this module runs on the shared audio
-# thread, which the provider and the other audio nodes also use.
-_MLX_AUDIO_THREAD = MLX_AUDIO_THREAD
+# current thread." Loading with `run_in_executor(None, ...)` and iterating the
+# generator on the event loop thread put the two on different threads. Every
+# MLX call in this package is pinned to the shared MLX_EXECUTOR thread. A
+# single worker also serializes Metal access, which these models want anyway.
 _GENERATOR_EXHAUSTED = object()
 log.setLevel(logging.DEBUG)
 
@@ -150,7 +151,7 @@ class BaseMLXTTS(BaseNode):
             log.info("Loading MLX TTS model %s", model_id)
             return load_model(load_target)
 
-        self._tts_model = await loop.run_in_executor(_MLX_AUDIO_THREAD, _load_model)
+        self._tts_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
         self._model_id_loaded = model_id
         ModelManager.set_model(self.id, cache_key, self._tts_model)
 
@@ -214,12 +215,10 @@ class BaseMLXTTS(BaseNode):
                         getattr(item, "sample_rate", None),
                     )
 
-                iterator = await loop.run_in_executor(_MLX_AUDIO_THREAD, _start)
+                iterator = await loop.run_in_executor(MLX_EXECUTOR, _start)
                 idx = -1
                 while True:
-                    pulled = await loop.run_in_executor(
-                        _MLX_AUDIO_THREAD, _pull, iterator
-                    )
+                    pulled = await loop.run_in_executor(MLX_EXECUTOR, _pull, iterator)
                     if pulled is _GENERATOR_EXHAUSTED:
                         break
                     idx += 1

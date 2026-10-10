@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import inspect
@@ -19,7 +20,6 @@ from nodetool.metadata.types import (
     Provider,
 )
 from nodetool.ml.core.model_manager import ModelManager
-from nodetool.mlx.threads import MLX_AUDIO_THREAD
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -117,7 +117,7 @@ class BaseMLXSpeechToText(BaseNode):
             return load_model(load_target)
 
         # Load and run on the same thread: MLX binds a Metal stream per thread.
-        self._stt_model = await loop.run_in_executor(MLX_AUDIO_THREAD, _load_model)
+        self._stt_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
         self._model_id_loaded = model_id
         ModelManager.set_model(self.id, cache_key, self._stt_model)
 
@@ -208,7 +208,7 @@ class BaseMLXSpeechToText(BaseNode):
 
         loop = asyncio.get_running_loop()
         try:
-            return await loop.run_in_executor(MLX_AUDIO_THREAD, _run_transcription)
+            return await loop.run_in_executor(MLX_EXECUTOR, _run_transcription)
         finally:
             with suppress(FileNotFoundError):
                 os.remove(audio_path)

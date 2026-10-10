@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import dataclasses
@@ -479,7 +480,9 @@ class ACEStepMusicGeneration(ACEStepBaseNode):
             )
             return dit, llm
 
-        self._dit_handler, self._llm_handler = await loop.run_in_executor(None, _load)
+        self._dit_handler, self._llm_handler = await loop.run_in_executor(
+            MLX_EXECUTOR, _load
+        )
 
     async def process(self, context: ProcessingContext) -> AudioRef:
         self._ensure_supported_platform()
@@ -548,7 +551,7 @@ class ACEStepMusicGeneration(ACEStepBaseNode):
                 )
                 return self._read_result_audio(result)
 
-        data = await loop.run_in_executor(None, _generate)
+        data = await loop.run_in_executor(MLX_EXECUTOR, _generate)
         self._post_progress(context, self.inference_steps, self.inference_steps)
         return await context.audio_from_bytes(data)
 
@@ -670,7 +673,7 @@ class ACEStepSongPlanner(ACEStepBaseNode):
         def _load() -> Any:
             return self._load_llm_handler(checkpoints_dir, lm_model_path, device)
 
-        self._llm_handler = await loop.run_in_executor(None, _load)
+        self._llm_handler = await loop.run_in_executor(MLX_EXECUTOR, _load)
 
     async def process(self, context: ProcessingContext) -> OutputType:
         self._ensure_supported_platform()
@@ -706,7 +709,7 @@ class ACEStepSongPlanner(ACEStepBaseNode):
             )
             return self._result_to_output(result)
 
-        return await loop.run_in_executor(None, _plan)
+        return await loop.run_in_executor(MLX_EXECUTOR, _plan)
 
     @staticmethod
     def _result_to_output(result: Any) -> "ACEStepSongPlanner.OutputType":

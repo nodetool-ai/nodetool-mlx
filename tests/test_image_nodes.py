@@ -408,7 +408,7 @@ async def test_vlm_node_loads_from_revision_only_cache_on_one_thread(
     assert await node.process(_mock_context()) == "a fox"
 
     assert load_targets == [str(tmp_path)]
-    assert len(set(threads)) == 1 and threads[0].startswith("mlx-vlm")
+    assert len(set(threads)) == 1 and threads[0].startswith("mlx_")
 
 
 def _install_fake_mflux(monkeypatch, **variants) -> MagicMock:

@@ -605,7 +605,7 @@ async def test_stt_node_reuses_model_and_stays_on_one_thread(
         assert result["text"] == "hello"
 
     assert len(loads) == 1
-    assert len(set(threads)) == 1 and threads[0].startswith("mlx-audio")
+    assert len(set(threads)) == 1 and threads[0].startswith("mlx_")
 
 
 async def test_tts_node_reuses_model_across_executions(
@@ -677,5 +677,5 @@ async def test_enhancement_node_reuses_model_and_stays_on_one_thread(
         assert await node.process(ctx) == {"audio": "audio-ref"}
 
     assert len(loads) == 1
-    assert len(set(threads)) == 1 and threads[0].startswith("mlx-audio")
+    assert len(set(threads)) == 1 and threads[0].startswith("mlx_")
     assert received[0].tolist() == [2.0, 2.0, 2.0, 2.0]

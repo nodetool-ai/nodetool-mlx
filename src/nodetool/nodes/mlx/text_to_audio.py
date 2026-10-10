@@ -1,4 +1,5 @@
 from __future__ import annotations
+from nodetool.nodes.mlx._mlx_thread import MLX_EXECUTOR
 
 import asyncio
 import io
@@ -142,7 +143,7 @@ class BaseStableAudio3(BaseNode):
                 weights.ensure_local(key)
 
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, _download)
+        await loop.run_in_executor(MLX_EXECUTOR, _download)
 
     def _ensure_seed(self) -> None:
         if self.seed == 0:
@@ -202,7 +203,7 @@ class BaseStableAudio3(BaseNode):
             )
 
         loop = asyncio.get_running_loop()
-        audio_np, sample_rate = await loop.run_in_executor(None, _run)
+        audio_np, sample_rate = await loop.run_in_executor(MLX_EXECUTOR, _run)
         wav_bytes = _audio_to_wav_bytes(audio_np, sample_rate)
         return await context.audio_from_bytes(wav_bytes)
 
