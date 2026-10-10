@@ -4,31 +4,45 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nodetool-mlx"
-version = "0.7.2"
+version = "0.7.3"
 description = "Apple Silicon MLX nodes for Nodetool"
 readme = "README.md"
 authors = [{ name = "Matthias Georgi", email = "matti.georgi@gmail.com" }]
 requires-python = ">=3.11"
+# MLX runs only on Apple Silicon. Every MLX runtime dependency carries the
+# Apple Silicon environment marker, so a Windows or Linux install pulls only
+# nodetool-core and the small helpers the node modules import. Without the
+# marker, Linux resolves mflux to mlx[cuda13] and torch (several GB) for nodes
+# that cannot run. Keep the marker identical on every MLX-only line.
 dependencies = [
-    "nodetool-core>=0.7.0",
-    "mlx>=0.30",
-    "mlx-whisper>=0.4.3",
-    "mlx-audio>=0.4.4",
-    "mflux>=0.18.1",
-    "huggingface-hub>=0.24.6",
-    "numpy>=1.26",
+    "nodetool-core>=0.8.2",
+    # mflux caps huggingface-hub below 2.0; transformers 5.19 needs >=1.31.
+    "huggingface-hub>=1.33.0,<2",
+    # Same floor as nodetool-core. Do not raise it to 2.4: nodetool-huggingface
+    # needs mistral-common, which caps numpy below 2.4 on Python 3.11 and 3.12.
+    "numpy>=2.3.5",
     "pydub>=0.25.1",
-    "mlx-lm>=0.31.3",
-    "mlx-vlm>=0.4.4",
+    "mlx>=0.32.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "mlx-lm>=0.32.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "mlx-vlm>=0.7.6; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "mlx-audio>=0.5.8; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "mlx-whisper>=0.4.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "mflux>=0.22.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
     # Stable Audio 3 T5Gemma tokenizer
-    "sentencepiece>=0.2",
-    # Pin numba to Python 3.11+ compatible version to override mlx-whisper's old dependency
-    "numba>=0.62.1",
+    "sentencepiece>=0.2.2; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    # mlx-whisper declares numba without a floor; keep a Python 3.11+ build.
+    "numba>=0.68.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
 
+[project.urls]
+Repository = "https://github.com/nodetool-ai/nodetool-mlx"
+
+# Node discovery: nodetool-core's worker reads this group and imports
+# nodetool.nodes.<value>.
+[project.entry-points."nodetool.namespaces"]
+mlx = "mlx"
+
 [project.optional-dependencies]
-# For exact version pinning in production
-stable = ["nodetool-core==0.7.0"]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.5",
@@ -53,7 +67,6 @@ include = [
     "src/nodetool/mlx/stable_audio_3/LICENSE",
     "src/nodetool/mlx/stable_audio_3/NOTICE.md",
 ]
-artifacts = ["package_metadata/nodetool-mlx.json"]
 
 # The Stable Audio 3 model definitions under stable_audio_3/defs are vendored
 # verbatim from Stability AI's MIT-licensed MLX implementation. Keep them out of
@@ -69,5 +82,18 @@ extend-exclude = ["src/nodetool/mlx/stable_audio_3/defs"]
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F"]
 
+[tool.ruff.lint.per-file-ignores]
+# The provider stops on non-Apple platforms before importing the MLX stack.
+"src/nodetool/mlx/mlx_provider.py" = ["E402"]
+
 [tool.black]
 extend-exclude = "src/nodetool/mlx/stable_audio_3/defs"
+
+[tool.uv]
+# Lock for the platforms the pack installs on. The MLX stack resolves only on
+# macOS arm64; the other platforms lock nodetool-core and its helpers.
+environments = [
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux'",
+    "sys_platform == 'win32'",
+]

@@ -12,6 +12,7 @@ import dataclasses
 import pytest
 
 from nodetool.nodes.mlx.text_to_music import (
+    _default_acestep_root,
     ACEStepBaseNode,
     ACEStepMusicGeneration,
     ACEStepSongPlanner,
@@ -105,6 +106,26 @@ def test_resolve_paths_honours_checkpoints_env(tmp_path, monkeypatch):
     assert checkpoints_dir == str(ckpt)
     assert project_root == str(tmp_path)
     assert ckpt.is_dir()
+
+
+def test_default_root_follows_xdg_cache_home(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
+    assert _default_acestep_root() == str(tmp_path / "xdg" / "nodetool" / "acestep")
+
+
+def test_default_root_keeps_existing_legacy_checkpoints(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    (home / ".cache" / "nodetool" / "acestep" / "checkpoints").mkdir(parents=True)
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
+    assert _default_acestep_root() == str(home / ".cache" / "nodetool" / "acestep")
+
+
+def test_default_root_without_xdg(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    assert _default_acestep_root() == str(tmp_path / ".cache" / "nodetool" / "acestep")
 
 
 def test_song_planner_result_parsing_from_dict():

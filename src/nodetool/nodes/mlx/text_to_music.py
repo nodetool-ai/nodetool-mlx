@@ -25,6 +25,20 @@ if TYPE_CHECKING:  # pragma: no cover - import only for type checking
 
 log = get_logger(__name__)
 
+
+def _default_acestep_root() -> str:
+    """Return ``$XDG_CACHE_HOME/nodetool/acestep``, or ``~/.cache/nodetool/acestep``.
+
+    The legacy ``~/.cache`` location wins when it already holds checkpoints, so
+    a user who sets ``XDG_CACHE_HOME`` later does not download them again.
+    """
+    legacy = os.path.join(os.path.expanduser("~"), ".cache", "nodetool", "acestep")
+    xdg = os.environ.get("XDG_CACHE_HOME", "").strip()
+    if not xdg or os.path.isdir(os.path.join(legacy, "checkpoints")):
+        return legacy
+    return os.path.join(os.path.expanduser(xdg), "nodetool", "acestep")
+
+
 # HuggingFace organisation hosting the ACE-Step 1.5 checkpoints.
 ACE_STEP_ORG = "ACE-Step"
 # Bundle download containing the VAE, text encoder, the turbo DiT and the 1.7B LM.
@@ -160,7 +174,7 @@ class ACEStepBaseNode(BaseNode):
         else:
             project_root = os.path.abspath(
                 os.path.expanduser(
-                    os.environ.get("ACESTEP_PROJECT_ROOT", "~/.cache/nodetool/acestep")
+                    os.environ.get("ACESTEP_PROJECT_ROOT") or _default_acestep_root()
                 )
             )
             checkpoints_dir = os.path.join(project_root, "checkpoints")
@@ -287,8 +301,9 @@ class ACEStepMusicGeneration(ACEStepBaseNode):
       higher quality base / XL checkpoints
 
     ACE-Step downloads its checkpoints from HuggingFace into
-    ``~/.cache/nodetool/acestep/checkpoints`` (configurable via
-    ``ACESTEP_CHECKPOINTS_DIR``) the first time a model is used.
+    ``$XDG_CACHE_HOME/nodetool/acestep/checkpoints`` (``~/.cache`` when
+    ``XDG_CACHE_HOME`` is unset; configurable via ``ACESTEP_CHECKPOINTS_DIR``)
+    the first time a model is used.
     """
 
     _expose_as_tool: ClassVar[bool] = True

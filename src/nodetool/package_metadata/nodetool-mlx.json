@@ -11,7 +11,7 @@
         "audio"
       ],
       "body": "content_card",
-      "description": "Transcribe an audio asset using MLX Whisper.\n    whisper, mlx, asr, speech-to-text\n\n    - Uses MLX for efficient Apple Silicon acceleration\n    - Returns transcript and segments with optional word-level timestamps",
+      "description": "Transcribe an audio asset using MLX Whisper.\nwhisper, mlx, asr, speech-to-text\n\n- Uses MLX for efficient Apple Silicon acceleration\n- Returns transcript and segments with optional word-level timestamps",
       "input_fields": [
         "audio"
       ],
@@ -348,7 +348,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images with MFlux ControlNet guidance using local MLX acceleration.\n    mlx, flux, controlnet, conditioning, edge-detection\n\n    Use cases:\n    - Apply edge-aware guidance via ControlNet canny models\n    - Leverage local Apple Silicon acceleration for conditioned generations\n    - Upscale images using ControlNet upscaler weights",
+      "description": "Generate images with MFlux ControlNet guidance using local MLX acceleration.\nmlx, flux, controlnet, conditioning, edge-detection\n\nUse cases:\n- Apply edge-aware guidance via ControlNet canny models\n- Leverage local Apple Silicon acceleration for conditioned generations\n- Upscale images using ControlNet upscaler weights",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -603,7 +603,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images with depth guidance via the MFlux depth pipeline using local MLX acceleration.\n    mlx, flux, depth, conditioning, structure-preserving\n\n    Use cases:\n    - Use a depth map to control structural composition while keeping prompt-driven appearance\n    - Provide both source image and depth map to transfer scene layout to a new generation\n    - Generate depth-guided outputs when only a depth map is available (source image optional)",
+      "description": "Generate images with depth guidance via the MFlux depth pipeline using local MLX acceleration.\nmlx, flux, depth, conditioning, structure-preserving\n\nUse cases:\n- Use a depth map to control structural composition while keeping prompt-driven appearance\n- Provide both source image and depth map to transfer scene layout to a new generation\n- Generate depth-guided outputs when only a depth map is available (source image optional)",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -783,7 +783,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images using Bria FIBO via MFLUX.\n    mlx, fibo, text-to-image, apple-silicon\n\n    Use cases:\n    - High-control image generation from structured JSON prompts\n    - Plain-text generation via FIBO's VLM prompt expansion\n    - Fast few-step generation with FIBO Lite",
+      "description": "Generate images using Bria FIBO via MFLUX.\nmlx, fibo, text-to-image, apple-silicon\n\nUse cases:\n- High-control image generation from structured JSON prompts\n- Plain-text generation via FIBO's VLM prompt expansion\n- Fast few-step generation with FIBO Lite",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -905,10 +905,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Optional LoRA adapter paths or HuggingFace repo IDs.",
           "name": "lora_paths",
-          "required": true,
           "title": "Lora Paths",
           "type": {
             "type": "list",
@@ -920,10 +919,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Scale values for the LoRA adapters. Must align with lora_paths when provided.",
           "name": "lora_scales",
-          "required": true,
           "title": "Lora Scales",
           "type": {
             "type": "list",
@@ -1005,7 +1003,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Edit images using Bria FIBO Edit via MFLUX.\n    mlx, fibo, image-editing, apple-silicon\n\n    Use cases:\n    - Instruction-based image editing from plain text or structured JSON\n    - Mask-free and maskless localized edit workflows through FIBO Edit\n    - Background matting via the FIBO Edit RMBG variant",
+      "description": "Edit images using Bria FIBO Edit via MFLUX.\nmlx, fibo, image-editing, apple-silicon\n\nUse cases:\n- Instruction-based image editing from plain text or structured JSON\n- Mask-free and maskless localized edit workflows through FIBO Edit\n- Background matting via the FIBO Edit RMBG variant",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -1143,10 +1141,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Optional LoRA adapter paths or HuggingFace repo IDs.",
           "name": "lora_paths",
-          "required": true,
           "title": "Lora Paths",
           "type": {
             "type": "list",
@@ -1158,10 +1155,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Scale values for the LoRA adapters. Must align with lora_paths when provided.",
           "name": "lora_scales",
-          "required": true,
           "title": "Lora Scales",
           "type": {
             "type": "list",
@@ -1242,7 +1238,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images using the FLUX.2 Klein models via MFLUX.\n    mlx, flux2, text-to-image, apple-silicon\n\n    Use cases:\n    - Fast FLUX.2 generation with distilled 4B/9B variants\n    - Higher-quality base FLUX.2 generation with more steps\n    - LoRA-enabled FLUX.2 generation on Apple Silicon",
+      "description": "Generate images using the FLUX.2 Klein models via MFLUX.\nmlx, flux2, text-to-image, apple-silicon\n\nUse cases:\n- Fast FLUX.2 generation with distilled 4B/9B variants\n- Higher-quality base FLUX.2 generation with more steps\n- LoRA-enabled FLUX.2 generation on Apple Silicon",
       "expose_as_tool": true,
       "input_fields": [
         "prompt"
@@ -1445,7 +1441,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Edit images using FLUX.2 Klein image-conditioned editing.\n    mlx, flux2, image-editing, apple-silicon\n\n    Use cases:\n    - Edit images with one or more reference images using FLUX.2\n    - Fast distilled FLUX.2 editing on Apple Silicon\n    - LoRA-enabled FLUX.2 edit workflows",
+      "description": "Edit images using FLUX.2 Klein image-conditioned editing.\nmlx, flux2, image-editing, apple-silicon\n\nUse cases:\n- Edit images with one or more reference images using FLUX.2\n- Fast distilled FLUX.2 editing on Apple Silicon\n- LoRA-enabled FLUX.2 edit workflows",
       "expose_as_tool": true,
       "input_fields": [
         "prompt"
@@ -1471,10 +1467,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Reference images for the edit. One or more images may be provided.",
           "name": "images",
-          "required": true,
           "title": "Images",
           "type": {
             "type": "list",
@@ -1663,7 +1658,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Transform an existing image using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image-to-image, apple-silicon\n\n    Use cases:\n    - Apply prompt-based edits to an existing image without relying on external APIs\n    - Experiment with strength-controlled transformations locally",
+      "description": "Transform an existing image using the MFLUX MLX implementation of FLUX.1.\nmlx, flux, image-to-image, apple-silicon\n\nUse cases:\n- Apply prompt-based edits to an existing image without relying on external APIs\n- Experiment with strength-controlled transformations locally",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -1902,7 +1897,7 @@
         "style"
       ],
       "body": "content_card",
-      "description": "Generate style-consistent images using In-Context LoRA via MFLUX.\n    mlx, flux, in-context, style-transfer, apple-silicon\n\n    Use cases:\n    - Generate images following a specific style from a reference image\n    - Apply various pre-defined style LoRAs (illustration, portrait, storyboard, etc.)\n    - Create consistent visual identity across multiple generations",
+      "description": "Generate style-consistent images using In-Context LoRA via MFLUX.\nmlx, flux, in-context, style-transfer, apple-silicon\n\nUse cases:\n- Generate images following a specific style from a reference image\n- Apply various pre-defined style LoRAs (illustration, portrait, storyboard, etc.)\n- Create consistent visual identity across multiple generations",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -2110,7 +2105,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Inpaint portions of an image locally using the MFLUX MLX implementation of FLUX.1 Fill.\n    mlx, flux, inpainting, mask editing\n\n    Use cases:\n    - Restore masked regions with prompt-guided content\n    - Blend new elements into an existing composition while preserving unmasked areas",
+      "description": "Inpaint portions of an image locally using the MFLUX MLX implementation of FLUX.1 Fill.\nmlx, flux, inpainting, mask editing\n\nUse cases:\n- Restore masked regions with prompt-guided content\n- Blend new elements into an existing composition while preserving unmasked areas",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -2290,7 +2285,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images using Kontext reference image fusion on Apple Silicon.\n    mlx, flux, kontext, reference guidance\n\n    Use cases:\n    - Leverage a reference image and prompt to produce stylistically consistent outputs\n    - Perform context-aware edits without external services\n    - Prototype Kontext-driven workflows locally",
+      "description": "Generate images using Kontext reference image fusion on Apple Silicon.\nmlx, flux, kontext, reference guidance\n\nUse cases:\n- Leverage a reference image and prompt to produce stylistically consistent outputs\n- Perform context-aware edits without external services\n- Prototype Kontext-driven workflows locally",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -2456,7 +2451,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images using Krea 2 Turbo via MFLUX.\n    mlx, krea2, text-to-image, apple-silicon\n\n    Use cases:\n    - Fast 8-step distilled generation with a wide style range\n    - Creative exploration with official Krea 2 style LoRAs\n    - Local Apple Silicon generation without an external API",
+      "description": "Generate images using Krea 2 Turbo via MFLUX.\nmlx, krea2, text-to-image, apple-silicon\n\nUse cases:\n- Fast 8-step distilled generation with a wide style range\n- Creative exploration with official Krea 2 style LoRAs\n- Local Apple Silicon generation without an external API",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -2678,7 +2673,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Outpaint an existing image by extending the canvas using the MFLUX Fill pipeline.\n    mlx, flux, outpainting, canvas extension\n\n    Use cases:\n    - Expand scene borders while maintaining continuity with the original image\n    - Add sky, foreground elements, or contextual scenery around a provided image",
+      "description": "Outpaint an existing image by extending the canvas using the MFLUX Fill pipeline.\nmlx, flux, outpainting, canvas extension\n\nUse cases:\n- Expand scene borders while maintaining continuity with the original image\n- Add sky, foreground elements, or contextual scenery around a provided image",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -2867,7 +2862,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images using the Qwen Image model via MFLUX on Apple Silicon.\n    mlx, qwen, text-to-image, apple-silicon\n\n    Use cases:\n    - Generate high-quality images with multilingual prompt support including Chinese\n    - Create images with rendered Chinese text content (signs, calligraphy, menus)\n    - Leverage Qwen's 20B parameter vision-language model for detailed generation",
+      "description": "Generate images using the Qwen Image model via MFLUX on Apple Silicon.\nmlx, qwen, text-to-image, apple-silicon\n\nUse cases:\n- Generate high-quality images with multilingual prompt support including Chinese\n- Create images with rendered Chinese text content (signs, calligraphy, menus)\n- Leverage Qwen's 20B parameter vision-language model for detailed generation",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -2989,10 +2984,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Optional LoRA adapter paths or HuggingFace repo IDs.",
           "name": "lora_paths",
-          "required": true,
           "title": "Lora Paths",
           "type": {
             "type": "list",
@@ -3004,10 +2998,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Scale values for the LoRA adapters. Must align with lora_paths when provided.",
           "name": "lora_scales",
-          "required": true,
           "title": "Lora Scales",
           "type": {
             "type": "list",
@@ -3093,7 +3086,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Edit images using natural language instructions with the Qwen Image Edit model.\n    mlx, qwen, image-editing, apple-silicon\n\n    Use cases:\n    - Modify images using natural language descriptions\n    - Combine elements from multiple reference images\n    - Apply transformations while maintaining original poses and positions",
+      "description": "Edit images using natural language instructions with the Qwen Image Edit model.\nmlx, qwen, image-editing, apple-silicon\n\nUse cases:\n- Modify images using natural language descriptions\n- Combine elements from multiple reference images\n- Apply transformations while maintaining original poses and positions",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -3129,10 +3122,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Reference images for the edit. The last image dimensions determine output size.",
           "name": "images",
-          "required": true,
           "title": "Images",
           "type": {
             "type": "list",
@@ -3232,10 +3224,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Optional LoRA adapter paths or HuggingFace repo IDs.",
           "name": "lora_paths",
-          "required": true,
           "title": "Lora Paths",
           "type": {
             "type": "list",
@@ -3247,10 +3238,9 @@
           }
         },
         {
-          "default": null,
+          "default": [],
           "description": "Scale values for the LoRA adapters. Must align with lora_paths when provided.",
           "name": "lora_scales",
-          "required": true,
           "title": "Lora Scales",
           "type": {
             "type": "list",
@@ -3318,7 +3308,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images using reference images with Flux Redux guidance on Apple Silicon.\n    mlx, flux, redux, reference fusion\n\n    Use cases:\n    - Blend multiple reference images with a text prompt to steer style and content\n    - Reinterpret a photo collection into a coherent output while keeping structure from the references\n    - Experiment locally with the Flux Redux pipeline without external APIs",
+      "description": "Generate images using reference images with Flux Redux guidance on Apple Silicon.\nmlx, flux, redux, reference fusion\n\nUse cases:\n- Blend multiple reference images with a text prompt to steer style and content\n- Reinterpret a photo collection into a coherent output while keeping structure from the references\n- Experiment locally with the Flux Redux pipeline without external APIs",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -3491,7 +3481,7 @@
         "resolution"
       ],
       "body": "content_card",
-      "description": "Upscale images using the SeedVR2 super-resolution model via MFLUX.\n    mlx, seedvr2, upscaling, super-resolution, apple-silicon\n\n    Use cases:\n    - Fast and faithful image upscaling (typically 1 step)\n    - High-fidelity super-resolution without text prompts\n    - Upscale by target resolution or scale factor",
+      "description": "Upscale images using the SeedVR2 super-resolution model via MFLUX.\nmlx, seedvr2, upscaling, super-resolution, apple-silicon\n\nUse cases:\n- Fast and faithful image upscaling (typically 1 step)\n- High-fidelity super-resolution without text prompts\n- Upscale by target resolution or scale factor",
       "expose_as_tool": true,
       "input_fields": [
         "image"
@@ -3619,7 +3609,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images using the base Z-Image model via MFLUX.\n    mlx, z-image, text-to-image, apple-silicon\n\n    Use cases:\n    - Higher-quality base Z-Image generation for detailed prompts\n    - Training-oriented or non-turbo Z-Image workflows\n    - LoRA-enabled Z-Image generation on Apple Silicon",
+      "description": "Generate images using the base Z-Image model via MFLUX.\nmlx, z-image, text-to-image, apple-silicon\n\nUse cases:\n- Higher-quality base Z-Image generation for detailed prompts\n- Training-oriented or non-turbo Z-Image workflows\n- LoRA-enabled Z-Image generation on Apple Silicon",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -3817,7 +3807,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images quickly using the Z-Image Turbo model via MFLUX.\n    mlx, z-image, text-to-image, fast-generation, apple-silicon\n\n    Use cases:\n    - Fast image generation (typically 9 steps)\n    - Efficient 6B parameter model for quick iterations\n    - Support for LoRA adapters for style customization",
+      "description": "Generate images quickly using the Z-Image Turbo model via MFLUX.\nmlx, z-image, text-to-image, fast-generation, apple-silicon\n\nUse cases:\n- Fast image generation (typically 9 steps)\n- Efficient 6B parameter model for quick iterations\n- Support for LoRA adapters for style customization",
       "expose_as_tool": true,
       "input_fields": [
         "prompt"
@@ -3995,7 +3985,7 @@
         "temperature"
       ],
       "body": "content_card",
-      "description": "Describe or answer questions about an image using MLX vision-language models.\n    mlx, vlm, image-to-text, vision, captioning, vqa, apple-silicon\n\n    Use cases:\n    - Generate captions or detailed descriptions for an image\n    - Visual question answering (VQA) about the contents of an image\n    - OCR-style reading and document understanding without external APIs\n    - Local multimodal understanding on Apple Silicon (Qwen3-VL, Gemma 4, etc.)",
+      "description": "Describe or answer questions about an image using MLX vision-language models.\nmlx, vlm, image-to-text, vision, captioning, vqa, apple-silicon\n\nUse cases:\n- Generate captions or detailed descriptions for an image\n- Visual question answering (VQA) about the contents of an image\n- OCR-style reading and document understanding without external APIs\n- Local multimodal understanding on Apple Silicon (Qwen3-VL, Gemma 4, etc.)",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -4307,7 +4297,7 @@
         "audio"
       ],
       "body": "content_card",
-      "description": "Suppress background noise using DeepFilterNet via MLX.\n    deepfilternet, mlx, denoise, speech enhancement\n\n    - Real-time capable noise suppression at 48 kHz\n    - Runs locally on Apple Silicon through mlx-audio",
+      "description": "Suppress background noise using DeepFilterNet via MLX.\ndeepfilternet, mlx, denoise, speech enhancement\n\n- Real-time capable noise suppression at 48 kHz\n- Runs locally on Apple Silicon through mlx-audio",
       "expose_as_tool": true,
       "input_fields": [
         "audio"
@@ -4406,7 +4396,7 @@
         "audio"
       ],
       "body": "content_card",
-      "description": "Enhance speech using MossFormer2 via MLX.\n    mossformer2, mlx, denoise, speech enhancement\n\n    - High-quality 48 kHz speech enhancement\n    - Runs locally on Apple Silicon through mlx-audio",
+      "description": "Enhance speech using MossFormer2 via MLX.\nmossformer2, mlx, denoise, speech enhancement\n\n- High-quality 48 kHz speech enhancement\n- Runs locally on Apple Silicon through mlx-audio",
       "expose_as_tool": true,
       "input_fields": [
         "audio"
@@ -4563,7 +4553,7 @@
         "language"
       ],
       "body": "content_card",
-      "description": "Generic MLX speech-to-text node.\n    mlx, asr, speech-to-text, transcription\n\n    Run any speech-to-text model supported by the ``mlx-audio`` library by entering\n    its Hugging Face repository id. Useful for models without a dedicated typed node.",
+      "description": "Generic MLX speech-to-text node.\nmlx, asr, speech-to-text, transcription\n\nRun any speech-to-text model supported by the ``mlx-audio`` library by entering\nits Hugging Face repository id. Useful for models without a dedicated typed node.",
       "expose_as_tool": true,
       "input_fields": [
         "audio"
@@ -4775,7 +4765,7 @@
         "audio"
       ],
       "body": "content_card",
-      "description": "Transcribe audio using NVIDIA Parakeet via MLX.\n    parakeet, mlx, asr, speech-to-text\n\n    - High-accuracy multilingual transcription with word/sentence alignment\n    - Runs locally on Apple Silicon through mlx-audio",
+      "description": "Transcribe audio using NVIDIA Parakeet via MLX.\nparakeet, mlx, asr, speech-to-text\n\n- High-accuracy multilingual transcription with word/sentence alignment\n- Runs locally on Apple Silicon through mlx-audio",
       "expose_as_tool": true,
       "input_fields": [
         "audio"
@@ -4932,7 +4922,7 @@
         "language"
       ],
       "body": "content_card",
-      "description": "Transcribe audio using Qwen3-ASR via MLX.\n    qwen3, mlx, asr, speech-to-text\n\n    - Alibaba's multilingual ASR with long-form chunking\n    - Runs locally on Apple Silicon through mlx-audio",
+      "description": "Transcribe audio using Qwen3-ASR via MLX.\nqwen3, mlx, asr, speech-to-text\n\n- Alibaba's multilingual ASR with long-form chunking\n- Runs locally on Apple Silicon through mlx-audio",
       "expose_as_tool": true,
       "input_fields": [
         "audio"
@@ -5082,7 +5072,7 @@
         "text"
       ],
       "body": "content_card",
-      "description": "Align a known transcript to audio using Qwen3-ForcedAligner via MLX.\n    qwen3, mlx, alignment, timestamps\n\n    - Produces word-level start/end timestamps for the provided text\n    - Runs locally on Apple Silicon through mlx-audio",
+      "description": "Align a known transcript to audio using Qwen3-ForcedAligner via MLX.\nqwen3, mlx, alignment, timestamps\n\n- Produces word-level start/end timestamps for the provided text\n- Runs locally on Apple Silicon through mlx-audio",
       "expose_as_tool": true,
       "input_fields": [
         "audio",
@@ -5195,7 +5185,7 @@
         "prompt"
       ],
       "body": "content_card",
-      "description": "Generate text using locally cached MLX models on Apple Silicon.\n    text, generation, mlx, local-llm\n\n    Use cases:\n    - Fast local iteration with MLX-converted instruction models\n    - Privacy-preserving summarization, drafting, or Q&A\n    - Building multi-node agent workflows without external APIs",
+      "description": "Generate text using locally cached MLX models on Apple Silicon.\ntext, generation, mlx, local-llm\n\nUse cases:\n- Fast local iteration with MLX-converted instruction models\n- Privacy-preserving summarization, drafting, or Q&A\n- Building multi-node agent workflows without external APIs",
       "input_fields": [
         "system_prompt",
         "prompt"
@@ -6246,7 +6236,7 @@
         "seed"
       ],
       "body": "content_card",
-      "description": "Generate music and sound effects from text with Stable Audio 3 on Apple Silicon.\n    mlx, audio, music, sound-effects, text-to-audio, apple-silicon, stable-audio\n\n    Use cases:\n    - Generate music loops and beds locally without cloud APIs\n    - Create sound effects from a text description\n    - Prototype audio ideas on-device with low latency",
+      "description": "Generate music and sound effects from text with Stable Audio 3 on Apple Silicon.\nmlx, audio, music, sound-effects, text-to-audio, apple-silicon, stable-audio\n\nUse cases:\n- Generate music loops and beds locally without cloud APIs\n- Create sound effects from a text description\n- Prototype audio ideas on-device with low latency",
       "expose_as_tool": true,
       "input_fields": [
         "prompt"
@@ -6382,7 +6372,7 @@
         "seed"
       ],
       "body": "content_card",
-      "description": "Transform an input clip into a variation guided by a text prompt (Stable Audio 3).\n    mlx, audio, audio-to-audio, style-transfer, variation, apple-silicon, stable-audio\n\n    Use cases:\n    - Create prompt-guided variations of an existing loop\n    - Restyle a melody or texture while keeping its broad structure\n    - Explore alternatives seeded from a reference recording",
+      "description": "Transform an input clip into a variation guided by a text prompt (Stable Audio 3).\nmlx, audio, audio-to-audio, style-transfer, variation, apple-silicon, stable-audio\n\nUse cases:\n- Create prompt-guided variations of an existing loop\n- Restyle a melody or texture while keeping its broad structure\n- Explore alternatives seeded from a reference recording",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -6541,7 +6531,7 @@
         "seed"
       ],
       "body": "content_card",
-      "description": "Regenerate a time range inside an audio clip from a text prompt (Stable Audio 3).\n    mlx, audio, inpainting, edit, repair, apple-silicon, stable-audio\n\n    Use cases:\n    - Replace a section of a track while preserving the rest exactly\n    - Fix or restyle a few seconds of a recording\n    - Fill a gap with prompt-guided content that matches the surroundings",
+      "description": "Regenerate a time range inside an audio clip from a text prompt (Stable Audio 3).\nmlx, audio, inpainting, edit, repair, apple-silicon, stable-audio\n\nUse cases:\n- Replace a section of a track while preserving the rest exactly\n- Fix or restyle a few seconds of a recording\n- Fill a gap with prompt-guided content that matches the surroundings",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -6707,7 +6697,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images locally using the MFLUX MLX implementation of FLUX.1.\n    mlx, flux, image generation, apple-silicon\n\n    Use cases:\n    - Create high quality images on Apple Silicon without external APIs\n    - Prototype prompts locally before running on cloud inference providers\n    - Experiment with quantized FLUX models (schnell/dev/krea-dev variants)\n\n    Recommended models:\n    - schnell: Fastest model, good for quick generations (2-4 steps)\n    - dev: More powerful model, higher quality (20-25 steps)\n    - krea-dev: Enhanced photorealism with distinctive aesthetics\n    - Quantized 4-bit models: Reduced memory usage versions of the official models",
+      "description": "Generate images locally using the MFLUX MLX implementation of FLUX.1.\nmlx, flux, image generation, apple-silicon\n\nUse cases:\n- Create high quality images on Apple Silicon without external APIs\n- Prototype prompts locally before running on cloud inference providers\n- Experiment with quantized FLUX models (schnell/dev/krea-dev variants)\n\nRecommended models:\n- schnell: Fastest model, good for quick generations (2-4 steps)\n- dev: More powerful model, higher quality (20-25 steps)\n- krea-dev: Enhanced photorealism with distinctive aesthetics\n- Quantized 4-bit models: Reduced memory usage versions of the official models",
       "expose_as_tool": true,
       "input_fields": [
         "prompt"
@@ -6916,7 +6906,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate images with Baidu's ERNIE-Image via MFLUX.\n    mlx, ernie, ernie-image, text-to-image, apple-silicon\n\n    Use cases:\n    - Fast 8-step generation with ERNIE-Image-Turbo\n    - Higher-fidelity generation with the non-distilled base model and guidance\n    - Local 8B diffusion transformer generation on Apple Silicon",
+      "description": "Generate images with Baidu's ERNIE-Image via MFLUX.\nmlx, ernie, ernie-image, text-to-image, apple-silicon\n\nUse cases:\n- Fast 8-step generation with ERNIE-Image-Turbo\n- Higher-fidelity generation with the non-distilled base model and guidance\n- Local 8B diffusion transformer generation on Apple Silicon",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -7102,7 +7092,7 @@
         "steps"
       ],
       "body": "content_card",
-      "description": "Generate typography-heavy images with Ideogram 4 via MFLUX.\n    mlx, ideogram, ideogram4, text-to-image, typography, apple-silicon\n\n    Use cases:\n    - Posters, labels and layouts with legible rendered text\n    - Structured JSON captions with bounding boxes and color palettes\n    - Local Apple Silicon generation without the Ideogram API\n\n    The prompt accepts plain text or an Ideogram JSON caption. JSON captions\n    give much better results; see Ideogram's prompting guide for the schema.",
+      "description": "Generate typography-heavy images with Ideogram 4 via MFLUX.\nmlx, ideogram, ideogram4, text-to-image, typography, apple-silicon\n\nUse cases:\n- Posters, labels and layouts with legible rendered text\n- Structured JSON captions with bounding boxes and color palettes\n- Local Apple Silicon generation without the Ideogram API\n\nThe prompt accepts plain text or an Ideogram JSON caption. JSON captions\ngive much better results; see Ideogram's prompting guide for the schema.",
       "expose_as_tool": true,
       "input_fields": [
         "prompt"
@@ -7263,7 +7253,7 @@
         "seed"
       ],
       "body": "content_card",
-      "description": "Generate full songs locally with ACE-Step 1.5 on Apple Silicon (MLX).\n    mlx, music, audio, text-to-music, ace-step, apple-silicon\n\n    Use cases:\n    - Turn a text description (and optional lyrics) into a complete track\n    - Produce instrumental beds, demos or background music without cloud APIs\n    - Iterate on prompts locally using the fast turbo DiT, then switch to the\n      higher quality base / XL checkpoints\n\n    ACE-Step downloads its checkpoints from HuggingFace into\n    ``~/.cache/nodetool/acestep/checkpoints`` (configurable via\n    ``ACESTEP_CHECKPOINTS_DIR``) the first time a model is used.",
+      "description": "Generate full songs locally with ACE-Step 1.5 on Apple Silicon (MLX).\nmlx, music, audio, text-to-music, ace-step, apple-silicon\n\nUse cases:\n- Turn a text description (and optional lyrics) into a complete track\n- Produce instrumental beds, demos or background music without cloud APIs\n- Iterate on prompts locally using the fast turbo DiT, then switch to the\n  higher quality base / XL checkpoints\n\nACE-Step downloads its checkpoints from HuggingFace into\n``~/.cache/nodetool/acestep/checkpoints`` (configurable via\n``ACESTEP_CHECKPOINTS_DIR``) the first time a model is used.",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -7668,7 +7658,7 @@
         "vocal_language"
       ],
       "body": "content_card",
-      "description": "Turn a natural-language idea into a song blueprint using the ACE-Step LM.\n    mlx, music, planner, lyrics, ace-step, apple-silicon\n\n    Use cases:\n    - Expand a short idea into a caption, lyrics and musical metadata\n    - Generate lyrics and a key/BPM suggestion to feed into music generation\n    - Prototype song concepts before committing to full audio synthesis\n\n    This node only runs the 5Hz language model (no diffusion), so it is fast\n    and lightweight compared to full music generation.",
+      "description": "Turn a natural-language idea into a song blueprint using the ACE-Step LM.\nmlx, music, planner, lyrics, ace-step, apple-silicon\n\nUse cases:\n- Expand a short idea into a caption, lyrics and musical metadata\n- Generate lyrics and a key/BPM suggestion to feed into music generation\n- Prototype song concepts before committing to full audio synthesis\n\nThis node only runs the 5Hz language model (no diffusion), so it is fast\nand lightweight compared to full music generation.",
       "input_fields": [
         "query"
       ],
@@ -8068,7 +8058,7 @@
         "top_p"
       ],
       "body": "content_card",
-      "description": "MLX Dia dialogue text-to-speech.\n\n    Use the ``[S1]`` and ``[S2]`` speaker tags inside the text to script multi-turn\n    dialogue. Optionally provide reference audio to clone a voice.",
+      "description": "MLX Dia dialogue text-to-speech.\n\nUse the ``[S1]`` and ``[S2]`` speaker tags inside the text to script multi-turn\ndialogue. Optionally provide reference audio to clone a voice.",
       "expose_as_tool": true,
       "input_fields": [
         "text"
@@ -9086,7 +9076,7 @@
         "speed"
       ],
       "body": "content_card",
-      "description": "Generic MLX text-to-speech node.\n\n    Run any text-to-speech model supported by the ``mlx-audio`` library by entering\n    its Hugging Face repository id. Useful for models that do not have a dedicated\n    typed node yet.",
+      "description": "Generic MLX text-to-speech node.\n\nRun any text-to-speech model supported by the ``mlx-audio`` library by entering\nits Hugging Face repository id. Useful for models that do not have a dedicated\ntyped node yet.",
       "expose_as_tool": true,
       "input_fields": [
         "text"
@@ -10666,6 +10656,6 @@
       "title": "Voxtral TTS"
     }
   ],
-  "repo_id": "",
-  "version": "0.7.2"
+  "repo_id": "nodetool-ai/nodetool-mlx",
+  "version": "0.7.3"
 }

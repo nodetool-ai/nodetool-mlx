@@ -2,9 +2,15 @@
 
 import importlib
 import importlib.util
+import platform
 import sys
 
 import pytest
+
+from nodetool.metadata.types import Provider
+from nodetool.providers.base import _PROVIDER_REGISTRY, _is_pack_absent
+
+PROVIDER_MODULE = "nodetool.mlx.mlx_provider"
 
 
 @pytest.mark.skipif(
@@ -12,5 +18,28 @@ import pytest
     reason="Requires the installed Apple Silicon MLX runtime",
 )
 def test_provider_imports_with_installed_runtime():
-    module = importlib.import_module("nodetool.mlx.mlx_provider")
+    module = importlib.import_module(PROVIDER_MODULE)
     assert module.MLXProvider.provider.value == "mlx"
+
+
+@pytest.mark.parametrize(
+    ("os_name", "machine"),
+    [("linux", "x86_64"), ("win32", "AMD64"), ("darwin", "x86_64")],
+)
+def test_provider_does_not_register_off_apple_silicon(monkeypatch, os_name, machine):
+    monkeypatch.setattr(sys, "platform", os_name)
+    monkeypatch.setattr(platform, "machine", lambda: machine)
+    for name in [
+        m for m in sys.modules if m == "nodetool.mlx" or m.startswith("nodetool.mlx.")
+    ]:
+        monkeypatch.delitem(sys.modules, name)
+    monkeypatch.delitem(_PROVIDER_REGISTRY, Provider.MLX, raising=False)
+
+    with pytest.raises(ImportError) as excinfo:
+        importlib.import_module(PROVIDER_MODULE)
+
+    assert isinstance(excinfo.value, ModuleNotFoundError)
+    assert excinfo.value.name == PROVIDER_MODULE
+    # The worker logs anything else as a broken install.
+    assert _is_pack_absent(PROVIDER_MODULE, excinfo.value)
+    assert Provider.MLX not in _PROVIDER_REGISTRY
