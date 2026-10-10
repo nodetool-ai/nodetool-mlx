@@ -11,6 +11,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from nodetool.config.logging_config import get_logger
+from nodetool.mlx.mflux_config import mflux_model_config
 from nodetool.integrations.huggingface.hf_cache import has_cached_files
 from nodetool.ml.core.model_manager import ModelManager
 
@@ -181,9 +182,8 @@ async def load_flux_model(
 
     model = await loop.run_in_executor(None, _load)
 
-    # Cache in ModelManager if node_id provided
-    if node_id:
-        ModelManager.set_model(node_id, cache_key, model)
+    # Cache in ModelManager
+    ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -238,12 +238,13 @@ async def load_flux_controlnet_model(
             f"Loading Flux ControlNet model {base_model_id} with controlnet {controlnet_model_id} "
             f"(quantize={quantize if quantize is not None else 'none'})"
         )
-        from mflux.models.common.config import ModelConfig
         from mflux.models.flux.variants.controlnet.flux_controlnet import (
             Flux1Controlnet,
         )
 
-        model_config = ModelConfig.from_name(base_model_id)
+        # A private copy, so setting the controlnet leaves mflux's
+        # process-wide registry unchanged.
+        model_config = mflux_model_config(base_model_id)
         model_config.controlnet_model = controlnet_model_id
 
         model = Flux1Controlnet(
@@ -255,8 +256,7 @@ async def load_flux_controlnet_model(
     model = await loop.run_in_executor(None, _load)
 
     # Cache in ModelManager
-    if node_id:
-        ModelManager.set_model(node_id, cache_key, model)
+    ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -308,8 +308,7 @@ async def load_flux_fill_model(
 
     model = await loop.run_in_executor(None, _load)
 
-    if node_id:
-        ModelManager.set_model(node_id, cache_key, model)
+    ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -350,8 +349,7 @@ async def load_flux_depth_model(
 
     model = await loop.run_in_executor(None, _load)
 
-    if node_id:
-        ModelManager.set_model(node_id, cache_key, model)
+    ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -397,8 +395,7 @@ async def load_flux_redux_model(
 
     model = await loop.run_in_executor(None, _load)
 
-    if node_id:
-        ModelManager.set_model(node_id, cache_key, model)
+    ModelManager.set_model(node_id, cache_key, model)
 
     return model
 
@@ -439,7 +436,6 @@ async def load_flux_kontext_model(
 
     model = await loop.run_in_executor(None, _load)
 
-    if node_id:
-        ModelManager.set_model(node_id, cache_key, model)
+    ModelManager.set_model(node_id, cache_key, model)
 
     return model

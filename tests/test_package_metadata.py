@@ -82,3 +82,18 @@ def test_metadata_recommended_models_match_code(node_type: str):
         f"{node_type}: recommended models in the metadata are out of date. "
         "Regenerate with `nodetool-pkg scan --write --enrich`."
     )
+
+
+def test_package_identity_matches_pyproject():
+    """repo_id and version come from pyproject; the UI links and installs by them."""
+    import tomllib
+
+    pyproject = tomllib.loads(
+        (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
+    )["project"]
+    repo_url = pyproject["urls"]["Repository"]
+    metadata = _metadata()
+
+    assert metadata["version"] == pyproject["version"]
+    assert metadata["repo_id"] == repo_url.removeprefix("https://github.com/")
+    assert metadata["repo_id"] == "nodetool-ai/nodetool-mlx"

@@ -254,6 +254,7 @@ class StableAudio3AudioToAudio(BaseStableAudio3):
     """
 
     audio: AudioRef = Field(
+        default=AudioRef(),
         description="Input audio used as the starting point (resampled to 44.1 kHz stereo).",
     )
     init_noise_level: float = Field(
@@ -314,6 +315,7 @@ class StableAudio3Inpaint(BaseStableAudio3):
     """
 
     audio: AudioRef = Field(
+        default=AudioRef(),
         description="Input audio to edit (resampled to 44.1 kHz stereo).",
     )
     inpaint_start: float = Field(

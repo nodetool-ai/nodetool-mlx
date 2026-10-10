@@ -7,6 +7,7 @@ on any platform.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -531,3 +532,150 @@ async def test_tts_preload_configures_espeak(monkeypatch, tmp_path):
 
     await tts.KittenTTS().preload_model(MagicMock())
     assert called.get("configured") is True
+
+
+# ---------------------------------------------------------------------------
+# Model reuse across executions and the single MLX thread
+#
+# The worker builds a fresh node per execution, so a model kept only on the
+# node reloads from disk every run. And MLX binds a Metal stream per thread, so
+# a model must be loaded and run on the same thread.
+# ---------------------------------------------------------------------------
+@pytest.fixture(autouse=True)
+def isolated_model_cache(monkeypatch):
+    # Nodes now cache models in the process-wide ModelManager; keep each test
+    # from seeing models another test loaded.
+    from nodetool.ml.core.model_manager import ModelManager
+
+    monkeypatch.setattr(ModelManager, "_models", {})
+    monkeypatch.setattr(ModelManager, "_models_by_node", {})
+
+
+def _install_module(monkeypatch, name: str, **attrs):
+    import types
+
+    module = types.ModuleType(name)
+    for key, value in attrs.items():
+        setattr(module, key, value)
+    parts = name.split(".")
+    for i in range(1, len(parts)):
+        parent = ".".join(parts[:i])
+        if parent not in sys.modules:
+            monkeypatch.setitem(sys.modules, parent, types.ModuleType(parent))
+    monkeypatch.setitem(sys.modules, name, module)
+    return module
+
+
+async def test_stt_node_reuses_model_and_stays_on_one_thread(
+    monkeypatch, tmp_path, isolated_model_cache
+):
+    import threading
+
+    from nodetool.metadata.types import AudioRef
+    from nodetool.nodes.mlx import _hf_cache
+
+    threads: list[str] = []
+    loads: list[Path] = []
+
+    class FakeSTTModel:
+        def generate(self, path, **kwargs):
+            threads.append(threading.current_thread().name)
+            return SimpleNamespace(text="hello", segments=[], language="en")
+
+    def load_model(path):
+        threads.append(threading.current_thread().name)
+        loads.append(Path(path))
+        return FakeSTTModel()
+
+    _install_module(monkeypatch, "mlx_audio.stt.utils", load_model=load_model)
+    monkeypatch.setattr(stt.sys, "platform", "darwin")
+    monkeypatch.setattr(_hf_cache, "find_cached_snapshot", lambda *a, **k: tmp_path)
+
+    wav = tmp_path / "in.wav"
+
+    async def export_audio(self, context):
+        wav.write_bytes(b"")
+        return str(wav)
+
+    monkeypatch.setattr(stt.BaseMLXSpeechToText, "_export_audio", export_audio)
+
+    for node_id in ("first", "second"):
+        node = stt.Parakeet(id=node_id, audio=AudioRef(uri="memory://a"))
+        result = await node.process(MagicMock())
+        assert result["text"] == "hello"
+
+    assert len(loads) == 1
+    assert len(set(threads)) == 1 and threads[0].startswith("mlx_")
+
+
+async def test_tts_node_reuses_model_across_executions(
+    monkeypatch, tmp_path, isolated_model_cache
+):
+    from nodetool.nodes.mlx import _hf_cache
+
+    loads: list[Path] = []
+
+    def load_model(path):
+        loads.append(Path(path))
+        return "kitten-model"
+
+    _install_module(monkeypatch, "mlx_audio.tts.utils", load_model=load_model)
+    monkeypatch.setattr(tts.sys, "platform", "darwin")
+    monkeypatch.setattr(tts.BaseMLXTTS, "_configure_espeak", staticmethod(lambda: None))
+    monkeypatch.setattr(_hf_cache, "find_cached_snapshot", lambda *a, **k: tmp_path)
+
+    first = tts.KittenTTS(id="first")
+    await first.preload_model(MagicMock())
+    second = tts.KittenTTS(id="second")
+    await second.preload_model(MagicMock())
+
+    assert second._tts_model == "kitten-model"
+    assert len(loads) == 1
+
+
+async def test_enhancement_node_reuses_model_and_stays_on_one_thread(
+    monkeypatch, isolated_model_cache
+):
+    import threading
+
+    import numpy as np
+
+    from nodetool.metadata.types import AudioRef
+
+    threads: list[str] = []
+    loads: list[int] = []
+
+    def load_model_sync(self):
+        threads.append(threading.current_thread().name)
+        loads.append(1)
+        return object()
+
+    def enhance_sync(self, samples):
+        threads.append(threading.current_thread().name)
+        return samples * 2
+
+    monkeypatch.setattr(se.DeepFilterNet, "_load_model_sync", load_model_sync)
+    monkeypatch.setattr(se.DeepFilterNet, "_enhance_sync", enhance_sync)
+    monkeypatch.setattr(se.sys, "platform", "darwin")
+
+    ctx = MagicMock()
+
+    async def audio_to_numpy(ref, sample_rate, mono):
+        return np.ones(4, dtype=np.float32), sample_rate, 1
+
+    received: list = []
+
+    async def audio_from_numpy(data, sample_rate):
+        received.append(data)
+        return "audio-ref"
+
+    ctx.audio_to_numpy = audio_to_numpy
+    ctx.audio_from_numpy = audio_from_numpy
+
+    for node_id in ("first", "second"):
+        node = se.DeepFilterNet(id=node_id, audio=AudioRef(uri="memory://a"))
+        assert await node.process(ctx) == {"audio": "audio-ref"}
+
+    assert len(loads) == 1
+    assert len(set(threads)) == 1 and threads[0].startswith("mlx_")
+    assert received[0].tolist() == [2.0, 2.0, 2.0, 2.0]

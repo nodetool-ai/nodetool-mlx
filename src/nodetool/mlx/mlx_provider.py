@@ -19,6 +19,20 @@ The provider supports:
 - Text-to-image and image-to-image generation
 """
 
+import platform
+import sys
+
+# MLX runs only on Apple Silicon, and the pack's MLX dependencies install only
+# there. Stop before importing them so the provider never registers on Windows,
+# Linux or Intel Macs. nodetool-core's worker treats a ModuleNotFoundError whose
+# `name` is this module as "provider not available here" rather than a broken
+# install.
+if sys.platform != "darwin" or platform.machine() != "arm64":
+    raise ModuleNotFoundError(
+        "The MLX provider requires macOS on Apple Silicon (arm64)",
+        name=__name__,
+    )
+
 import ast
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -38,7 +52,6 @@ from typing import (
 from io import BytesIO
 from urllib.parse import urlparse, unquote
 import os
-import sys
 import tempfile
 from nodetool.media.audio.audio_helpers import convert_audio_to_standard_format
 import numpy as np
@@ -89,6 +102,8 @@ from nodetool.integrations.huggingface.huggingface_models import (
     get_mlx_image_models_from_hf_cache,
     get_mlx_language_models_from_hf_cache,
 )
+from nodetool.mlx.threads import MLX_AUDIO_THREAD, MLX_VLM_THREAD
+from nodetool.mlx.mflux_config import mflux_model_config
 from nodetool.mlx.flux_model_loader import (
     load_flux_model,
 )
@@ -134,6 +149,51 @@ _VLM_MODEL_CACHE_LOCK = threading.Lock()
 # Separate cache for TTS models (mlx-audio)
 _TTS_MODEL_CACHE: dict[str, tuple[Any, float]] = {}
 _TTS_MODEL_CACHE_LOCK = threading.Lock()
+
+
+_GENERATOR_EXHAUSTED = object()
+
+# Kokoro selects its G2P pipeline by a one-letter code (mlx-audio
+# ``kokoro.pipeline.LANG_CODES``). Map the language codes callers send.
+_KOKORO_LANG_CODES = {
+    "en": "a",
+    "en-us": "a",
+    "en-gb": "b",
+    "es": "e",
+    "fr": "f",
+    "fr-fr": "f",
+    "hi": "h",
+    "it": "i",
+    "pt": "p",
+    "pt-br": "p",
+    "ja": "j",
+    "zh": "z",
+    "zh-cn": "z",
+}
+
+
+def _tts_lang_code(language: str | None, is_kokoro: bool) -> str | None:
+    """Translate a caller's language into the model's ``lang_code``.
+
+    Returns None to keep the model's default. Other model families take
+    their own codes (``en``, ``english``, ``EN-US``), so they get the value
+    unchanged.
+    """
+    if not language:
+        return None
+    if not is_kokoro:
+        return language
+    normalized = language.strip().lower().replace("_", "-")
+    if normalized in _KOKORO_LANG_CODES.values():
+        return normalized
+    code = _KOKORO_LANG_CODES.get(normalized) or _KOKORO_LANG_CODES.get(
+        normalized.split("-")[0]
+    )
+    if code is None:
+        log.warning(
+            "Kokoro has no pipeline for language %r; using its default", language
+        )
+    return code
 
 
 @register_provider(Provider.MLX)
@@ -364,6 +424,26 @@ class MLXProvider(BaseProvider):
                 name="Qwen3 ASR 1.7B (8-bit)",
                 provider=Provider.MLX,
             ),
+            ASRModel(
+                id="mlx-community/nemotron-3.5-asr-streaming-0.6b",
+                name="Nemotron 3.5 ASR 0.6B",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/Voxtral-Mini-3B-2507-bf16",
+                name="Voxtral Mini 3B",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit",
+                name="Voxtral Mini 4B Realtime (4-bit)",
+                provider=Provider.MLX,
+            ),
+            ASRModel(
+                id="mlx-community/VibeVoice-ASR-4bit",
+                name="VibeVoice ASR (4-bit)",
+                provider=Provider.MLX,
+            ),
         ]
         return models
 
@@ -467,7 +547,11 @@ class MLXProvider(BaseProvider):
 
             return transcribe_fn(audio_float, **call_kwargs)
 
-        transcribe_task = asyncio.to_thread(_run_transcription)
+        # mlx-whisper caches its model per process; load and run it on the
+        # audio thread, since MLX binds a Metal stream per thread.
+        transcribe_task = asyncio.get_running_loop().run_in_executor(
+            MLX_AUDIO_THREAD, _run_transcription
+        )
         try:
             if timeout_s is not None:
                 result = await asyncio.wait_for(transcribe_task, timeout=timeout_s)
@@ -540,7 +624,9 @@ class MLXProvider(BaseProvider):
                     log.info("Loading MLX STT model %s", model)
                     return load_stt(repo_path)
 
-                stt_model = await asyncio.to_thread(_load)
+                stt_model = await asyncio.get_running_loop().run_in_executor(
+                    MLX_AUDIO_THREAD, _load
+                )
                 node_id = f"mlx_stt_provider_{model}"
                 ModelManager.set_model(node_id, cache_key, stt_model)
             return stt_model
@@ -585,7 +671,7 @@ class MLXProvider(BaseProvider):
             return generate(audio_path, **call_kwargs)
 
         try:
-            task = asyncio.to_thread(_run)
+            task = asyncio.get_running_loop().run_in_executor(MLX_AUDIO_THREAD, _run)
             if timeout_s is not None:
                 result = await asyncio.wait_for(task, timeout=timeout_s)
             else:
@@ -1025,12 +1111,18 @@ class MLXProvider(BaseProvider):
             "pt_male",
         ]
         voxtral_models = [
-            TTSModel(
-                id="mlx-community/Voxtral-4B-TTS-2603-mlx-bf16",
-                name="Voxtral 4B TTS",
-                provider=Provider.MLX,
-                voices=voxtral_voices,
-            )
+            TTSModel(id=repo, name=name, provider=Provider.MLX, voices=voxtral_voices)
+            for repo, name in [
+                ("mlx-community/Voxtral-4B-TTS-2603-mlx-bf16", "Voxtral 4B TTS"),
+                (
+                    "mlx-community/Voxtral-4B-TTS-2603-mlx-6bit",
+                    "Voxtral 4B TTS (6-bit)",
+                ),
+                (
+                    "mlx-community/Voxtral-4B-TTS-2603-mlx-4bit",
+                    "Voxtral 4B TTS (4-bit)",
+                ),
+            ]
         ]
 
         # MeloTTS lightweight English model (accent via language code)
@@ -1064,6 +1156,15 @@ class MLXProvider(BaseProvider):
                     "mlx-community/LongCat-AudioDiT-3.5B-4bit",
                     "LongCat-AudioDiT 3.5B (4-bit)",
                 ),
+                ("mlx-community/Soprano-1.1-80M-bf16", "Soprano 1.1 80M"),
+                ("mlx-community/MOSS-TTS-Nano-100M", "MOSS-TTS Nano 100M"),
+                (
+                    "mlx-community/VibeVoice-Realtime-0.5B-fp16",
+                    "VibeVoice Realtime 0.5B",
+                ),
+                ("mlx-community/MisoLabs-MisoTTS-8bit", "MisoTTS (8-bit)"),
+                ("mlx-community/Ming-omni-tts-0.5B-bf16", "Ming Omni TTS 0.5B"),
+                ("bosonai/higgs-audio-v3-tts-4b", "Higgs Audio v3 4B"),
             ]
         ]
 
@@ -1242,6 +1343,12 @@ class MLXProvider(BaseProvider):
         extraction of tool calls from the MLX runtime. Yields `Chunk` and
         `ToolCall` items to the caller.
         """
+        # The bridge sends options the caller left unset as None; treat them as
+        # unset so the defaults below and in the samplers apply.
+        if max_tokens is None:
+            max_tokens = 8192
+        kwargs = {key: value for key, value in kwargs.items() if value is not None}
+
         # Route FIBO VLM through its native runtime before generic mlx-vlm handling.
         image_parts = self._extract_image_parts(messages)
         audio_parts = self._extract_audio_parts(messages)
@@ -1344,6 +1451,10 @@ class MLXProvider(BaseProvider):
 
         queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
         loop = asyncio.get_running_loop()
+        # Set when the consumer stops iterating (done, cancel, or teardown) so
+        # the generation thread stops instead of running to max_tokens while it
+        # holds the single mlx-lm thread.
+        stop_generation = threading.Event()
 
         # Acquire generation lock to serialize MLX model usage across concurrent requests
         await self._generation_lock.acquire()
@@ -1368,6 +1479,9 @@ class MLXProvider(BaseProvider):
                         max_tokens=max_tokens,
                         **stream_kwargs,
                     ):
+                        if stop_generation.is_set():
+                            log.debug("MLX _run_stream stopped by consumer")
+                            break
                         asyncio.run_coroutine_threadsafe(
                             queue.put(("response", response)), loop
                         ).result()
@@ -1489,6 +1603,7 @@ class MLXProvider(BaseProvider):
                         yield Chunk(content="", done=True)
                     break
         finally:
+            stop_generation.set()
             # Always release generation lock, even on error
             self._generation_lock.release()
             log.debug("MLX _stream_chat end | model=%s", model)
@@ -1570,7 +1685,9 @@ class MLXProvider(BaseProvider):
 
                 return FiboVLM(model_id=model, quantize=4)
 
-            fibo_vlm = await asyncio.to_thread(_load)
+            fibo_vlm = await asyncio.get_running_loop().run_in_executor(
+                MLX_VLM_THREAD, _load
+            )
             node_id = f"mlx_fibo_vlm_provider_{model}"
             ModelManager.set_model(node_id, cache_key, fibo_vlm)
             log.info("Loaded FIBO VLM model %s", model)
@@ -1595,7 +1712,10 @@ class MLXProvider(BaseProvider):
                         cfg = mlx_vlm.utils.load_config(model)
                     return mdl, proc, cfg
 
-                mdl, proc, cfg = await asyncio.to_thread(_load)
+                # Load and generate on one thread: MLX binds a Metal stream per thread.
+                mdl, proc, cfg = await asyncio.get_running_loop().run_in_executor(
+                    MLX_VLM_THREAD, _load
+                )
 
                 # Cache in ModelManager
                 node_id = f"mlx_vlm_provider_{model}_{self.adapter_path or 'default'}"
@@ -1976,7 +2096,9 @@ class MLXProvider(BaseProvider):
 
         try:
             async with self._vlm_generation_lock:
-                output: str = await asyncio.to_thread(_run_generate)
+                output: str = await asyncio.get_running_loop().run_in_executor(
+                    MLX_VLM_THREAD, _run_generate
+                )
             yield Chunk(content=output, done=True)
         finally:
             for image_path in images:
@@ -2057,7 +2179,9 @@ class MLXProvider(BaseProvider):
             # Serialize VLM generation to avoid concurrent Metal access
             async with self._vlm_generation_lock:
                 try:
-                    output: str = await asyncio.to_thread(_run_generate)
+                    output: str = await asyncio.get_running_loop().run_in_executor(
+                        MLX_VLM_THREAD, _run_generate
+                    )
                 except Exception as exc:
                     log.exception("MLX-VLM generation error: %s", exc)
                     raise RuntimeError(f"mlx-vlm generation failed: {exc}")
@@ -2166,7 +2290,11 @@ class MLXProvider(BaseProvider):
                     log.info(f"Loading MLX TTS model {model}")
                     return mlx_audio.tts.utils.load_model(Path(load_target))
 
-                tts_model = await asyncio.to_thread(_load)
+                # Load on the thread that generates: MLX binds a Metal stream
+                # per thread (KittenTTS fails otherwise).
+                tts_model = await asyncio.get_running_loop().run_in_executor(
+                    MLX_AUDIO_THREAD, _load
+                )
 
                 # Cache in ModelManager
                 node_id = f"mlx_tts_provider_{model}"
@@ -2266,14 +2394,19 @@ class MLXProvider(BaseProvider):
         if mlx_lm.sample_utils.make_sampler is None:
             return None
 
+        def _option(key: str, default: Any) -> Any:
+            # The bridge sends options the caller left unset as None.
+            value = kwargs.pop(key, None)
+            return default if value is None else value
+
         sampler_params = {
-            "temp": kwargs.pop("temperature", 0.5),
-            "top_p": kwargs.pop("top_p", 0.95),
-            "top_k": kwargs.pop("top_k", 50),
-            "min_p": kwargs.pop("min_p", 0.0),
-            "min_tokens_to_keep": kwargs.pop("min_tokens_to_keep", 1),
-            "xtc_probability": kwargs.pop("xtc_probability", 0.0),
-            "xtc_threshold": kwargs.pop("xtc_threshold", 0.0),
+            "temp": _option("temperature", 0.5),
+            "top_p": _option("top_p", 0.95),
+            "top_k": _option("top_k", 50),
+            "min_p": _option("min_p", 0.0),
+            "min_tokens_to_keep": _option("min_tokens_to_keep", 1),
+            "xtc_probability": _option("xtc_probability", 0.0),
+            "xtc_threshold": _option("xtc_threshold", 0.0),
         }
 
         # When temperature is explicitly zero we avoid allocating a sampler.
@@ -2484,16 +2617,19 @@ class MLXProvider(BaseProvider):
         # "af_heart" is a Kokoro preset; injecting it into other model families
         # breaks their speaker lookup (KittenTTS raises, Qwen3-TTS mis-renders),
         # so only default it for Kokoro and let other models use their own default.
-        if not voice and "kokoro" in model.lower():
+        is_kokoro = "kokoro" in model.lower()
+        if not voice and is_kokoro:
             voice = "af_heart"
-        speed = max(0.5, min(2.0, speed))
+        # The bridge sends options the caller left unset as None.
+        speed = max(0.5, min(2.0, 1.0 if speed is None else speed))
 
+        reference_path: str | None = None
         try:
             # Load TTS model (from cache or filesystem)
             tts_model = await self._load_tts_model(model)
 
             # Prepare generation parameters - enable streaming
-            gen_params = {
+            gen_params: dict[str, Any] = {
                 "text": text,
                 "speed": speed,
                 "stream": True,  # Enable streaming
@@ -2505,82 +2641,95 @@ class MLXProvider(BaseProvider):
                 gen_params["voice"] = voice
 
             # Add additional kwargs
-            if "temperature" in kwargs:
+            if kwargs.get("temperature") is not None:
                 gen_params["temperature"] = kwargs["temperature"]
-            if "lang_code" in kwargs:
-                gen_params["lang_code"] = kwargs["lang_code"]
-            if "language" in kwargs:
-                gen_params["lang_code"] = kwargs["language"]
+            lang_code = kwargs.get("lang_code") or _tts_lang_code(
+                kwargs.get("language"), is_kokoro
+            )
+            if lang_code:
+                gen_params["lang_code"] = lang_code
 
-            # Stream audio chunks
-            queue: asyncio.Queue[tuple[str, Any]] = asyncio.Queue()
+            # Voice cloning and voice design, for the models that support them.
+            reference_audio = kwargs.get("reference_audio")
+            if reference_audio:
+                segment = AudioSegment.from_file(BytesIO(reference_audio))
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                    reference_path = tmp.name
+                segment.export(reference_path, format="wav")
+                gen_params["ref_audio"] = reference_path
+            if kwargs.get("reference_text"):
+                gen_params["ref_text"] = kwargs["reference_text"]
+            if kwargs.get("instructions"):
+                gen_params["instruct"] = kwargs["instructions"]
+
             loop = asyncio.get_running_loop()
+            target_sr = 24_000
 
-            def _stream_audio():
-                """Stream audio chunks in background thread."""
-                try:
-                    assert tts_model.generate is not None
-                    target_sr = 24_000
-                    for result in tts_model.generate(**gen_params):
-                        audio = result.audio
-                        if audio is None:
-                            continue
+            def _start() -> Any:
+                return tts_model.generate(**gen_params)
 
-                        # Convert MLX array to numpy float32
-                        if hasattr(audio, "astype") and hasattr(audio, "numpy"):
-                            chunk_float = audio.astype(np.float32).numpy()
-                        else:
-                            chunk_float = np.asarray(audio, dtype=np.float32)
+            def _pull(iterator: Any) -> Any:
+                """Advance the generator to the next non-empty int16 chunk.
 
-                        # The provider contract is 24kHz mono; models like Dia
-                        # emit other rates, so resample to keep playback speed
-                        # and pitch correct.
-                        result_sr = int(getattr(result, "sample_rate", 0) or 0)
-                        if result_sr and result_sr != target_sr and chunk_float.size:
-                            n_out = int(round(chunk_float.size * target_sr / result_sr))
-                            if n_out > 0:
-                                x_old = np.arange(chunk_float.size) / result_sr
-                                x_new = np.arange(n_out) / target_sr
-                                chunk_float = np.interp(
-                                    x_new, x_old, chunk_float
-                                ).astype(np.float32)
+                Runs on the thread that loaded the model, so no MLX array is
+                touched off it.
+                """
+                for result in iterator:
+                    audio = result.audio
+                    if audio is None:
+                        continue
 
-                        chunk_int16 = np.clip(chunk_float, -1.0, 1.0)
-                        chunk_int16 = (chunk_int16 * 32767.0).astype(np.int16)
+                    # Convert MLX array to numpy float32
+                    if hasattr(audio, "astype") and hasattr(audio, "numpy"):
+                        chunk_float = audio.astype(np.float32).numpy()
+                    else:
+                        chunk_float = np.asarray(audio, dtype=np.float32)
+                    if chunk_float.size == 0:
+                        continue
 
-                        if chunk_float.size > 0:
-                            # Put float chunk in queue
-                            asyncio.run_coroutine_threadsafe(
-                                queue.put(("chunk", chunk_int16)), loop
-                            ).result()
+                    # The provider contract is 24kHz mono; models like Dia
+                    # emit other rates, so resample to keep playback speed
+                    # and pitch correct.
+                    result_sr = int(getattr(result, "sample_rate", 0) or 0)
+                    if result_sr and result_sr != target_sr:
+                        n_out = int(round(chunk_float.size * target_sr / result_sr))
+                        if n_out > 0:
+                            x_old = np.arange(chunk_float.size) / result_sr
+                            x_new = np.arange(n_out) / target_sr
+                            chunk_float = np.interp(x_new, x_old, chunk_float).astype(
+                                np.float32
+                            )
 
-                    # Signal completion
-                    asyncio.run_coroutine_threadsafe(
-                        queue.put(("done", None)), loop
-                    ).result()
+                    chunk_int16 = np.clip(chunk_float, -1.0, 1.0)
+                    return (chunk_int16 * 32767.0).astype(np.int16)
+                return _GENERATOR_EXHAUSTED
 
-                except Exception as exc:
-                    log.exception(f"MLX TTS streaming error: {exc}")
-                    asyncio.run_coroutine_threadsafe(
-                        queue.put(("error", exc)), loop
-                    ).result()
-
-            # Start streaming thread
-            threading.Thread(target=_stream_audio, daemon=True).start()
-
-            while True:
-                kind, payload = await queue.get()
-
-                if kind == "chunk":
-                    yield payload
-                elif kind == "error":
-                    raise payload
-                elif kind == "done":
-                    break
+            # Pull one chunk per await on the audio thread. A consumer that
+            # stops iterating simply stops pulling, so no thread keeps
+            # generating after a cancel.
+            iterator = await loop.run_in_executor(MLX_AUDIO_THREAD, _start)
+            try:
+                while True:
+                    chunk = await loop.run_in_executor(
+                        MLX_AUDIO_THREAD, _pull, iterator
+                    )
+                    if chunk is _GENERATOR_EXHAUSTED:
+                        break
+                    yield chunk
+            finally:
+                close = getattr(iterator, "close", None)
+                if close is not None:
+                    MLX_AUDIO_THREAD.submit(close)
 
         except Exception as e:
             log.error(f"MLX TTS generation failed: {e}")
             raise RuntimeError(f"MLX TTS generation failed: {str(e)}")
+        finally:
+            if reference_path is not None:
+                try:
+                    os.remove(reference_path)
+                except OSError:
+                    pass
 
     async def text_to_image(
         self,
@@ -2617,47 +2766,41 @@ class MLXProvider(BaseProvider):
             cache_key = f"{model_id}_{'z-image' if is_z_image else 'flux2' if is_flux2 else 'qwen' if is_qwen else 'fibo' if is_fibo else 'flux'}"
             async with ModelManager.lock_model(cache_key):
                 if is_z_image:
-                    from mflux.models.common.config import ModelConfig
                     from mflux.models.z_image.variants import ZImage
 
                     model = ModelManager.get_model(cache_key)
                     if model is None:
-                        quantize = 4
-                        model_config = (
-                            ModelConfig.z_image_turbo()
-                            if "turbo" in model_id_lower
-                            else ModelConfig.z_image()
+                        # from_name resolves the requested repo, including
+                        # pre-quantized and third-party builds.
+                        model = ZImage(
+                            quantize=4, model_config=mflux_model_config(model_id)
                         )
-                        model = ZImage(quantize=quantize, model_config=model_config)
                         ModelManager.set_model(cache_key, cache_key, model)
                 elif is_flux2:
-                    from mflux.models.common.config import ModelConfig
                     from mflux.models.flux2.variants import Flux2Klein
 
                     model = ModelManager.get_model(cache_key)
                     if model is None:
                         model = Flux2Klein(
-                            quantize=4, model_config=ModelConfig.from_name(model_id)
+                            quantize=4, model_config=mflux_model_config(model_id)
                         )
                         ModelManager.set_model(cache_key, cache_key, model)
                 elif is_qwen:
-                    from mflux.models.common.config import ModelConfig
                     from mflux.models.qwen.variants.txt2img.qwen_image import QwenImage
 
                     model = ModelManager.get_model(cache_key)
                     if model is None:
                         model = QwenImage(
-                            quantize=8, model_config=ModelConfig.from_name(model_id)
+                            quantize=8, model_config=mflux_model_config(model_id)
                         )
                         ModelManager.set_model(cache_key, cache_key, model)
                 elif is_fibo:
-                    from mflux.models.common.config import ModelConfig
                     from mflux.models.fibo.variants.txt2img.fibo import FIBO
 
                     model = ModelManager.get_model(cache_key)
                     if model is None:
                         model = FIBO(
-                            quantize=4, model_config=ModelConfig.from_name(model_id)
+                            quantize=4, model_config=mflux_model_config(model_id)
                         )
                         ModelManager.set_model(cache_key, cache_key, model)
                 else:
@@ -2713,17 +2856,23 @@ class MLXProvider(BaseProvider):
                             )
                         )
                     )
-                    generated = model.generate_image(
-                        seed=params.seed if params.seed is not None else 0,
-                        prompt=prompt_value,
-                        num_inference_steps=params.num_inference_steps or default_steps,
-                        height=params.height or 1024,
-                        width=params.width or 1024,
-                        guidance=params.guidance_scale,
-                        negative_prompt=(
-                            params.negative_prompt if (is_qwen or is_fibo) else None
-                        ),
-                    )
+                    gen_kwargs: dict[str, Any] = {
+                        "seed": params.seed if params.seed is not None else 0,
+                        "prompt": prompt_value,
+                        "num_inference_steps": params.num_inference_steps
+                        or default_steps,
+                        "height": params.height or 1024,
+                        "width": params.width or 1024,
+                    }
+                    # Unset guidance keeps each model's own default; mflux would
+                    # otherwise turn None into 0.0 (washed out on FLUX dev).
+                    if params.guidance_scale is not None:
+                        gen_kwargs["guidance"] = params.guidance_scale
+                    # Only Qwen and FIBO use a negative prompt, and FLUX.2 Klein's
+                    # generate_image does not accept the argument at all.
+                    if (is_qwen or is_fibo) and params.negative_prompt:
+                        gen_kwargs["negative_prompt"] = params.negative_prompt
+                    generated = model.generate_image(**gen_kwargs)
                     return generated.image if hasattr(generated, "image") else generated
 
                 # Run generation in executor
@@ -2775,62 +2924,50 @@ class MLXProvider(BaseProvider):
             raise ValueError("Prompt cannot be empty for image-to-image generation.")
 
         if is_z_image:
-            from mflux.models.common.config import ModelConfig
             from mflux.models.z_image.variants import ZImage
 
             cache_key = f"{model_id}_z-image"
             model = ModelManager.get_model(cache_key)
             if model is None:
-                model_config = (
-                    ModelConfig.z_image_turbo()
-                    if "turbo" in model_id_lower
-                    else ModelConfig.z_image()
-                )
-                model = ZImage(quantize=4, model_config=model_config)
+                # from_name resolves the requested repo, including pre-quantized
+                # and third-party builds.
+                model = ZImage(quantize=4, model_config=mflux_model_config(model_id))
                 ModelManager.set_model(cache_key, cache_key, model)
         elif is_flux2:
-            from mflux.models.common.config import ModelConfig
             from mflux.models.flux2.variants import Flux2Klein
 
             cache_key = f"{model_id}_flux2"
             model = ModelManager.get_model(cache_key)
             if model is None:
                 model = Flux2Klein(
-                    quantize=4, model_config=ModelConfig.from_name(model_id)
+                    quantize=4, model_config=mflux_model_config(model_id)
                 )
                 ModelManager.set_model(cache_key, cache_key, model)
         elif is_seedvr2:
-            from mflux.models.common.config import ModelConfig
             from mflux.models.seedvr2.variants.upscale.seedvr2 import SeedVR2
 
             cache_key = f"{model_id}_seedvr2"
             model = ModelManager.get_model(cache_key)
             if model is None:
-                model = SeedVR2(
-                    quantize=4, model_config=ModelConfig.from_name(model_id)
-                )
+                model = SeedVR2(quantize=4, model_config=mflux_model_config(model_id))
                 ModelManager.set_model(cache_key, cache_key, model)
         elif is_qwen:
-            from mflux.models.common.config import ModelConfig
             from mflux.models.qwen.variants.edit.qwen_image_edit import QwenImageEdit
 
             cache_key = f"{model_id}_qwen-image-edit"
             model = ModelManager.get_model(cache_key)
             if model is None:
                 model = QwenImageEdit(
-                    quantize=8, model_config=ModelConfig.from_name(model_id)
+                    quantize=8, model_config=mflux_model_config(model_id)
                 )
                 ModelManager.set_model(cache_key, cache_key, model)
         elif is_fibo:
-            from mflux.models.common.config import ModelConfig
             from mflux.models.fibo.variants.edit.fibo_edit import FIBOEdit
 
             cache_key = f"{model_id}_fibo-edit"
             model = ModelManager.get_model(cache_key)
             if model is None:
-                model = FIBOEdit(
-                    quantize=4, model_config=ModelConfig.from_name(model_id)
-                )
+                model = FIBOEdit(quantize=4, model_config=mflux_model_config(model_id))
                 ModelManager.set_model(cache_key, cache_key, model)
         else:
             model = await load_flux_model(
@@ -2948,16 +3085,20 @@ class MLXProvider(BaseProvider):
                 else:
                     default_steps = 4 if "schnell" in model_name_lower else 8
 
-                generated = model.generate_image(
-                    seed=params.seed if params.seed is not None else 0,
-                    prompt=params.prompt,
-                    num_inference_steps=params.num_inference_steps or default_steps,
-                    height=target_height,
-                    width=target_width,
-                    guidance=params.guidance_scale,
-                    image_strength=params.strength or 0.4,
-                    image_path=image_path,
-                )
+                gen_kwargs: dict[str, Any] = {
+                    "seed": params.seed if params.seed is not None else 0,
+                    "prompt": params.prompt,
+                    "num_inference_steps": params.num_inference_steps or default_steps,
+                    "height": target_height,
+                    "width": target_width,
+                    "image_strength": params.strength or 0.4,
+                    "image_path": image_path,
+                }
+                # Unset guidance keeps the model's own default; mflux would
+                # otherwise turn None into 0.0 (washed out on FLUX dev).
+                if params.guidance_scale is not None:
+                    gen_kwargs["guidance"] = params.guidance_scale
+                generated = model.generate_image(**gen_kwargs)
                 return generated.image if hasattr(generated, "image") else generated
             finally:
                 # Clean up temp file

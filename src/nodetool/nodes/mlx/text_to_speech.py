@@ -20,6 +20,7 @@ from typing import (
 from pydantic import Field, PrivateAttr
 
 from nodetool.metadata.types import AudioRef, HFTextToSpeech, HuggingFaceModel, Provider
+from nodetool.ml.core.model_manager import ModelManager
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 from nodetool.workflows.types import Chunk
@@ -126,6 +127,14 @@ class BaseMLXTTS(BaseNode):
         if self._tts_model is not None and self._model_id_loaded == model_id:
             return
 
+        # The worker builds a new node per execution, so cache across runs.
+        cache_key = f"{model_id}_mlx_tts_node"
+        cached = ModelManager.get_model(cache_key)
+        if cached is not None:
+            self._tts_model = cached
+            self._model_id_loaded = model_id
+            return
+
         from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
         load_target = find_cached_snapshot(model_id, "config.json")
@@ -144,6 +153,7 @@ class BaseMLXTTS(BaseNode):
 
         self._tts_model = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
         self._model_id_loaded = model_id
+        ModelManager.set_model(self.id, cache_key, self._tts_model)
 
     class OutputType(TypedDict):
         audio: AudioRef | None
@@ -1098,6 +1108,8 @@ class VoxtralTTS(BaseMLXTTS):
 
     class Model(str, Enum):
         VOXTRAL_4B_TTS = "mlx-community/Voxtral-4B-TTS-2603-mlx-bf16"
+        VOXTRAL_4B_TTS_6BIT = "mlx-community/Voxtral-4B-TTS-2603-mlx-6bit"
+        VOXTRAL_4B_TTS_4BIT = "mlx-community/Voxtral-4B-TTS-2603-mlx-4bit"
 
     class Voice(str, Enum):
         NEUTRAL_FEMALE = "neutral_female"
@@ -1436,6 +1448,15 @@ class MLXTextToSpeech(BaseMLXTTS):
             HFTextToSpeech(repo_id="mlx-community/Dia-1.6B-fp16"),
             HFTextToSpeech(repo_id="mlx-community/csm-1b"),
             HFTextToSpeech(repo_id="mlx-community/OuteTTS-1.0-0.6B-fp16"),
+            HFTextToSpeech(repo_id="mlx-community/Soprano-1.1-80M-bf16"),
+            HFTextToSpeech(repo_id="mlx-community/MOSS-TTS-Nano-100M"),
+            HFTextToSpeech(repo_id="mlx-community/VibeVoice-Realtime-0.5B-fp16"),
+            HFTextToSpeech(repo_id="mlx-community/MisoLabs-MisoTTS-8bit"),
+            HFTextToSpeech(repo_id="mlx-community/Ming-omni-tts-0.5B-bf16"),
+            HFTextToSpeech(repo_id="mlx-community/Ming-omni-tts-16.8B-A3B-bf16"),
+            HFTextToSpeech(repo_id="bosonai/higgs-audio-v3-tts-4b"),
+            HFTextToSpeech(repo_id="kugelaudio/kugelaudio-0-open"),
+            HFTextToSpeech(repo_id="OpenMOSS-Team/MOSS-TTS-v1.5"),
         ]
 
     def _normalize_speed(self) -> float:

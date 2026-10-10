@@ -15,6 +15,7 @@ from nodetool.metadata.types import (
     HuggingFaceModel,
     Provider,
 )
+from nodetool.ml.core.model_manager import ModelManager
 from nodetool.workflows.base_node import BaseNode
 from nodetool.workflows.processing_context import ProcessingContext
 
@@ -104,8 +105,15 @@ class BaseMLXSpeechEnhancement(BaseNode):
         if self._model is not None and self._model_id_loaded == load_key:
             return
 
-        loop = asyncio.get_running_loop()
-        self._model = await loop.run_in_executor(MLX_EXECUTOR, self._load_model_sync)
+        # The worker builds a new node per execution, so cache across runs.
+        cache_key = f"{load_key}_mlx_enhancement_node"
+        cached = ModelManager.get_model(cache_key)
+        if cached is None:
+            # Load and run on the same thread: MLX binds a Metal stream per thread.
+            loop = asyncio.get_running_loop()
+            cached = await loop.run_in_executor(MLX_EXECUTOR, self._load_model_sync)
+            ModelManager.set_model(self.id, cache_key, cached)
+        self._model = cached
         self._model_id_loaded = load_key
 
     class OutputType(TypedDict):
@@ -126,10 +134,13 @@ class BaseMLXSpeechEnhancement(BaseNode):
         )
         mono = samples.flatten().astype(np.float32)
 
-        loop = asyncio.get_running_loop()
-        enhanced = await loop.run_in_executor(MLX_EXECUTOR, self._enhance_sync, mono)
+        def _enhance() -> "np.ndarray":
+            # Convert on the MLX thread so no MLX array is touched off it.
+            enhanced = self._enhance_sync(mono)
+            return np.asarray(enhanced, dtype=np.float32).flatten()
 
-        enhanced_np = np.asarray(enhanced, dtype=np.float32).flatten()
+        loop = asyncio.get_running_loop()
+        enhanced_np = await loop.run_in_executor(MLX_EXECUTOR, _enhance)
         audio_ref = await context.audio_from_numpy(enhanced_np, self._sample_rate)
         return {"audio": audio_ref}
 

@@ -11,11 +11,14 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import sys
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from PIL import Image as PILImage
 
 import nodetool.nodes.mlx.image_to_image as i2i
+import nodetool.nodes.mlx.text_to_image as t2i
 from nodetool.metadata.types import ImageRef
 
 
@@ -144,7 +147,7 @@ def _mflux_node_classes():
         if isinstance(cls, type)
         and issubclass(cls, i2i.BaseMFluxNode)
         and cls is not i2i.BaseMFluxNode
-    ] + [__import__("nodetool.nodes.mlx.text_to_image", fromlist=["MFlux"]).MFlux]
+    ] + [t2i.MFlux, t2i.MFluxErnieImage, t2i.MFluxIdeogram4]
 
 
 def test_mflux_input_fields_are_primary_only():
@@ -212,3 +215,304 @@ async def test_kontext_forwards_image_path():
     # Kontext is conditioned by a single reference image_path.
     assert kwargs["image_path"] is not None
     assert "depth_image_path" not in kwargs
+
+
+def _install_fake_mflux_utils(monkeypatch) -> list[str]:
+    """Fake the two mflux utility modules the outpaint padding path imports.
+
+    Both mflux 0.18.1 and 0.22.0 expose ``mflux.utils.box_values.BoxValues``
+    with a ``parse`` static method; there is no ``mflux.ui`` package.
+    """
+    import types
+
+    parsed: list[str] = []
+
+    class BoxValues:
+        def __init__(self, value: int):
+            self.value = value
+
+        @staticmethod
+        def parse(value: str) -> "BoxValues":
+            parsed.append(value)
+            return BoxValues(int(value))
+
+        def normalize_to_dimensions(self, width, height):
+            v = self.value
+            return types.SimpleNamespace(top=v, right=v, bottom=v, left=v)
+
+    class ImageUtil:
+        @staticmethod
+        def expand_image(image, top, right, bottom, left):
+            return PILImage.new(
+                "RGB", (image.width + left + right, image.height + top + bottom)
+            )
+
+        @staticmethod
+        def create_outpaint_mask_image(
+            orig_width, orig_height, top, right, bottom, left
+        ):
+            return PILImage.new(
+                "RGB", (orig_width + left + right, orig_height + top + bottom)
+            )
+
+    mflux = types.ModuleType("mflux")
+    utils = types.ModuleType("mflux.utils")
+    box_values = types.ModuleType("mflux.utils.box_values")
+    box_values.BoxValues = BoxValues
+    image_util = types.ModuleType("mflux.utils.image_util")
+    image_util.ImageUtil = ImageUtil
+    for name, mod in {
+        "mflux": mflux,
+        "mflux.utils": utils,
+        "mflux.utils.box_values": box_values,
+        "mflux.utils.image_util": image_util,
+    }.items():
+        monkeypatch.setitem(sys.modules, name, mod)
+    return parsed
+
+
+async def test_outpaint_blank_mask_uses_padding(monkeypatch):
+    parsed = _install_fake_mflux_utils(monkeypatch)
+    node = i2i.MFluxOutpaint(
+        prompt="sky",
+        image=ImageRef(uri="memory://base"),
+        padding="64",
+        width=256,
+        height=256,
+    )
+    node._flux_model = _mock_flux_model()
+    ctx = _mock_context()
+    loaded: list = []
+    original = ctx.image_to_pil
+
+    async def _tracking_to_pil(ref):
+        loaded.append(ref)
+        return await original(ref)
+
+    ctx.image_to_pil = _tracking_to_pil
+
+    assert "mask" not in node.required_inputs()
+    result = await node.process(ctx)
+
+    assert result == "image-ref"
+    assert parsed == ["64"]
+    # The blank mask is never decoded; only the base image is.
+    assert loaded == [node.image]
+    kwargs = node._flux_model.generate_image.call_args.kwargs
+    assert (kwargs["width"], kwargs["height"]) == (256 + 128, 256 + 128)
+
+
+def test_outpaint_box_values_import_matches_mflux():
+    box_values = pytest.importorskip("mflux.utils.box_values")
+    assert hasattr(box_values.BoxValues, "parse")
+
+
+class _ListRegistry:
+    """A minimal stand-in for mflux's per-model CallbackRegistry."""
+
+    def __init__(self):
+        self.loop: list = []
+
+    def register(self, callback):
+        self.loop.append(callback)
+
+    def in_loop_callbacks(self):
+        return self.loop
+
+
+@pytest.mark.parametrize(
+    ("node_cls", "model_attr"),
+    [(i2i.MFluxFlux2Edit, "_flux2_model"), (i2i.MFluxQwenImageEdit, "_qwen_model")],
+)
+async def test_edit_nodes_clean_up_when_an_input_image_fails(
+    node_cls, model_attr, monkeypatch
+):
+    import tempfile as tempfile_mod
+
+    written: list[str] = []
+    real_ntf = tempfile_mod.NamedTemporaryFile
+
+    def tracking_ntf(*args, **kwargs):
+        handle = real_ntf(*args, **kwargs)
+        written.append(handle.name)
+        return handle
+
+    monkeypatch.setattr(i2i.tempfile, "NamedTemporaryFile", tracking_ntf)
+
+    model = _mock_flux_model()
+    model.callbacks = _ListRegistry()
+    node = node_cls(
+        prompt="edit",
+        images=[ImageRef(uri="memory://ok"), ImageRef(uri="memory://bad")],
+    )
+    setattr(node, model_attr, model)
+
+    ctx = _mock_context()
+    pil = PILImage.new("RGB", (8, 8))
+
+    async def to_pil(ref):
+        if ref.uri == "memory://bad":
+            raise ValueError("cannot decode image")
+        return pil
+
+    ctx.image_to_pil = to_pil
+
+    with pytest.raises(ValueError, match="cannot decode"):
+        await node.process(ctx)
+
+    # No callback left on the cached model, and no temp PNG left on disk.
+    assert model.callbacks.loop == []
+    assert written, "the first image should have been staged"
+    assert not any(Path(name).exists() for name in written)
+    model.generate_image.assert_not_called()
+
+
+async def test_vlm_node_loads_from_revision_only_cache_on_one_thread(
+    monkeypatch, tmp_path
+):
+    import threading
+    import types
+
+    from nodetool.ml.core.model_manager import ModelManager
+    from nodetool.nodes.mlx import _hf_cache
+    from nodetool.nodes.mlx import image_to_text as i2t
+
+    monkeypatch.setattr(ModelManager, "_models", {})
+    monkeypatch.setattr(ModelManager, "_models_by_node", {})
+    # try_to_load_from_cache misses a snapshot fetched without refs/main;
+    # find_cached_snapshot finds it.
+    monkeypatch.setattr(_hf_cache, "find_cached_snapshot", lambda *a, **k: tmp_path)
+
+    threads: list[str] = []
+    load_targets: list[str] = []
+
+    def load(target):
+        threads.append(threading.current_thread().name)
+        load_targets.append(target)
+        return SimpleNamespace(config={"model_type": "qwen3_vl"}), object()
+
+    def generate(*args, **kwargs):
+        threads.append(threading.current_thread().name)
+        return SimpleNamespace(text="a fox")
+
+    mlx_vlm = types.ModuleType("mlx_vlm")
+    mlx_vlm.load = load
+    mlx_vlm.generate = generate
+    mlx_vlm.prompt_utils = SimpleNamespace(
+        apply_chat_template=lambda proc, cfg, prompt, num_images: prompt
+    )
+    mlx_vlm.utils = SimpleNamespace(load_config=lambda target: {})
+    monkeypatch.setitem(sys.modules, "mlx_vlm", mlx_vlm)
+
+    node = i2t.MLXVisionLanguage(image=ImageRef(uri="memory://img"))
+    assert await node.process(_mock_context()) == "a fox"
+
+    assert load_targets == [str(tmp_path)]
+    assert len(set(threads)) == 1 and threads[0].startswith("mlx_")
+
+
+def _install_fake_mflux(monkeypatch, **variants) -> MagicMock:
+    """Register stub ``mflux`` modules so ``preload_model`` runs without MLX."""
+    model_config = MagicMock(name="ModelConfig")
+    modules = {
+        "mflux": MagicMock(),
+        "mflux.models": MagicMock(),
+        "mflux.models.common": MagicMock(),
+        "mflux.models.common.config": MagicMock(ModelConfig=model_config),
+    }
+    for module_name, attrs in variants.items():
+        modules[module_name] = MagicMock(**attrs)
+    for name, module in modules.items():
+        monkeypatch.setitem(sys.modules, name, module)
+    return model_config
+
+
+@pytest.mark.parametrize(
+    ("repo_id", "config_factory"),
+    [
+        ("mflux-community/ernie-image-turbo-mflux-q8", "ernie_image_turbo"),
+        ("mflux-community/ernie-image-base-mflux-q8", "ernie_image"),
+    ],
+)
+async def test_ernie_image_loads_matching_named_config(
+    monkeypatch, repo_id, config_factory
+):
+    # ModelConfig.from_name on an mflux-community repo id keeps the ERNIE base
+    # config but drops its sigma shift, so the node must pass the named config
+    # and load the weights through model_path.
+    ernie_cls = MagicMock(name="ErnieImage")
+    model_config = _install_fake_mflux(
+        monkeypatch, **{"mflux.models.ernie_image": {"ErnieImage": ernie_cls}}
+    )
+    monkeypatch.setattr(t2i.ModelManager, "get_model", lambda _key: None)
+    monkeypatch.setattr(t2i.ModelManager, "set_model", lambda *_args: None)
+
+    node = t2i.MFluxErnieImage(model=t2i.HFTextToImage(repo_id=repo_id))
+    await node.preload_model(MagicMock())
+
+    kwargs = ernie_cls.call_args.kwargs
+    assert kwargs["model_path"] == repo_id
+    assert kwargs["model_config"] is getattr(model_config, config_factory).return_value
+
+
+async def test_ernie_image_forwards_generate_args():
+    node = t2i.MFluxErnieImage(
+        prompt="a barn owl",
+        negative_prompt="  ",
+        steps=8,
+        guidance=1.0,
+        height=1000,
+        width=1030,
+        seed=7,
+    )
+    node._ernie_model = _mock_flux_model()
+
+    result = await node.process(_mock_context())
+
+    assert result == "image-ref"
+    kwargs = node._ernie_model.generate_image.call_args.kwargs
+    assert kwargs["prompt"] == "a barn owl"
+    assert kwargs["negative_prompt"] is None
+    assert kwargs["num_inference_steps"] == 8
+    assert kwargs["guidance"] == 1.0
+    assert (kwargs["height"], kwargs["width"]) == (992, 1024)
+    assert kwargs["seed"] == 7
+
+
+async def test_ideogram4_uses_preset_schedule_by_default():
+    node = t2i.MFluxIdeogram4(
+        prompt='{"high_level_description": "a poster"}',
+        preset=t2i.Ideogram4Preset.TURBO_12,
+        seed=3,
+    )
+    node._ideogram_model = _mock_flux_model()
+
+    await node.process(_mock_context())
+
+    kwargs = node._ideogram_model.generate_image.call_args.kwargs
+    assert kwargs["prompt"] == '{"high_level_description": "a poster"}'
+    assert kwargs["preset"] == "V4_TURBO_12"
+    assert kwargs["num_inference_steps"] is None
+    assert kwargs["guidance"] is None
+
+
+async def test_ideogram4_step_override_uses_constant_guidance():
+    node = t2i.MFluxIdeogram4(prompt="a label", steps=30, guidance=5.0, seed=3)
+    node._ideogram_model = _mock_flux_model()
+
+    await node.process(_mock_context())
+
+    kwargs = node._ideogram_model.generate_image.call_args.kwargs
+    assert kwargs["num_inference_steps"] == 30
+    assert kwargs["guidance"] == 5.0
+
+
+def test_progress_callback_uses_new_model_attributes():
+    for node, attr in (
+        (t2i.MFluxErnieImage(prompt="x"), "_ernie_model"),
+        (t2i.MFluxIdeogram4(prompt="x"), "_ideogram_model"),
+    ):
+        model = _FakeModelWithRegistry()
+        setattr(node, attr, model)
+        callback = node._register_progress_callback(MagicMock(), total_steps=8)
+        assert callback in model.callbacks.in_loop_callbacks()

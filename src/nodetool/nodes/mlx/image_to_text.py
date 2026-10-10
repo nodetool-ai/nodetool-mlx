@@ -110,12 +110,14 @@ class MLXVisionLanguage(BaseNode):
             self._vlm = cached
             return
 
-        from huggingface_hub import try_to_load_from_cache
+        from nodetool.nodes.mlx._hf_cache import find_cached_snapshot
 
-        if not try_to_load_from_cache(model_id, "config.json"):
+        snapshot = find_cached_snapshot(model_id, "config.json")
+        if snapshot is None:
             raise ValueError(
                 f"Model {model_id} must be downloaded first, check recommended models"
             )
+        load_target = str(snapshot)
 
         loop = asyncio.get_running_loop()
 
@@ -123,12 +125,13 @@ class MLXVisionLanguage(BaseNode):
             import mlx_vlm
 
             log.info("Loading MLX-VLM model %s", model_id)
-            mdl, proc = mlx_vlm.load(model_id)
+            mdl, proc = mlx_vlm.load(load_target)
             cfg = getattr(mdl, "config", None)
             if cfg is None:
-                cfg = mlx_vlm.utils.load_config(model_id)
+                cfg = mlx_vlm.utils.load_config(load_target)
             return mdl, proc, cfg
 
+        # Load and run on the same thread: MLX binds a Metal stream per thread.
         self._vlm = await loop.run_in_executor(MLX_EXECUTOR, _load_model)
         ModelManager.set_model(self.id, cache_key, self._vlm)
 
@@ -217,4 +220,16 @@ class MLXVisionLanguage(BaseNode):
             HFImageTextToText(repo_id="mlx-community/Qwen3-VL-30B-A3B-Instruct-4bit"),
             HFImageTextToText(repo_id="mlx-community/gemma-4-e4b-it-4bit"),
             HFImageTextToText(repo_id="mlx-community/gemma-4-12B-it-4bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3.5-4B-MLX-4bit"),
+            HFImageTextToText(repo_id="mlx-community/Qwen3.5-9B-MLX-4bit"),
+            HFImageTextToText(
+                repo_id="mlx-community/Ministral-3-8B-Instruct-2512-4bit"
+            ),
+            HFImageTextToText(
+                repo_id="mlx-community/Ministral-3-14B-Instruct-2512-4bit"
+            ),
+            HFImageTextToText(repo_id="mlx-community/LFM2.5-VL-1.6B-4bit"),
+            HFImageTextToText(repo_id="mlx-community/GLM-OCR-bf16"),
+            HFImageTextToText(repo_id="mlx-community/DeepSeek-OCR-2-8bit"),
+            HFImageTextToText(repo_id="mlx-community/dots.ocr-bf16"),
         ]
