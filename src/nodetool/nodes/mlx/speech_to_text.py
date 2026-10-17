@@ -424,6 +424,9 @@ class MLXSpeechToText(BaseMLXSpeechToText):
                 repo_id="mlx-community/Voxtral-Mini-4B-Realtime-2602-4bit"
             ),
             HFAutomaticSpeechRecognition(repo_id="mlx-community/VibeVoice-ASR-4bit"),
+            HFAutomaticSpeechRecognition(
+                repo_id="mlx-community/VibeVoice-ASR-Streaming-7B-4bit"
+            ),
         ]
 
     def _build_generate_kwargs(self) -> dict[str, Any]:

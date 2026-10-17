@@ -3294,6 +3294,24 @@
             "region:us"
           ],
           "type": "hf.qwen_image_edit"
+        },
+        {
+          "id": "mflux-community/qwen-image-edit-2511-mflux-q4",
+          "name": "mflux-community/qwen-image-edit-2511-mflux-q4",
+          "repo_id": "mflux-community/qwen-image-edit-2511-mflux-q4",
+          "type": "hf.qwen_image_edit"
+        },
+        {
+          "id": "mflux-community/qwen-image-edit-2511-mflux-q6",
+          "name": "mflux-community/qwen-image-edit-2511-mflux-q6",
+          "repo_id": "mflux-community/qwen-image-edit-2511-mflux-q6",
+          "type": "hf.qwen_image_edit"
+        },
+        {
+          "id": "mflux-community/qwen-image-edit-2511-mflux-q8",
+          "name": "mflux-community/qwen-image-edit-2511-mflux-q8",
+          "repo_id": "mflux-community/qwen-image-edit-2511-mflux-q8",
+          "type": "hf.qwen_image_edit"
         }
       ],
       "title": "MFlux Qwen Image Edit"
@@ -4252,6 +4270,18 @@
           "type": "hf.image_text_to_text"
         },
         {
+          "id": "mlx-community/Qwen3.8-27B-4bit",
+          "name": "mlx-community/Qwen3.8-27B-4bit",
+          "repo_id": "mlx-community/Qwen3.8-27B-4bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/Qwen3.8-27B-8bit",
+          "name": "mlx-community/Qwen3.8-27B-8bit",
+          "repo_id": "mlx-community/Qwen3.8-27B-8bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
           "id": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
           "name": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
           "repo_id": "mlx-community/Ministral-3-8B-Instruct-2512-4bit",
@@ -4285,6 +4315,18 @@
           "id": "mlx-community/dots.ocr-bf16",
           "name": "mlx-community/dots.ocr-bf16",
           "repo_id": "mlx-community/dots.ocr-bf16",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/Unlimited-OCR-4bit",
+          "name": "mlx-community/Unlimited-OCR-4bit",
+          "repo_id": "mlx-community/Unlimited-OCR-4bit",
+          "type": "hf.image_text_to_text"
+        },
+        {
+          "id": "mlx-community/OvisOCR2-8bit",
+          "name": "mlx-community/OvisOCR2-8bit",
+          "repo_id": "mlx-community/OvisOCR2-8bit",
           "type": "hf.image_text_to_text"
         }
       ],
@@ -4754,6 +4796,12 @@
           "id": "mlx-community/VibeVoice-ASR-4bit",
           "name": "mlx-community/VibeVoice-ASR-4bit",
           "repo_id": "mlx-community/VibeVoice-ASR-4bit",
+          "type": "hf.automatic_speech_recognition"
+        },
+        {
+          "id": "mlx-community/VibeVoice-ASR-Streaming-7B-4bit",
+          "name": "mlx-community/VibeVoice-ASR-Streaming-7B-4bit",
+          "repo_id": "mlx-community/VibeVoice-ASR-Streaming-7B-4bit",
           "type": "hf.automatic_speech_recognition"
         }
       ],
@@ -5699,6 +5747,24 @@
           "type": "hf.text_generation"
         },
         {
+          "id": "mlx-community/Qwen3.8-27B-4bit",
+          "name": "mlx-community/Qwen3.8-27B-4bit",
+          "repo_id": "mlx-community/Qwen3.8-27B-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/Qwen3.8-27B-8bit",
+          "name": "mlx-community/Qwen3.8-27B-8bit",
+          "repo_id": "mlx-community/Qwen3.8-27B-8bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/Qwen3.8-27B-OptiQ-4bit",
+          "name": "mlx-community/Qwen3.8-27B-OptiQ-4bit",
+          "repo_id": "mlx-community/Qwen3.8-27B-OptiQ-4bit",
+          "type": "hf.text_generation"
+        },
+        {
           "downloads": 32000,
           "has_model_index": false,
           "id": "mlx-community/Qwen3.6-35B-A3B-4bit",
@@ -6014,6 +6080,12 @@
           "type": "hf.text_generation"
         },
         {
+          "id": "mlx-community/Qwen3-Coder-Next-4bit",
+          "name": "mlx-community/Qwen3-Coder-Next-4bit",
+          "repo_id": "mlx-community/Qwen3-Coder-Next-4bit",
+          "type": "hf.text_generation"
+        },
+        {
           "id": "mlx-community/gpt-oss-20b-MXFP4-Q8",
           "name": "mlx-community/gpt-oss-20b-MXFP4-Q8",
           "repo_id": "mlx-community/gpt-oss-20b-MXFP4-Q8",
@@ -6035,6 +6107,18 @@
           "id": "mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit",
           "name": "mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit",
           "repo_id": "mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+          "name": "mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+          "repo_id": "mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit",
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/MiniCPM5-2B-8bit",
+          "name": "mlx-community/MiniCPM5-2B-8bit",
+          "repo_id": "mlx-community/MiniCPM5-2B-8bit",
           "type": "hf.text_generation"
         },
         {
@@ -6202,6 +6286,12 @@
           "type": "hf.text_generation"
         },
         {
+          "id": "mlx-community/GLM-5.3-4bit",
+          "name": "mlx-community/GLM-5.3-4bit",
+          "repo_id": "mlx-community/GLM-5.3-4bit",
+          "type": "hf.text_generation"
+        },
+        {
           "downloads": 17231,
           "has_model_index": false,
           "id": "mlx-community/DeepSeek-V4-Flash-4bit",
@@ -6220,6 +6310,12 @@
             "4-bit",
             "region:us"
           ],
+          "type": "hf.text_generation"
+        },
+        {
+          "id": "mlx-community/DeepSeek-V4.1-Flash-MLX-4bit",
+          "name": "mlx-community/DeepSeek-V4.1-Flash-MLX-4bit",
+          "repo_id": "mlx-community/DeepSeek-V4.1-Flash-MLX-4bit",
           "type": "hf.text_generation"
         }
       ],
@@ -7263,7 +7359,7 @@
         "seed"
       ],
       "body": "content_card",
-      "description": "Generate full songs locally with ACE-Step 1.5 on Apple Silicon (MLX).\nmlx, music, audio, text-to-music, ace-step, apple-silicon\n\nUse cases:\n- Turn a text description (and optional lyrics) into a complete track\n- Produce instrumental beds, demos or background music without cloud APIs\n- Iterate on prompts locally using the fast turbo DiT, then switch to the\n  higher quality base / XL checkpoints\n\nACE-Step downloads its checkpoints from HuggingFace into\n``~/.cache/nodetool/acestep/checkpoints`` (configurable via\n``ACESTEP_CHECKPOINTS_DIR``) the first time a model is used.",
+      "description": "Generate full songs locally with ACE-Step 1.5 on Apple Silicon (MLX).\nmlx, music, audio, text-to-music, ace-step, apple-silicon\n\nUse cases:\n- Turn a text description (and optional lyrics) into a complete track\n- Produce instrumental beds, demos or background music without cloud APIs\n- Iterate on prompts locally using the fast turbo DiT, then switch to the\n  higher quality base / XL checkpoints\n\nACE-Step downloads its checkpoints from HuggingFace into\n``$XDG_CACHE_HOME/nodetool/acestep/checkpoints`` (``~/.cache`` when\n``XDG_CACHE_HOME`` is unset; configurable via ``ACESTEP_CHECKPOINTS_DIR``)\nthe first time a model is used.",
       "expose_as_tool": true,
       "input_fields": [
         "prompt",
@@ -9385,6 +9481,30 @@
           "id": "OpenMOSS-Team/MOSS-TTS-v1.5",
           "name": "OpenMOSS-Team/MOSS-TTS-v1.5",
           "repo_id": "OpenMOSS-Team/MOSS-TTS-v1.5",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/MOSS-TTS-Local-Transformer-v1.5-8bit",
+          "name": "mlx-community/MOSS-TTS-Local-Transformer-v1.5-8bit",
+          "repo_id": "mlx-community/MOSS-TTS-Local-Transformer-v1.5-8bit",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/VoxCPM2-bf16",
+          "name": "mlx-community/VoxCPM2-bf16",
+          "repo_id": "mlx-community/VoxCPM2-bf16",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/chatterbox-multilingual-v3",
+          "name": "mlx-community/chatterbox-multilingual-v3",
+          "repo_id": "mlx-community/chatterbox-multilingual-v3",
+          "type": "hf.text_to_speech"
+        },
+        {
+          "id": "mlx-community/Irodori-TTS-v4.1-Small-MF-8bit",
+          "name": "mlx-community/Irodori-TTS-v4.1-Small-MF-8bit",
+          "repo_id": "mlx-community/Irodori-TTS-v4.1-Small-MF-8bit",
           "type": "hf.text_to_speech"
         }
       ],
