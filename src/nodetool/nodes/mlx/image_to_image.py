@@ -2552,6 +2552,9 @@ class MFluxQwenImageEdit(BaseMFluxNode):
             HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2509-mflux-q4"),
             HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2509-mflux-q6"),
             HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2509-mflux-q8"),
+            HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2511-mflux-q4"),
+            HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2511-mflux-q6"),
+            HFQwenImageEdit(repo_id="mflux-community/qwen-image-edit-2511-mflux-q8"),
         ]
 
 

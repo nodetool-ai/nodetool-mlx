@@ -1457,6 +1457,12 @@ class MLXTextToSpeech(BaseMLXTTS):
             HFTextToSpeech(repo_id="bosonai/higgs-audio-v3-tts-4b"),
             HFTextToSpeech(repo_id="kugelaudio/kugelaudio-0-open"),
             HFTextToSpeech(repo_id="OpenMOSS-Team/MOSS-TTS-v1.5"),
+            HFTextToSpeech(
+                repo_id="mlx-community/MOSS-TTS-Local-Transformer-v1.5-8bit"
+            ),
+            HFTextToSpeech(repo_id="mlx-community/VoxCPM2-bf16"),
+            HFTextToSpeech(repo_id="mlx-community/chatterbox-multilingual-v3"),
+            HFTextToSpeech(repo_id="mlx-community/Irodori-TTS-v4.1-Small-MF-8bit"),
         ]
 
     def _normalize_speed(self) -> float:

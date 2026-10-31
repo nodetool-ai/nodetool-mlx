@@ -179,6 +179,9 @@ class TextGeneration(BaseNode):
             HFTextGeneration(repo_id="mlx-community/gemma-4-31b-it-4bit"),
             HFTextGeneration(repo_id="mlx-community/gemma-4-31b-it-8bit"),
             HFTextGeneration(repo_id="mlx-community/gemma-4-31B-it-OptiQ-4bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.8-27B-4bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.8-27B-8bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3.8-27B-OptiQ-4bit"),
             HFTextGeneration(repo_id="mlx-community/Qwen3.6-35B-A3B-4bit"),
             HFTextGeneration(repo_id="mlx-community/Qwen3.6-35B-A3B-4bit-DWQ"),
             HFTextGeneration(repo_id="mlx-community/Qwen3.6-35B-A3B-nvfp4"),
@@ -194,12 +197,17 @@ class TextGeneration(BaseNode):
             HFTextGeneration(repo_id="mlx-community/Qwen3.5-4B-4bit"),
             HFTextGeneration(repo_id="mlx-community/Qwen3.5-27B-4bit"),
             HFTextGeneration(repo_id="mlx-community/Qwen3.5-35B-A3B-4bit"),
+            HFTextGeneration(repo_id="mlx-community/Qwen3-Coder-Next-4bit"),
             HFTextGeneration(repo_id="mlx-community/gpt-oss-20b-MXFP4-Q8"),
             HFTextGeneration(repo_id="mlx-community/gpt-oss-120b-MXFP4-Q8"),
             HFTextGeneration(repo_id="mlx-community/NVIDIA-Nemotron-3-Nano-4B-4bit"),
             HFTextGeneration(
                 repo_id="mlx-community/NVIDIA-Nemotron-3-Nano-30B-A3B-4bit"
             ),
+            HFTextGeneration(
+                repo_id="mlx-community/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-4bit"
+            ),
+            HFTextGeneration(repo_id="mlx-community/MiniCPM5-2B-8bit"),
             HFTextGeneration(repo_id="mlx-community/Ministral-3-3B-Instruct-2512-4bit"),
             HFTextGeneration(repo_id="mlx-community/Ministral-3-8B-Instruct-2512-4bit"),
             HFTextGeneration(
@@ -212,7 +220,9 @@ class TextGeneration(BaseNode):
             HFTextGeneration(repo_id="mlx-community/GLM-4.7-Flash-6bit"),
             HFTextGeneration(repo_id="mlx-community/GLM-4.7-Flash-8bit"),
             HFTextGeneration(repo_id="mlx-community/GLM-5.2-mxfp4"),
+            HFTextGeneration(repo_id="mlx-community/GLM-5.3-4bit"),
             HFTextGeneration(repo_id="mlx-community/DeepSeek-V4-Flash-4bit"),
+            HFTextGeneration(repo_id="mlx-community/DeepSeek-V4.1-Flash-MLX-4bit"),
         ]
 
     async def preload_model(self, context: ProcessingContext) -> None:

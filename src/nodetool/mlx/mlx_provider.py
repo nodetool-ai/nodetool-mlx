@@ -444,6 +444,11 @@ class MLXProvider(BaseProvider):
                 name="VibeVoice ASR (4-bit)",
                 provider=Provider.MLX,
             ),
+            ASRModel(
+                id="mlx-community/VibeVoice-ASR-Streaming-7B-4bit",
+                name="VibeVoice ASR Streaming 7B (4-bit)",
+                provider=Provider.MLX,
+            ),
         ]
         return models
 
@@ -1165,6 +1170,15 @@ class MLXProvider(BaseProvider):
                 ("mlx-community/MisoLabs-MisoTTS-8bit", "MisoTTS (8-bit)"),
                 ("mlx-community/Ming-omni-tts-0.5B-bf16", "Ming Omni TTS 0.5B"),
                 ("bosonai/higgs-audio-v3-tts-4b", "Higgs Audio v3 4B"),
+                ("mlx-community/VoxCPM2-bf16", "VoxCPM2"),
+                (
+                    "mlx-community/chatterbox-multilingual-v3",
+                    "Chatterbox Multilingual v3",
+                ),
+                (
+                    "mlx-community/MOSS-TTS-Local-Transformer-v1.5-8bit",
+                    "MOSS-TTS Local v1.5 (8-bit)",
+                ),
             ]
         ]
 
