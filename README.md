@@ -75,6 +75,14 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 - `LTXIngredients` – a video featuring the subjects of 1 to 8 reference pictures (LTX-2.3 ingredients IC-LoRA)
 - `LTXUpscale` – double the width and height of a clip, keeping its sound (LTX-2.5 pixel upscaler IC-LoRA)
 
+### MiniMax H3 video (`mlx.minimax_h3`)
+
+- `MiniMaxH3Video` – video with sound from a prompt, with an optional first frame, last frame and face to keep
+- `MiniMaxH3Keyframes` – one clip through 2 to 8 images spread evenly from the first frame to the last
+- `MiniMaxH3Extend` – continue a clip and its sound by up to 15 seconds
+- `MiniMaxH3LipSync` – video that performs a given soundtrack, up to 30 seconds
+- `MiniMaxH3AddSound` – a new soundtrack for a clip, with its picture unchanged
+
 ### Text (`mlx.text_generation`)
 
 - `TextGeneration` – local LLM text generation via `mlx-lm`
@@ -148,6 +156,35 @@ Every LTX node takes **loras**, a list of character or style LoRAs with a streng
 names a repo and the `.safetensors` path in it, and must be trained for the LTX version
 the node runs. The nodes attach LoRAs as run-time adapters rather than fusing them into
 the quantized weights, which would round most of the LoRA away.
+
+### MiniMax H3 (video generation)
+
+Powered by MiniMax H3. The H3 nodes run [minimax-h3-mlx](https://github.com/mrbizarro/minimax-h3-mlx)
+(Apache-2.0) at commit `26010372`, the engine Phosphene pins. It has no package metadata,
+so the first run downloads that commit's archive into `~/.local/share/nodetool/minimax-h3/`,
+checks that the archive names the pinned commit, and runs its `scripts/generate_staged.py`
+in a subprocess of the NodeTool Python. The engine's dependencies are already part of
+`nodetool-mlx`. It also needs `ffmpeg` on the `PATH`.
+
+Download the three weight repos from the Models Manager first, about 75 GB in total:
+`DeepBeepMeep/MiniMax-H3` (the pruned bf16 transformer), `ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit`
+(text encoder and VAEs) and two config files from `MiniMaxAI/MiniMax-H3`. The first render
+then quantizes the transformer to the engine's Q8 pack (about 22 GB, about five minutes),
+which halves the memory a render holds. Renders pass `--low-memory auto`, so a Mac with
+less memory streams weights instead of swapping, and leave the larger of 6 GB and an
+eighth of RAM free.
+
+**speed** is Fast by default: three steps with TaoMate's LoRA (`Kijai/MiniMax-H3_comfy`,
+pinned and hash-checked, 180 MB on first use), about four times faster than Best.
+**resolution** picks a 640x384, 768x448 or 1024x576 canvas, landscape or portrait.
+Clips longer than 5 seconds chain 5 second windows, each carrying the last 17 frames of
+the one before.
+
+The weights are under the MiniMax H3 Community License. It asks that products show
+"Powered by MiniMax H3", it needs separate permission for commercial use above USD 20M
+in yearly revenue, and it excludes some territories. Read it on the
+[MiniMaxAI/MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3) model card before
+using the output.
 
 ## Requirements
 

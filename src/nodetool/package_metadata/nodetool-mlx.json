@@ -4334,6 +4334,872 @@
     },
     {
       "basic_fields": [
+        "prompt",
+        "video",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Generates a soundtrack for a video and keeps its picture exactly as it is, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, audio, video-to-audio, foley, sound effects, minimax, h3, hailuo, mlx, apple silicon\n\nUse cases:\n- Add sound effects and ambience to a silent clip\n- Replace a clip's soundtrack with one described in the prompt",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "video"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3AddSound",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "The clip to score, up to 60 seconds.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Add Sound (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "video",
+        "seconds",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Continues a video with new frames and sound, carrying its last 17 frames and their sound, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, extend, continue, minimax, h3, hailuo, mlx, apple silicon, audio\n\nUse cases:\n- Make a clip longer without a cut\n- Continue a shot toward an optional end frame",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "video",
+        "seconds",
+        "last_image"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3Extend",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "The clip to continue, up to 60 seconds.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        },
+        {
+          "default": 5.0,
+          "description": "Seconds of new video after the clip.",
+          "max": 15.0,
+          "min": 0.5,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional frame the continuation should end on.",
+          "name": "last_image",
+          "title": "Last Image",
+          "type": {
+            "type": "image"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Extend (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "images",
+        "seconds",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound that passes through a sequence of images, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, keyframes, interpolation, minimax, h3, hailuo, mlx, apple silicon, audio\n\nUse cases:\n- Move a shot through planned story beats\n- Join a first and a last image with stills in between",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "images",
+        "seconds"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3Keyframes",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": [],
+          "description": "Two to eight stills, spread evenly from the first frame to the last.",
+          "name": "images",
+          "title": "Images",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "image"
+              }
+            ]
+          }
+        },
+        {
+          "default": 5.0,
+          "description": "Clip length.",
+          "max": 15.0,
+          "min": 1.0,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Keyframes (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "audio",
+        "image",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Generates a video performing a given soundtrack, with lips synced to speech or singing, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, lip sync, audio-to-video, talking head, minimax, h3, hailuo, mlx, apple silicon\n\nUse cases:\n- Make a speaker or singer perform a recording\n- Animate a portrait to a voice-over",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "audio",
+        "image",
+        "start_time",
+        "seconds"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3LipSync",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "audio",
+            "uri": ""
+          },
+          "description": "The soundtrack the clip performs and keeps. Isolated vocals sync best.",
+          "name": "audio",
+          "title": "Audio",
+          "type": {
+            "type": "audio"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame, such as the speaker's face.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": 0.0,
+          "description": "Second of the audio the clip starts at.",
+          "min": 0.0,
+          "name": "start_time",
+          "title": "Start Time",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 0.0,
+          "description": "Clip length. 0 covers the audio from the start time, up to 30 seconds.",
+          "max": 30.0,
+          "min": 0.0,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Lip Sync (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "image",
+        "last_image",
+        "seconds",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound from a prompt, optionally from a first frame, to a last frame, or keeping a face, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, text-to-video, image-to-video, minimax, h3, hailuo, mlx, apple silicon, audio\n\nUse cases:\n- Generate a clip with dialogue and sound from a description\n- Animate a still, or move from a first frame to a last frame\n- Keep a person's face from a reference photo",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "image",
+        "last_image",
+        "reference",
+        "seconds"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3Video",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame. Leave empty for text to video.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional last frame.",
+          "name": "last_image",
+          "title": "Last Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional face to keep: a photo of the person, not a frame of the clip.",
+          "name": "reference",
+          "title": "Reference",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": 5.0,
+          "description": "Clip length. Past 5 seconds the engine chains 5 second windows.",
+          "max": 15.0,
+          "min": 1.0,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Video (MLX)"
+    },
+    {
+      "basic_fields": [
         "model",
         "version",
         "audio"
