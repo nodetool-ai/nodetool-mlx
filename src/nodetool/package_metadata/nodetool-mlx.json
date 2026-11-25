@@ -10784,6 +10784,652 @@
         }
       ],
       "title": "Voxtral TTS"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "audio",
+        "image",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Generates a video for a given soundtrack, such as speech or music, with LTX-2.5 on Apple Silicon. The output keeps the input audio.\nvideo, audio-to-video, lip sync, music video, ltx, mlx, apple silicon\n\nUse cases:\n- Make a talking or singing character from a voice track\n- Cut visuals to a piece of music",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "num_frames",
+        "frame_rate",
+        "width",
+        "height",
+        "audio",
+        "image"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXAudioToVideo",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "q8 (about 46 GB to download, recommended) or q4 (about 27 GB, lower quality).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": 0,
+          "description": "Frames to generate, rounded down to 8n+1. 0 covers the audio, up to 257 frames.",
+          "max": 257.0,
+          "min": 0.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 768,
+          "description": "Width in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 448,
+          "description": "Height in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "audio",
+            "uri": ""
+          },
+          "description": "The soundtrack. With music, isolated vocals sync better.",
+          "name": "audio",
+          "title": "Audio",
+          "type": {
+            "type": "audio"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame, such as the speaker.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Audio to Video (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "video",
+        "seconds",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Continues a video and its sound with LTX-2.5 on Apple Silicon. Returns the whole clip with the new part appended.\nvideo, extend, continue, ltx, mlx, apple silicon, audio\n\nUse cases:\n- Make a generated shot longer\n- Continue a scene in a new direction with a new prompt",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "video",
+        "seconds"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXExtend",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "q8 (about 46 GB to download, recommended) or q4 (about 27 GB, lower quality).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "Clip to continue. Both sides must be multiples of 64 pixels, as LTX output is.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        },
+        {
+          "default": 4.0,
+          "description": "Seconds of video to add.",
+          "max": 10.0,
+          "min": 0.5,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Extend (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "images",
+        "num_frames",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound that passes through 2 to 8 images, spread evenly from the first frame to the last, with LTX-2.5 on Apple Silicon.\nvideo, keyframes, interpolation, ltx, mlx, apple silicon, audio\n\nUse cases:\n- Turn a storyboard into one continuous shot\n- Interpolate between several stills",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "num_frames",
+        "frame_rate",
+        "width",
+        "height",
+        "images",
+        "strength"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXKeyframes",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "q8 (about 46 GB to download, recommended) or q4 (about 27 GB, lower quality).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": 121,
+          "description": "Frames to generate, rounded down to 8n+1. 121 frames at 24 fps is 5 seconds.",
+          "max": 257.0,
+          "min": 9.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 768,
+          "description": "Width in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 448,
+          "description": "Height in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": [],
+          "description": "2 to 8 keyframes, in order. The first is frame one, the last is the final frame.",
+          "name": "images",
+          "title": "Images",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "image"
+              }
+            ]
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "How closely the clip holds each keyframe.",
+          "max": 1.0,
+          "min": 0.0,
+          "name": "strength",
+          "title": "Strength",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Keyframes (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "image",
+        "last_image",
+        "num_frames",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound from a prompt, optionally starting and ending on given images, with LTX-2.5 on Apple Silicon.\nvideo, text-to-video, image-to-video, ltx, mlx, apple silicon, audio\n\nUse cases:\n- Generate a short clip and its soundtrack from a description\n- Animate a still image, or move from one image to another",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "num_frames",
+        "frame_rate",
+        "width",
+        "height",
+        "image",
+        "last_image",
+        "strength"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXVideo",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "q8 (about 46 GB to download, recommended) or q4 (about 27 GB, lower quality).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": 121,
+          "description": "Frames to generate, rounded down to 8n+1. 121 frames at 24 fps is 5 seconds.",
+          "max": 257.0,
+          "min": 9.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 768,
+          "description": "Width in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 448,
+          "description": "Height in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame. Leave empty for text to video.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional last frame.",
+          "name": "last_image",
+          "title": "Last Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "How closely the clip holds the given frames.",
+          "max": 1.0,
+          "min": 0.0,
+          "name": "strength",
+          "title": "Strength",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Video (MLX)"
     }
   ],
   "repo_id": "nodetool-ai/nodetool-mlx",

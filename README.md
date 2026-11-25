@@ -65,6 +65,13 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 - `ACEStepMusicGeneration` – local text-to-music generation with [ACE-Step 1.5](https://github.com/ace-step/ACE-Step-1.5) (prompt + lyrics → full songs)
 - `ACEStepSongPlanner` – use the ACE-Step 5Hz language model to turn an idea into a caption, lyrics and musical metadata
 
+### Video (`mlx.text_to_video`)
+
+- `LTXVideo` – LTX-2.5 video with sound from a prompt, with an optional first and last frame
+- `LTXKeyframes` – one clip through 2 to 8 images spread evenly from the first frame to the last
+- `LTXAudioToVideo` – video for a given soundtrack, such as speech or music
+- `LTXExtend` – continue a clip and its sound
+
 ### Text (`mlx.text_generation`)
 
 - `TextGeneration` – local LLM text generation via `mlx-lm`
@@ -106,6 +113,27 @@ environment variable). The main bundle `ACE-Step/Ace-Step1.5` includes the VAE, 
 turbo DiT and the 1.7B planner LM; additional DiT and LM checkpoints are listed as
 recommended models on each node.
 
+### LTX-2.5 (video generation)
+
+The LTX nodes run [ltx-2-mlx](https://github.com/dgrauet/ltx-2-mlx), an MLX port of
+Lightricks' LTX-2 pipelines, in the distilled two-stage mode (8 + 3 steps). Every node
+returns an MP4 with its generated or given soundtrack. ltx-2-mlx is not on PyPI, so
+install it into the same environment as `nodetool-mlx`:
+
+```bash
+uv pip install \
+  "ltx-core-mlx @ git+https://github.com/dgrauet/ltx-2-mlx@v0.18.0#subdirectory=packages/ltx-core-mlx" \
+  "ltx-pipelines-mlx @ git+https://github.com/dgrauet/ltx-2-mlx@v0.18.0#subdirectory=packages/ltx-pipelines-mlx"
+```
+
+If it is missing, the nodes raise an error with this command. They also need `ffmpeg`
+on the `PATH`, which the NodeTool conda environment provides.
+
+The weights are dgrauet's pre-converted packs, `dgrauet/ltx-2.5-mlx-q8` (recommended)
+and `dgrauet/ltx-2.5-mlx-q4`, chosen with the **quantization** field. Download one from
+the Models Manager first. The recommended download skips the dev transformer and the
+distilled LoRA, which these nodes do not load. That makes it about 46 GB for q8 and
+27 GB for q4. On a 32 GB Mac, turn on **low_ram** to stream the transformer from disk.
 
 ## Requirements
 
