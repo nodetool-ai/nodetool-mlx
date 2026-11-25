@@ -10799,6 +10799,7 @@
         "quantization",
         "seed",
         "low_ram",
+        "loras",
         "num_frames",
         "frame_rate",
         "width",
@@ -10856,6 +10857,20 @@
           "title": "Low Ram",
           "type": {
             "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
           }
         },
         {
@@ -10959,6 +10974,211 @@
     },
     {
       "basic_fields": [
+        "mode",
+        "prompt",
+        "video",
+        "image",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Renders a new video that follows the motion and layout of a source video, or colorizes a black-and-white video, with LTX-2.3 IC-LoRAs on Apple Silicon.\nvideo, video-to-video, motion control, colorize, ic-lora, ltx, mlx, apple silicon\n\nUse cases:\n- Restyle a clip while keeping its camera move and choreography\n- Drive a new character with the motion of a reference performance\n- Add color to old black-and-white footage",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "mode",
+        "video",
+        "image",
+        "num_frames",
+        "reference_strength",
+        "frame_rate"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXControl",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q4",
+          "description": "LTX-2.3 pack: q4 (about 12 GB, what the IC-LoRAs were tuned on) or q8 (about 26 GB).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": "motion",
+          "description": "motion: a new video that follows the source (Union Control IC-LoRA). colorize: the source in color, with its own sound.",
+          "name": "mode",
+          "title": "Mode",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXControlMode",
+            "values": [
+              "motion",
+              "colorize"
+            ]
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "The source video.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame for motion control, such as the new character.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": 121,
+          "description": "Frames to generate, rounded down to 8n+1 and to the source length.",
+          "max": 257.0,
+          "min": 9.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "How closely the output follows the source. Lower is looser.",
+          "max": 1.0,
+          "min": 0.0,
+          "name": "reference_strength",
+          "title": "Reference Strength",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.3-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "transformer-distilled-1.1.safetensors",
+            "ltx-2.3-22b-distilled-lora-*.safetensors",
+            "spatial_upscaler_x1_5_*.safetensors",
+            "temporal_upscaler_*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.3-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.3-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.3-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "transformer-distilled-1.1.safetensors",
+            "ltx-2.3-22b-distilled-lora-*.safetensors",
+            "spatial_upscaler_x1_5_*.safetensors",
+            "temporal_upscaler_*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.3-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.3-mlx-q8",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "mlx-community/gemma-3-12b-it-4bit",
+          "name": "mlx-community/gemma-3-12b-it-4bit",
+          "repo_id": "mlx-community/gemma-3-12b-it-4bit",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.3 Motion Control and Colorize (MLX)"
+    },
+    {
+      "basic_fields": [
         "prompt",
         "video",
         "seconds",
@@ -10971,6 +11191,7 @@
         "quantization",
         "seed",
         "low_ram",
+        "loras",
         "video",
         "seconds"
       ],
@@ -11024,6 +11245,20 @@
           "title": "Low Ram",
           "type": {
             "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
           }
         },
         {
@@ -11081,6 +11316,209 @@
     },
     {
       "basic_fields": [
+        "images",
+        "sheet_description",
+        "prompt",
+        "num_frames",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound that features the people, objects and places from 1 to 8 reference pictures, with the LTX-2.3 ingredients IC-LoRA on Apple Silicon.\nvideo, references, ingredients, character, product, ic-lora, ltx, mlx, apple silicon\n\nUse cases:\n- Put a character and a product into one scene\n- Keep a cast consistent across shots",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "images",
+        "sheet_description",
+        "num_frames",
+        "width",
+        "height",
+        "quick",
+        "frame_rate"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXIngredients",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q4",
+          "description": "LTX-2.3 pack: q4 (about 12 GB, what the IC-LoRAs were tuned on) or q8 (about 26 GB).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": [],
+          "description": "1 to 8 reference pictures. They are tiled onto one reference sheet.",
+          "name": "images",
+          "title": "Images",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "image"
+              }
+            ]
+          }
+        },
+        {
+          "default": "",
+          "description": "What the reference pictures show, such as 'a red-haired woman, a vintage motorbike'.",
+          "name": "sheet_description",
+          "title": "Sheet Description",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": 121,
+          "description": "Frames to generate, rounded down to 8n+1.",
+          "max": 257.0,
+          "min": 9.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 1536,
+          "description": "Width in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 896,
+          "description": "Height in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Skip the refine stage: faster, at half the size, with a dreamier look.",
+          "name": "quick",
+          "title": "Quick",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.3-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "transformer-distilled-1.1.safetensors",
+            "ltx-2.3-22b-distilled-lora-*.safetensors",
+            "spatial_upscaler_x1_5_*.safetensors",
+            "temporal_upscaler_*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.3-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.3-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.3-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "transformer-distilled-1.1.safetensors",
+            "ltx-2.3-22b-distilled-lora-*.safetensors",
+            "spatial_upscaler_x1_5_*.safetensors",
+            "temporal_upscaler_*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.3-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.3-mlx-q8",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "mlx-community/gemma-3-12b-it-4bit",
+          "name": "mlx-community/gemma-3-12b-it-4bit",
+          "repo_id": "mlx-community/gemma-3-12b-it-4bit",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.3 Ingredients (MLX)"
+    },
+    {
+      "basic_fields": [
         "prompt",
         "images",
         "num_frames",
@@ -11093,6 +11531,7 @@
         "quantization",
         "seed",
         "low_ram",
+        "loras",
         "num_frames",
         "frame_rate",
         "width",
@@ -11150,6 +11589,20 @@
           "title": "Low Ram",
           "type": {
             "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
           }
         },
         {
@@ -11248,6 +11701,142 @@
     },
     {
       "basic_fields": [
+        "video",
+        "keep",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Doubles the width and height of a video with the LTX-2.5 pixel upscaler IC-LoRA on Apple Silicon. Keeps the source sound and length.\nvideo, upscale, super resolution, x2, ic-lora, ltx, mlx, apple silicon\n\nUse cases:\n- Bring a 768x448 LTX draft to 1536x896\n- Sharpen a low-resolution clip before delivery",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "video",
+        "keep"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXUpscale",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "LTX-2.5 pack: q8 (about 46 GB, recommended) or q4 (about 27 GB).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "The video to upscale. Its sides should be multiples of 32 pixels.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "How much of the source to keep. Lower lets the model invent more detail.",
+          "max": 1.0,
+          "min": 0.3,
+          "name": "keep",
+          "title": "Keep",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Upscale x2 (MLX)"
+    },
+    {
+      "basic_fields": [
         "prompt",
         "image",
         "last_image",
@@ -11261,6 +11850,7 @@
         "quantization",
         "seed",
         "low_ram",
+        "loras",
         "num_frames",
         "frame_rate",
         "width",
@@ -11319,6 +11909,20 @@
           "title": "Low Ram",
           "type": {
             "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
           }
         },
         {

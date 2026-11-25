@@ -71,6 +71,9 @@ All nodes live under `src/nodetool/nodes/mlx`. Audio nodes wrap the
 - `LTXKeyframes` – one clip through 2 to 8 images spread evenly from the first frame to the last
 - `LTXAudioToVideo` – video for a given soundtrack, such as speech or music
 - `LTXExtend` – continue a clip and its sound
+- `LTXControl` – a new video that follows the motion of a source video, or the source colorized (LTX-2.3 IC-LoRAs)
+- `LTXIngredients` – a video featuring the subjects of 1 to 8 reference pictures (LTX-2.3 ingredients IC-LoRA)
+- `LTXUpscale` – double the width and height of a clip, keeping its sound (LTX-2.5 pixel upscaler IC-LoRA)
 
 ### Text (`mlx.text_generation`)
 
@@ -113,7 +116,7 @@ environment variable). The main bundle `ACE-Step/Ace-Step1.5` includes the VAE, 
 turbo DiT and the 1.7B planner LM; additional DiT and LM checkpoints are listed as
 recommended models on each node.
 
-### LTX-2.5 (video generation)
+### LTX-2.5 and LTX-2.3 (video generation)
 
 The LTX nodes run [ltx-2-mlx](https://github.com/dgrauet/ltx-2-mlx), an MLX port of
 Lightricks' LTX-2 pipelines, in the distilled two-stage mode (8 + 3 steps). Every node
@@ -134,6 +137,17 @@ and `dgrauet/ltx-2.5-mlx-q4`, chosen with the **quantization** field. Download o
 the Models Manager first. The recommended download skips the dev transformer and the
 distilled LoRA, which these nodes do not load. That makes it about 46 GB for q8 and
 27 GB for q4. On a 32 GB Mac, turn on **low_ram** to stream the transformer from disk.
+
+`LTXControl` and `LTXIngredients` run on the LTX-2.3 packs (`dgrauet/ltx-2.3-mlx-q4`,
+about 12 GB, or `-q8`), because their IC-LoRAs were trained on LTX-2.3. LTX-2.3 packs
+need the separate text encoder `mlx-community/gemma-3-12b-it-4bit`. The IC-LoRA files
+download on first use. The upscaler, `Lightricks/LTX-2.5-22b-IC-LoRA-Pixel-Spatial-Upscaler`,
+is gated: accept its license on Hugging Face and set `HF_TOKEN`.
+
+Every LTX node takes **loras**, a list of character or style LoRAs with a strength. Each
+names a repo and the `.safetensors` path in it, and must be trained for the LTX version
+the node runs. The nodes attach LoRAs as run-time adapters rather than fusing them into
+the quantized weights, which would round most of the LoRA away.
 
 ## Requirements
 

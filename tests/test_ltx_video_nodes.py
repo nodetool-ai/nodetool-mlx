@@ -32,9 +32,10 @@ class Anchor:
 class FakePipeline:
     instances: list["FakePipeline"] = []
 
-    def __init__(self, model_dir, low_ram_streaming=False):
+    def __init__(self, model_dir, low_ram_streaming=False, **kwargs):
         self.model_dir = model_dir
         self.low_ram_streaming = low_ram_streaming
+        self.kwargs = kwargs
         self.calls: list[tuple[str, dict]] = []
         self.source_frame_rate = None
         FakePipeline.instances.append(self)
@@ -68,13 +69,16 @@ def engine(monkeypatch, tmp_path):
         "DistilledPipeline",
         "A2VidDistilledPipeline",
         "ExtendDistilledPipeline",
+        "ICLoraPipeline",
     ):
         setattr(package, name, type(name, (FakePipeline,), {}))
     utils = types.ModuleType("ltx_pipelines_mlx.utils")
     utils_types = types.ModuleType("ltx_pipelines_mlx.utils.types")
     utils_types.ImageConditioningInput = Anchor
     ffmpeg = types.ModuleType("ltx_core_mlx.utils.ffmpeg")
-    ffmpeg.probe_video_info = lambda path: types.SimpleNamespace(fps=25.0)
+    ffmpeg.probe_video_info = lambda path: types.SimpleNamespace(
+        fps=25.0, width=1920, height=1080, num_frames=100
+    )
     for name, module in {
         "ltx_pipelines_mlx": package,
         "ltx_pipelines_mlx.utils": utils,
@@ -87,13 +91,33 @@ def engine(monkeypatch, tmp_path):
     monkeypatch.setattr(ltx.sys, "platform", "darwin")
     snapshots = {}
 
-    def find(repo_id, marker):
-        assert marker == ltx.LTX_MLX_MARKER
+    def find(repo_id, marker="config.json"):
+        if repo_id.startswith("dgrauet/"):
+            assert marker == ltx.LTX_MLX_MARKER
         snapshots[repo_id] = tmp_path / repo_id
         return snapshots[repo_id]
 
     monkeypatch.setattr(ltx, "find_cached_snapshot", find)
+    import huggingface_hub
+
+    monkeypatch.setattr(
+        huggingface_hub,
+        "hf_hub_download",
+        lambda repo_id, filename, token=None: f"/hub/{repo_id}/{filename}",
+    )
     return FakePipeline.instances
+
+
+@pytest.fixture
+def ffmpeg_calls(monkeypatch):
+    calls: list[tuple[str, ...]] = []
+
+    def run(*args):
+        calls.append(args)
+        Path(args[-1]).write_bytes(b"mp4")
+
+    monkeypatch.setattr(ltx, "_ffmpeg", run)
+    return calls
 
 
 def _context(audio_ms: int = 4000) -> MagicMock:
@@ -115,7 +139,12 @@ def _context(audio_ms: int = 4000) -> MagicMock:
     context.image_to_pil = image_to_pil
     context.asset_to_bytes = asset_to_bytes
     context.audio_to_audio_segment = audio_to_audio_segment
+
+    async def get_secret(key):
+        return None
+
     context.video_from_bytes = video_from_bytes
+    context.get_secret = get_secret
     return context
 
 
@@ -223,3 +252,115 @@ async def test_missing_pack_asks_for_a_download(engine, monkeypatch):
     monkeypatch.setattr(ltx, "find_cached_snapshot", lambda repo, marker: None)
     with pytest.raises(RuntimeError, match="is not downloaded"):
         await ltx.LTXVideo(prompt="x").process(_context())
+
+
+def test_ic_lora_helpers():
+    assert ltx.pad_frames(100) == 105
+    assert ltx.pad_frames(97) == 97
+    assert ltx.pad_frames(3) == 9
+    assert ltx.control_canvas(1920, 1080) == (1280, 704)
+    assert ltx.control_canvas(768, 416) == (768, 384)
+    assert ltx.ingredients_prompt(" two cats ", "they dance") == (
+        "Reference sheet: two cats\n\nGenerated video: they dance"
+    )
+    assert ltx.ingredients_prompt("", "they dance") == "Generated video: they dance"
+
+
+def test_sheet_tiles_images_in_a_grid():
+    one = Image.new("RGB", (40, 30), (255, 0, 0))
+    assert ltx.compose_sheet([one]).size == (40, 30)
+    sheet = ltx.compose_sheet([one] * 3)
+    assert sheet.size == ltx.INGREDIENTS_SHEET_SIZE
+    # Two columns, two rows: the first cell holds red, the empty fourth is black.
+    assert sheet.getpixel((384, 224)) == (255, 0, 0)
+    assert sheet.getpixel((1152, 672)) == (0, 0, 0)
+
+
+async def test_character_loras_attach_unfused(engine):
+    lora = ltx.HFLoraLTXConfig(
+        lora=ltx.HFLoraLTX(repo_id="me/hero", path="hero.safetensors"), strength=0.7
+    )
+    await ltx.LTXVideo(prompt="x", loras=[lora]).process(_context())
+    [pipeline] = engine
+    assert pipeline.lora_mode == "unfused"
+    assert pipeline._pending_loras == [("/hub/me/hero/hero.safetensors", 0.7)]
+
+
+async def test_lora_without_a_file_path_is_refused(engine):
+    lora = ltx.HFLoraLTXConfig(lora=ltx.HFLoraLTX(repo_id="me/hero"))
+    with pytest.raises(ValueError, match="path of its .safetensors"):
+        await ltx.LTXVideo(prompt="x", loras=[lora]).process(_context())
+
+
+async def test_motion_control_follows_the_source(engine, ffmpeg_calls):
+    node = ltx.LTXControl(
+        prompt="a robot dances", video=VideoRef(data=b"v"), image=ImageRef(data=b"i")
+    )
+    assert await node.process(_context()) is VIDEO
+    [pipeline] = engine
+    assert type(pipeline).__name__ == "ICLoraPipeline"
+    assert pipeline.model_dir.endswith("dgrauet/ltx-2.3-mlx-q4")
+    assert pipeline.kwargs["lora_paths"] == [
+        (f"/hub/{ltx.IC_LORA_MOTION.repo_id}/{ltx.IC_LORA_MOTION.path}", 1.0)
+    ]
+    assert pipeline.kwargs["gemma_model_id"].endswith(ltx.LTX23_GEMMA_REPO)
+    kwargs = pipeline.calls[0][1]
+    assert (kwargs["width"], kwargs["height"]) == (1280, 704)
+    assert kwargs["num_frames"] == 97
+    assert kwargs["video_conditioning"][0][0].endswith("source.mp4")
+    assert [a.frame_idx for a in kwargs["images"]] == [0]
+    assert ffmpeg_calls == []
+
+
+async def test_colorize_keeps_the_source_sound(engine, ffmpeg_calls):
+    node = ltx.LTXControl(mode=ltx.LTXControlMode.COLORIZE, video=VideoRef(data=b"v"))
+    assert await node.process(_context()) is VIDEO
+    [pipeline] = engine
+    assert ltx.IC_LORA_COLORIZE.path in pipeline.kwargs["lora_paths"][0][0]
+    [mux] = ffmpeg_calls
+    assert mux[1].endswith("generated.mp4") and mux[3].endswith("source.mp4")
+    assert "1:a:0?" in mux
+
+
+async def test_ingredients_build_a_reference_clip(engine, ffmpeg_calls):
+    node = ltx.LTXIngredients(
+        images=[ImageRef(data=b"a"), ImageRef(data=b"b")],
+        sheet_description="a cat, a hat",
+        prompt="the cat puts on the hat",
+        quick=True,
+    )
+    assert await node.process(_context()) is VIDEO
+    [clip] = ffmpeg_calls
+    assert "scale=768:448" in clip and clip[clip.index("-frames:v") + 1] == "121"
+    [pipeline] = engine
+    assert pipeline.kwargs["lora_paths"][0][1] == 1.4
+    kwargs = pipeline.calls[0][1]
+    assert kwargs["prompt"].startswith("Reference sheet: a cat, a hat")
+    assert (kwargs["width"], kwargs["height"]) == (1536, 896)
+    assert kwargs["video_conditioning"] == [(clip[-1], 1.0)]
+    assert kwargs["skip_stage_2"] is True
+
+
+async def test_upscale_doubles_the_size_and_keeps_the_length(engine, ffmpeg_calls):
+    node = ltx.LTXUpscale(video=VideoRef(data=b"v"), keep=0.6)
+    assert await node.process(_context()) is VIDEO
+    [pipeline] = engine
+    assert pipeline.model_dir.endswith("dgrauet/ltx-2.5-mlx-q8")
+    assert "gemma_model_id" not in pipeline.kwargs
+    kwargs = pipeline.calls[0][1]
+    assert (kwargs["width"], kwargs["height"]) == (3840, 2112)
+    assert kwargs["num_frames"] == 105
+    assert kwargs["single_stage"] is True
+    assert kwargs["conditioning_attention_strength"] == 0.6
+    pad, mux = ffmpeg_calls
+    assert "tpad=stop_mode=clone:stop=5" in pad
+    assert mux[mux.index("-frames:v") + 1] == "100"
+
+
+def test_ic_lora_nodes_recommend_the_23_packs_and_gemma():
+    repos = [m.repo_id for m in ltx.LTXControl.get_recommended_models()]
+    assert repos == [
+        "dgrauet/ltx-2.3-mlx-q4",
+        "dgrauet/ltx-2.3-mlx-q8",
+        ltx.LTX23_GEMMA_REPO,
+    ]
