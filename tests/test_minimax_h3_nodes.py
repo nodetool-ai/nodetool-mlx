@@ -18,6 +18,7 @@ import nodetool.nodes.mlx.minimax_h3 as h3
 from nodetool.metadata.types import AudioRef, ImageRef, VideoRef
 
 VIDEO = VideoRef(uri="memory://out")
+ORIGINAL_REQUIRE_RUNTIME = h3.require_runtime
 
 
 def _context(audio_ms: int = 4000) -> MagicMock:
@@ -64,6 +65,7 @@ def engine(monkeypatch, tmp_path):
             )
         ),
     )
+    monkeypatch.setattr(h3, "require_runtime", lambda: None)
     monkeypatch.setattr(h3, "ensure_engine", lambda: tmp_path / "engine")
     monkeypatch.setattr(h3, "ensure_q8_pack", lambda engine, dit, run: tmp_path / "q8")
     monkeypatch.setattr(
@@ -401,3 +403,44 @@ def test_nodes_recommend_the_three_weight_repos():
     assert repos == [h3.H3_DIT_REPO, h3.H3_COMPACT_REPO, h3.H3_META_REPO]
     assert not h3._MiniMaxH3Base.is_visible()
     assert h3.MiniMaxH3AddSound.is_visible()
+
+
+# -- runtime requirements -----------------------------------------------------------
+
+
+def _versions(**found):
+    from importlib import metadata
+
+    def version(package):
+        if package not in found:
+            raise metadata.PackageNotFoundError(package)
+        return found[package]
+
+    return version
+
+
+def test_runtime_check_passes_on_the_validated_set():
+    version = _versions(mlx="0.32.4", **{"mlx-vlm": "0.7.8"}, transformers="5.19.0")
+    assert h3.runtime_problems(version, lambda name: "/bin/ffmpeg", 32.0) == []
+
+
+def test_runtime_check_names_each_missing_piece():
+    version = _versions(mlx="0.31.1", transformers="5.13.0rc1")
+    problems = h3.runtime_problems(version, lambda name: None, 8.0)
+    assert problems == [
+        "mlx is 0.31.1; the engine needs 0.32 or later",
+        "mlx-vlm 0.7.8 or later is not installed",
+        "transformers is 5.13.0rc1; the engine needs 5.14 or later",
+        "ffmpeg is not on PATH (brew install ffmpeg)",
+        "this Mac has 8 GB of memory; the engine needs 16 GB",
+    ]
+
+
+async def test_render_stops_before_the_engine_when_requirements_are_missing(
+    monkeypatch, engine
+):
+    monkeypatch.setattr(h3, "require_runtime", ORIGINAL_REQUIRE_RUNTIME)
+    monkeypatch.setattr(h3, "runtime_problems", lambda: ["ffmpeg is not on PATH"])
+    with pytest.raises(RuntimeError, match="cannot run here: ffmpeg is not on PATH"):
+        await h3.MiniMaxH3Video(prompt="x").process(_context())
+    assert engine == []

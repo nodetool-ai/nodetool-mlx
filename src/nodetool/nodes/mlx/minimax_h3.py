@@ -121,6 +121,12 @@ H3_LIPSYNC_CONTRACT = (
 # apps leave too little memory free right now.
 H3_EXIT_CANNOT_FIT = 76
 H3_EXIT_BUSY = 77
+# What the engine needs from this Python, as Phosphene's H3 constraints pin it:
+# mlx 0.32 or later (on 0.31 the engine fails in mx.random.seed) and the
+# Qwen3-VL text encoder in mlx-vlm 0.7.8, which needs transformers 5.14.
+H3_MIN_VERSIONS = {"mlx": (0, 32), "mlx-vlm": (0, 7, 8), "transformers": (5, 14)}
+# The smallest Mac the engine's low-memory plan serves.
+H3_MIN_RAM_GB = 16.0
 
 # The fused qkv rows of an H3 LoRA: 56 heads of 128 rows for each of q, k, v.
 H3_QKV_HEADS = 56
@@ -217,6 +223,56 @@ def keyframe_positions(count: int, frames: int) -> list[int]:
     last = frames - 1
     inner = [round(index * last / (count - 1)) for index in range(1, count - 1)]
     return [max(1, min(frames - 2, frame)) for frame in inner]
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    parts = []
+    for part in version.split("."):
+        digits = "".join(ch for ch in part if ch.isdigit())
+        if not digits:
+            break
+        parts.append(int(digits))
+        if not part.isdigit():
+            break
+    return tuple(parts)
+
+
+def runtime_problems(
+    version: Callable[[str], str] | None = None,
+    which: Callable[[str], str | None] = shutil.which,
+    ram_gb: float | None = None,
+) -> list[str]:
+    """What this machine lacks to run the H3 engine; empty when it can run."""
+    from importlib import metadata
+
+    get_version = version or metadata.version
+    problems = []
+    for package, minimum in H3_MIN_VERSIONS.items():
+        wanted = ".".join(map(str, minimum))
+        try:
+            found = get_version(package)
+        except metadata.PackageNotFoundError:
+            problems.append(f"{package} {wanted} or later is not installed")
+            continue
+        if _version_tuple(found) < minimum:
+            problems.append(f"{package} is {found}; the engine needs {wanted} or later")
+    if which("ffmpeg") is None:
+        problems.append("ffmpeg is not on PATH (brew install ffmpeg)")
+    ram = system_ram_gb() if ram_gb is None else ram_gb
+    if 0 < ram < H3_MIN_RAM_GB:
+        problems.append(
+            f"this Mac has {ram:.0f} GB of memory; the engine needs {H3_MIN_RAM_GB:.0f} GB"
+        )
+    return problems
+
+
+def require_runtime() -> None:
+    problems = runtime_problems()
+    if problems:
+        raise RuntimeError(
+            "MiniMax H3 cannot run here: " + "; ".join(problems) + ". Update the MLX "
+            "pack from the Package Manager to install the Python packages."
+        )
 
 
 # -- engine install -------------------------------------------------------------
@@ -640,6 +696,7 @@ class _MiniMaxH3Base(BaseNode):
             run_engine(command, engine, cancelled)
 
         def work() -> None:
+            require_runtime()
             engine = ensure_engine()
             pack = ensure_q8_pack(engine, dit_file, run)
             if self.speed == H3Speed.FAST:

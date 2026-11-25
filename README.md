@@ -163,8 +163,15 @@ Powered by MiniMax H3. The H3 nodes run [minimax-h3-mlx](https://github.com/mrbi
 (Apache-2.0) at commit `26010372`, the engine Phosphene pins. It has no package metadata,
 so the first run downloads that commit's archive into `~/.local/share/nodetool/minimax-h3/`,
 checks that the archive names the pinned commit, and runs its `scripts/generate_staged.py`
-in a subprocess of the NodeTool Python. The engine's dependencies are already part of
-`nodetool-mlx`. It also needs `ffmpeg` on the `PATH`.
+in a subprocess of the NodeTool Python.
+
+Runtime requirements, checked before every render with a message that names what is
+missing: mlx 0.32 or later, mlx-vlm 0.7.8 or later (its Qwen3-VL text encoder),
+transformers 5.14 or later, `ffmpeg` on the `PATH`, and at least 16 GB of memory.
+`nodetool-mlx` declares the Python packages with the floors of the set Phosphene validated
+the engine on, so installing or updating the pack installs them. The first render also
+needs network access to `codeload.github.com` and about 100 GB of disk: 75 GB of weights
+and the 22 GB Q8 pack.
 
 Download the three weight repos from the Models Manager first, about 75 GB in total:
 `DeepBeepMeep/MiniMax-H3` (the pruned bf16 transformer), `ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit`
