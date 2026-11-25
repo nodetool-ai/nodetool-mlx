@@ -4334,6 +4334,872 @@
     },
     {
       "basic_fields": [
+        "prompt",
+        "video",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Generates a soundtrack for a video and keeps its picture exactly as it is, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, audio, video-to-audio, foley, sound effects, minimax, h3, hailuo, mlx, apple silicon\n\nUse cases:\n- Add sound effects and ambience to a silent clip\n- Replace a clip's soundtrack with one described in the prompt",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "video"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3AddSound",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "The clip to score, up to 60 seconds.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Add Sound (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "video",
+        "seconds",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Continues a video with new frames and sound, carrying its last 17 frames and their sound, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, extend, continue, minimax, h3, hailuo, mlx, apple silicon, audio\n\nUse cases:\n- Make a clip longer without a cut\n- Continue a shot toward an optional end frame",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "video",
+        "seconds",
+        "last_image"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3Extend",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "The clip to continue, up to 60 seconds.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        },
+        {
+          "default": 5.0,
+          "description": "Seconds of new video after the clip.",
+          "max": 15.0,
+          "min": 0.5,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional frame the continuation should end on.",
+          "name": "last_image",
+          "title": "Last Image",
+          "type": {
+            "type": "image"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Extend (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "images",
+        "seconds",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound that passes through a sequence of images, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, keyframes, interpolation, minimax, h3, hailuo, mlx, apple silicon, audio\n\nUse cases:\n- Move a shot through planned story beats\n- Join a first and a last image with stills in between",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "images",
+        "seconds"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3Keyframes",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": [],
+          "description": "Two to eight stills, spread evenly from the first frame to the last.",
+          "name": "images",
+          "title": "Images",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "image"
+              }
+            ]
+          }
+        },
+        {
+          "default": 5.0,
+          "description": "Clip length.",
+          "max": 15.0,
+          "min": 1.0,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Keyframes (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "audio",
+        "image",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Generates a video performing a given soundtrack, with lips synced to speech or singing, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, lip sync, audio-to-video, talking head, minimax, h3, hailuo, mlx, apple silicon\n\nUse cases:\n- Make a speaker or singer perform a recording\n- Animate a portrait to a voice-over",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "audio",
+        "image",
+        "start_time",
+        "seconds"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3LipSync",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "audio",
+            "uri": ""
+          },
+          "description": "The soundtrack the clip performs and keeps. Isolated vocals sync best.",
+          "name": "audio",
+          "title": "Audio",
+          "type": {
+            "type": "audio"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame, such as the speaker's face.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": 0.0,
+          "description": "Second of the audio the clip starts at.",
+          "min": 0.0,
+          "name": "start_time",
+          "title": "Start Time",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 0.0,
+          "description": "Clip length. 0 covers the audio from the start time, up to 30 seconds.",
+          "max": 30.0,
+          "min": 0.0,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Lip Sync (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "image",
+        "last_image",
+        "seconds",
+        "resolution",
+        "speed"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound from a prompt, optionally from a first frame, to a last frame, or keeping a face, with MiniMax H3 on Apple Silicon. Powered by MiniMax H3.\nvideo, text-to-video, image-to-video, minimax, h3, hailuo, mlx, apple silicon, audio\n\nUse cases:\n- Generate a clip with dialogue and sound from a description\n- Animate a still, or move from a first frame to a last frame\n- Keep a person's face from a reference photo",
+      "input_fields": [
+        "prompt",
+        "resolution",
+        "speed",
+        "steps",
+        "seed",
+        "image",
+        "last_image",
+        "reference",
+        "seconds"
+      ],
+      "namespace": "mlx.minimax_h3",
+      "node_type": "mlx.minimax_h3.MiniMaxH3Video",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including dialogue and sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "768x448",
+          "description": "Canvas. Draft is fastest; High is true 16:9 and resolves faces best.",
+          "name": "resolution",
+          "title": "Resolution",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Resolution",
+            "values": [
+              "640x384",
+              "768x448",
+              "1024x576",
+              "384x640",
+              "448x768",
+              "576x1024"
+            ]
+          }
+        },
+        {
+          "default": "fast",
+          "description": "Fast runs three steps with TaoMate's LoRA, about four times faster. Best runs the full sampler.",
+          "name": "speed",
+          "title": "Speed",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.minimax_h3.H3Speed",
+            "values": [
+              "fast",
+              "best"
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Sigma points for Best (steps run = points - 1). 0 uses 9, or 16 at High.",
+          "max": 50.0,
+          "min": 0.0,
+          "name": "steps",
+          "title": "Steps",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame. Leave empty for text to video.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional last frame.",
+          "name": "last_image",
+          "title": "Last Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional face to keep: a photo of the person, not a frame of the clip.",
+          "name": "reference",
+          "title": "Reference",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": 5.0,
+          "description": "Clip length. Past 5 seconds the engine chains 5 second windows.",
+          "max": 15.0,
+          "min": 1.0,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "allow_patterns": [
+            "MiniMax-H3-FL2VA-pruned_bf16.safetensors"
+          ],
+          "id": "DeepBeepMeep/MiniMax-H3",
+          "name": "DeepBeepMeep/MiniMax-H3",
+          "repo_id": "DeepBeepMeep/MiniMax-H3",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "text_encoder.safetensors",
+            "video_vae.safetensors",
+            "audio_vae.safetensors",
+            "config.json",
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "vocab.json",
+            "merges.txt",
+            "LICENSE",
+            "NOTICE",
+            "MODIFICATIONS.md"
+          ],
+          "id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "name": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "repo_id": "ddalcu/MiniMax-H3-FL2VA-MLX-Serve-8bit",
+          "type": "hf.text_to_video"
+        },
+        {
+          "allow_patterns": [
+            "FL2VA/text_encoder/config.json",
+            "FL2VA/model_index.json"
+          ],
+          "id": "MiniMaxAI/MiniMax-H3",
+          "name": "MiniMaxAI/MiniMax-H3",
+          "repo_id": "MiniMaxAI/MiniMax-H3",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "MiniMax H3 Video (MLX)"
+    },
+    {
+      "basic_fields": [
         "model",
         "version",
         "audio"
@@ -10784,6 +11650,1256 @@
         }
       ],
       "title": "Voxtral TTS"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "audio",
+        "image",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Generates a video for a given soundtrack, such as speech or music, with LTX-2.5 on Apple Silicon. The output keeps the input audio.\nvideo, audio-to-video, lip sync, music video, ltx, mlx, apple silicon\n\nUse cases:\n- Make a talking or singing character from a voice track\n- Cut visuals to a piece of music",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "num_frames",
+        "frame_rate",
+        "width",
+        "height",
+        "audio",
+        "image"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXAudioToVideo",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "q8 (about 46 GB to download, recommended) or q4 (about 27 GB, lower quality).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": 0,
+          "description": "Frames to generate, rounded down to 8n+1. 0 covers the audio, up to 257 frames.",
+          "max": 257.0,
+          "min": 0.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 768,
+          "description": "Width in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 448,
+          "description": "Height in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "audio",
+            "uri": ""
+          },
+          "description": "The soundtrack. With music, isolated vocals sync better.",
+          "name": "audio",
+          "title": "Audio",
+          "type": {
+            "type": "audio"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame, such as the speaker.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Audio to Video (MLX)"
+    },
+    {
+      "basic_fields": [
+        "mode",
+        "prompt",
+        "video",
+        "image",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Renders a new video that follows the motion and layout of a source video, or colorizes a black-and-white video, with LTX-2.3 IC-LoRAs on Apple Silicon.\nvideo, video-to-video, motion control, colorize, ic-lora, ltx, mlx, apple silicon\n\nUse cases:\n- Restyle a clip while keeping its camera move and choreography\n- Drive a new character with the motion of a reference performance\n- Add color to old black-and-white footage",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "mode",
+        "video",
+        "image",
+        "num_frames",
+        "reference_strength",
+        "frame_rate"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXControl",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q4",
+          "description": "LTX-2.3 pack: q4 (about 12 GB, what the IC-LoRAs were tuned on) or q8 (about 26 GB).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": "motion",
+          "description": "motion: a new video that follows the source (Union Control IC-LoRA). colorize: the source in color, with its own sound.",
+          "name": "mode",
+          "title": "Mode",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXControlMode",
+            "values": [
+              "motion",
+              "colorize"
+            ]
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "The source video.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame for motion control, such as the new character.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": 121,
+          "description": "Frames to generate, rounded down to 8n+1 and to the source length.",
+          "max": 257.0,
+          "min": 9.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "How closely the output follows the source. Lower is looser.",
+          "max": 1.0,
+          "min": 0.0,
+          "name": "reference_strength",
+          "title": "Reference Strength",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.3-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "transformer-distilled-1.1.safetensors",
+            "ltx-2.3-22b-distilled-lora-*.safetensors",
+            "spatial_upscaler_x1_5_*.safetensors",
+            "temporal_upscaler_*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.3-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.3-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.3-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "transformer-distilled-1.1.safetensors",
+            "ltx-2.3-22b-distilled-lora-*.safetensors",
+            "spatial_upscaler_x1_5_*.safetensors",
+            "temporal_upscaler_*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.3-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.3-mlx-q8",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "mlx-community/gemma-3-12b-it-4bit",
+          "name": "mlx-community/gemma-3-12b-it-4bit",
+          "repo_id": "mlx-community/gemma-3-12b-it-4bit",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.3 Motion Control and Colorize (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "video",
+        "seconds",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Continues a video and its sound with LTX-2.5 on Apple Silicon. Returns the whole clip with the new part appended.\nvideo, extend, continue, ltx, mlx, apple silicon, audio\n\nUse cases:\n- Make a generated shot longer\n- Continue a scene in a new direction with a new prompt",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "video",
+        "seconds"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXExtend",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "q8 (about 46 GB to download, recommended) or q4 (about 27 GB, lower quality).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "Clip to continue. Both sides must be multiples of 64 pixels, as LTX output is.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        },
+        {
+          "default": 4.0,
+          "description": "Seconds of video to add.",
+          "max": 10.0,
+          "min": 0.5,
+          "name": "seconds",
+          "title": "Seconds",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Extend (MLX)"
+    },
+    {
+      "basic_fields": [
+        "images",
+        "sheet_description",
+        "prompt",
+        "num_frames",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound that features the people, objects and places from 1 to 8 reference pictures, with the LTX-2.3 ingredients IC-LoRA on Apple Silicon.\nvideo, references, ingredients, character, product, ic-lora, ltx, mlx, apple silicon\n\nUse cases:\n- Put a character and a product into one scene\n- Keep a cast consistent across shots",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "images",
+        "sheet_description",
+        "num_frames",
+        "width",
+        "height",
+        "quick",
+        "frame_rate"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXIngredients",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q4",
+          "description": "LTX-2.3 pack: q4 (about 12 GB, what the IC-LoRAs were tuned on) or q8 (about 26 GB).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": [],
+          "description": "1 to 8 reference pictures. They are tiled onto one reference sheet.",
+          "name": "images",
+          "title": "Images",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "image"
+              }
+            ]
+          }
+        },
+        {
+          "default": "",
+          "description": "What the reference pictures show, such as 'a red-haired woman, a vintage motorbike'.",
+          "name": "sheet_description",
+          "title": "Sheet Description",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": 121,
+          "description": "Frames to generate, rounded down to 8n+1.",
+          "max": 257.0,
+          "min": 9.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 1536,
+          "description": "Width in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 896,
+          "description": "Height in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Skip the refine stage: faster, at half the size, with a dreamier look.",
+          "name": "quick",
+          "title": "Quick",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.3-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "transformer-distilled-1.1.safetensors",
+            "ltx-2.3-22b-distilled-lora-*.safetensors",
+            "spatial_upscaler_x1_5_*.safetensors",
+            "temporal_upscaler_*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.3-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.3-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.3-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "transformer-distilled-1.1.safetensors",
+            "ltx-2.3-22b-distilled-lora-*.safetensors",
+            "spatial_upscaler_x1_5_*.safetensors",
+            "temporal_upscaler_*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.3-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.3-mlx-q8",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "mlx-community/gemma-3-12b-it-4bit",
+          "name": "mlx-community/gemma-3-12b-it-4bit",
+          "repo_id": "mlx-community/gemma-3-12b-it-4bit",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.3 Ingredients (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "images",
+        "num_frames",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound that passes through 2 to 8 images, spread evenly from the first frame to the last, with LTX-2.5 on Apple Silicon.\nvideo, keyframes, interpolation, ltx, mlx, apple silicon, audio\n\nUse cases:\n- Turn a storyboard into one continuous shot\n- Interpolate between several stills",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "num_frames",
+        "frame_rate",
+        "width",
+        "height",
+        "images",
+        "strength"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXKeyframes",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "q8 (about 46 GB to download, recommended) or q4 (about 27 GB, lower quality).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": 121,
+          "description": "Frames to generate, rounded down to 8n+1. 121 frames at 24 fps is 5 seconds.",
+          "max": 257.0,
+          "min": 9.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 768,
+          "description": "Width in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 448,
+          "description": "Height in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": [],
+          "description": "2 to 8 keyframes, in order. The first is frame one, the last is the final frame.",
+          "name": "images",
+          "title": "Images",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "image"
+              }
+            ]
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "How closely the clip holds each keyframe.",
+          "max": 1.0,
+          "min": 0.0,
+          "name": "strength",
+          "title": "Strength",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Keyframes (MLX)"
+    },
+    {
+      "basic_fields": [
+        "video",
+        "keep",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Doubles the width and height of a video with the LTX-2.5 pixel upscaler IC-LoRA on Apple Silicon. Keeps the source sound and length.\nvideo, upscale, super resolution, x2, ic-lora, ltx, mlx, apple silicon\n\nUse cases:\n- Bring a 768x448 LTX draft to 1536x896\n- Sharpen a low-resolution clip before delivery",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "video",
+        "keep"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXUpscale",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "LTX-2.5 pack: q8 (about 46 GB, recommended) or q4 (about 27 GB).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "duration": null,
+            "format": null,
+            "metadata": null,
+            "type": "video",
+            "uri": ""
+          },
+          "description": "The video to upscale. Its sides should be multiples of 32 pixels.",
+          "name": "video",
+          "title": "Video",
+          "type": {
+            "type": "video"
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "How much of the source to keep. Lower lets the model invent more detail.",
+          "max": 1.0,
+          "min": 0.3,
+          "name": "keep",
+          "title": "Keep",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Upscale x2 (MLX)"
+    },
+    {
+      "basic_fields": [
+        "prompt",
+        "image",
+        "last_image",
+        "num_frames",
+        "quantization"
+      ],
+      "body": "content_card",
+      "description": "Generates a video with sound from a prompt, optionally starting and ending on given images, with LTX-2.5 on Apple Silicon.\nvideo, text-to-video, image-to-video, ltx, mlx, apple silicon, audio\n\nUse cases:\n- Generate a short clip and its soundtrack from a description\n- Animate a still image, or move from one image to another",
+      "input_fields": [
+        "prompt",
+        "quantization",
+        "seed",
+        "low_ram",
+        "loras",
+        "num_frames",
+        "frame_rate",
+        "width",
+        "height",
+        "image",
+        "last_image",
+        "strength"
+      ],
+      "namespace": "mlx.text_to_video",
+      "node_type": "mlx.text_to_video.LTXVideo",
+      "outputs": [
+        {
+          "name": "output",
+          "type": {
+            "type": "video"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "default": "",
+          "description": "What happens in the clip, including the sound.",
+          "name": "prompt",
+          "title": "Prompt",
+          "type": {
+            "type": "str"
+          }
+        },
+        {
+          "default": "q8",
+          "description": "q8 (about 46 GB to download, recommended) or q4 (about 27 GB, lower quality).",
+          "name": "quantization",
+          "title": "Quantization",
+          "type": {
+            "type": "enum",
+            "type_name": "nodetool.nodes.mlx.text_to_video.LTXQuantization",
+            "values": [
+              "q4",
+              "q8"
+            ]
+          }
+        },
+        {
+          "default": -1,
+          "description": "Random seed. -1 picks one at random.",
+          "name": "seed",
+          "title": "Seed",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": false,
+          "description": "Stream transformer blocks from disk. Slower, but fits a 32 GB Mac.",
+          "name": "low_ram",
+          "title": "Low Ram",
+          "type": {
+            "type": "bool"
+          }
+        },
+        {
+          "default": [],
+          "description": "Character or style LoRAs trained for the LTX version this node runs.",
+          "name": "loras",
+          "title": "Loras",
+          "type": {
+            "type": "list",
+            "type_args": [
+              {
+                "type": "hf.lora_ltx_config"
+              }
+            ]
+          }
+        },
+        {
+          "default": 121,
+          "description": "Frames to generate, rounded down to 8n+1. 121 frames at 24 fps is 5 seconds.",
+          "max": 257.0,
+          "min": 9.0,
+          "name": "num_frames",
+          "title": "Num Frames",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 24.0,
+          "description": "Frames per second.",
+          "max": 60.0,
+          "min": 1.0,
+          "name": "frame_rate",
+          "title": "Frame Rate",
+          "type": {
+            "type": "float"
+          }
+        },
+        {
+          "default": 768,
+          "description": "Width in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "width",
+          "title": "Width",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": 448,
+          "description": "Height in pixels, rounded down to a multiple of 64.",
+          "max": 1536.0,
+          "min": 256.0,
+          "name": "height",
+          "title": "Height",
+          "type": {
+            "type": "int"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional first frame. Leave empty for text to video.",
+          "name": "image",
+          "title": "Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": {
+            "asset_id": null,
+            "data": null,
+            "metadata": null,
+            "type": "image",
+            "uri": ""
+          },
+          "description": "Optional last frame.",
+          "name": "last_image",
+          "title": "Last Image",
+          "type": {
+            "type": "image"
+          }
+        },
+        {
+          "default": 1.0,
+          "description": "How closely the clip holds the given frames.",
+          "max": 1.0,
+          "min": 0.0,
+          "name": "strength",
+          "title": "Strength",
+          "type": {
+            "type": "float"
+          }
+        }
+      ],
+      "recommended_models": [
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q4",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q4",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q4",
+          "type": "hf.text_to_video"
+        },
+        {
+          "id": "dgrauet/ltx-2.5-mlx-q8",
+          "ignore_patterns": [
+            "transformer-dev.safetensors",
+            "ltx-2.5-22b-distilled-lora-*.safetensors"
+          ],
+          "name": "dgrauet/ltx-2.5-mlx-q8",
+          "repo_id": "dgrauet/ltx-2.5-mlx-q8",
+          "type": "hf.text_to_video"
+        }
+      ],
+      "title": "LTX-2.5 Video (MLX)"
     }
   ],
   "repo_id": "nodetool-ai/nodetool-mlx",

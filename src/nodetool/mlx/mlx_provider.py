@@ -17,6 +17,7 @@ The provider supports:
 - Vision and audio understanding
 - Text-to-speech generation
 - Text-to-image and image-to-image generation
+- Text-to-video and image-to-video with sound (LTX-2.5, MiniMax H3)
 """
 
 import platform
@@ -89,10 +90,18 @@ from nodetool.metadata.types import (
     AudioRef,
     LanguageModel,
     ImageModel,
+    VideoModel,
+    VideoRef,
 )
 from nodetool.workflows.types import Chunk
 from nodetool.io.uri_utils import fetch_uri_bytes_and_mime
-from nodetool.providers.types import ImageBytes, TextToImageParams, ImageToImageParams
+from nodetool.providers.types import (
+    ImageBytes,
+    ImageToImageParams,
+    ImageToVideoParams,
+    TextToImageParams,
+    TextToVideoParams,
+)
 from nodetool.workflows.processing_context import ProcessingContext
 
 import PIL.Image
@@ -352,6 +361,50 @@ class MLXProvider(BaseProvider):
         except Exception as e:  # pragma: no cover
             log.debug("Could not read installed MLX image models: %s", e)
             return []
+
+    async def get_available_video_models(self) -> List[VideoModel]:
+        """LTX-2.5 packs and MiniMax H3 (Best and Fast) whose weights are downloaded."""
+        from nodetool.mlx.video import mlx_video_models
+
+        try:
+            return mlx_video_models()
+        except Exception as e:  # pragma: no cover
+            log.debug("Could not read installed MLX video models: %s", e)
+            return []
+
+    async def text_to_video(  # type: ignore[override]
+        self,
+        params: TextToVideoParams,
+        timeout_s: int | None = None,
+        context: ProcessingContext | None = None,
+        node_id: str | None = None,
+    ) -> VideoRef:
+        """Generate a video with sound with LTX-2.5 or MiniMax H3 on MLX."""
+        from nodetool.mlx.video import generate_video
+
+        if context is None:
+            raise ValueError("ProcessingContext is required for MLX video generation")
+        return await generate_video(context, params)
+
+    async def image_to_video(  # type: ignore[override]
+        self,
+        image: bytes,
+        params: ImageToVideoParams,
+        timeout_s: int | None = None,
+        context: ProcessingContext | None = None,
+        node_id: str | None = None,
+        **kwargs: Any,
+    ) -> VideoRef:
+        """Animate ``image`` with LTX-2.5 or MiniMax H3 on MLX.
+
+        An ``end_image`` (bytes) extra field on ``params`` sets the last frame.
+        """
+        from nodetool.mlx.video import generate_video
+
+        if context is None:
+            raise ValueError("ProcessingContext is required for MLX video generation")
+        end_image = (params.model_extra or {}).get("end_image")
+        return await generate_video(context, params, image=image, end_image=end_image)
 
     async def get_available_asr_models(self) -> List[ASRModel]:
         """

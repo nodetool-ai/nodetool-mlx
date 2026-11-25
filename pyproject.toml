@@ -24,12 +24,18 @@ dependencies = [
     "pydub>=0.25.1",
     "mlx>=0.32.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "mlx-lm>=0.32.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
-    "mlx-vlm>=0.7.6; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "mlx-vlm>=0.7.8; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "mlx-audio>=0.5.8; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "mlx-whisper>=0.4.3; sys_platform == 'darwin' and platform_machine == 'arm64'",
     "mflux>=0.22.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
     # Stable Audio 3 T5Gemma tokenizer
     "sentencepiece>=0.2.2; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    # The MiniMax H3 engine (minimax-h3-mlx) imports these directly. The floors
+    # are the set Phosphene validated it on: mlx-vlm 0.7.8's Qwen3-VL encoder
+    # needs transformers 5.14 or later.
+    "transformers>=5.14.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "safetensors>=0.8.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "pillow>=12.3.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
     # mlx-whisper declares numba without a floor; keep a Python 3.11+ build.
     "numba>=0.68.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
