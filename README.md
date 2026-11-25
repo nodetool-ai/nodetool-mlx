@@ -186,6 +186,15 @@ in yearly revenue, and it excludes some territories. Read it on the
 [MiniMaxAI/MiniMax-H3](https://huggingface.co/MiniMaxAI/MiniMax-H3) model card before
 using the output.
 
+### Video through the MLX provider
+
+The `mlx` provider also serves text to video and image to video, with an optional end
+frame, so the generic video nodes and agents can use these models. It lists each model
+only when its weights are downloaded: `dgrauet/ltx-2.5-mlx-q8` and `-q4` (LTX-2.5), and
+`MiniMaxAI/MiniMax-H3` and `MiniMaxAI/MiniMax-H3:fast` (MiniMax H3 Best and Fast). The
+requested resolution and aspect ratio pick the canvas, and an input image sets the aspect
+ratio. Each call runs the same node as the graph, `LTXVideo` or `MiniMaxH3Video`.
+
 ## Requirements
 
 - macOS 14+ on Apple Silicon (MLX currently supports Apple hardware only)
